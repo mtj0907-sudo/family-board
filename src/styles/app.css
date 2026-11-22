@@ -366,3 +366,21 @@ button.eventrow:active { background: var(--line-2); }
   .mrow { padding: 16px 18px; }
   .mrow .avatar { width: 46px !important; height: 46px !important; font-size: 19px !important; }
 }
+
+/* ───────── 오늘 화면: 남는 높이를 나눠 쓰기 ─────────
+   폰마다 보이는 높이가 달라서, 남는 만큼 구성원 줄이 늘어나고 시계도 높이에 맞춰 커집니다.
+   (넘치면 평소처럼 스크롤) */
+main { display: flex; flex-direction: column; }
+.screen { flex-shrink: 0; }
+.screen.fill { flex: 1 0 auto; }
+.group.fill { flex: 1; display: flex; flex-direction: column; }
+.group.fill > .mrow { flex: 1 1 auto; align-items: center; }
+.hero.compact svg { width: clamp(72px, 12dvh, 116px); height: clamp(72px, 12dvh, 116px); }
+.hero.compact .clock-digital { font-size: clamp(34px, 6.4dvh, 58px); }
+@media (min-width: 900px) {
+  .hero.compact svg { width: 132px; height: 132px; }
+  .hero.compact .clock-digital { font-size: clamp(48px, 7vw, 68px); }
+}
+
+.mrow-in { display: flex; gap: 12px; align-items: flex-start; width: 100%; min-width: 0; }
+.mrow .mrow-in .avatar { margin-top: 2px; }
