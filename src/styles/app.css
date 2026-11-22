@@ -339,3 +339,30 @@ button.eventrow:active { background: var(--line-2); }
 
 .kbtn.when { gap: 3px; padding: 0 4px; }
 .when-name { font-size: 14px; font-weight: 800; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ───────── 폰에서 오늘 화면이 한 페이지에 들어오게: 촘촘하게 ───────── */
+.hero.compact { gap: 16px; padding: 0 2px; }
+.hero.compact svg { width: 72px; height: 72px; }
+.hero.compact .clock-digital { font-size: clamp(34px, 10.5vw, 44px); }
+.hero.compact .clock-date { margin-top: 4px; font-size: 14.5px; }
+.mrow { padding: 10px 16px; gap: 12px; }
+.mrow .avatar { width: 40px !important; height: 40px !important; font-size: 17px !important; }
+.m-status { margin-top: 1px; }
+.eta-line { margin-top: 6px; }
+.bar { margin-top: 6px; }
+.pips { margin-top: 8px; gap: 5px; }
+.pip { width: 26px; height: 26px; }
+.m-extra { margin-top: 6px; padding-top: 6px; gap: 2px; }
+.workrow { gap: 2px 12px; }
+.workrow .wk { font-size: 13px; padding: 2px 10px; }
+.workpreview { gap: 5px; }
+.locate { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.topbar { padding-bottom: 2px; }
+.top-title { font-size: 26px; }
+.screen { gap: 10px; }
+@media (min-width: 900px) {
+  .hero.compact svg { width: 132px; height: 132px; }
+  .hero.compact .clock-digital { font-size: clamp(48px, 7vw, 68px); }
+  .mrow { padding: 16px 18px; }
+  .mrow .avatar { width: 46px !important; height: 46px !important; font-size: 19px !important; }
+}
