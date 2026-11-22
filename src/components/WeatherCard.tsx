@@ -28,20 +28,19 @@ export function WeatherLine({ w }: { w: Weather }) {
   );
 }
 
-/** 거실 보드 날씨 카드. 누르면 비·눈·바람 모습을 미리 볼 수 있어요. */
+/** 거실 보드 위쪽 날씨 알약. 사진을 가리지 않게 한 줄로 작게 두고, 누르면 비·눈·바람 미리보기. */
 export function WeatherCard({ w, preview, onTap }: { w: Weather; preview?: string; onTap?: () => void }) {
   return (
     <button className="weather-card" onClick={onTap} aria-label={`${WEATHER_PLACE.name} 날씨. 누르면 비, 눈, 바람 미리보기`}>
-      <WeatherIcon w={w} size={40} />
-      <span className="wc-main">
-        <span className="wc-top">
-          <b>{deg(w.temp)}</b>
-          <span>{WEATHER_PLACE.name} · {labelOf(w)}</span>
-        </span>
+      <WeatherIcon w={w} size={24} />
+      <b>{deg(w.temp)}</b>
+      <span className="wc-label">{preview ? `${preview} 미리보기` : labelOf(w)}</span>
+      {!preview && w.lo !== null && w.hi !== null && (
         <span className="sub">
-          {preview ? `${preview} 미리보기 · 한 번 더 누르면 다음` : `체감 ${deg(w.feels)}${w.lo !== null && w.hi !== null ? ` · ${deg(w.lo)} / ${deg(w.hi)}` : ''}${w.pop !== null ? ` · 비·눈 ${Math.round(w.pop)}%` : ''}`}
+          {deg(w.lo)} / {deg(w.hi)}
         </span>
-      </span>
+      )}
+      {!preview && w.pop !== null && w.pop >= 30 && <span className="sub">☔ {Math.round(w.pop)}%</span>}
     </button>
   );
 }
