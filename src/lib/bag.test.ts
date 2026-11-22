@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_BAG_ITEMS, bagDate, bagNudgeActive, bagProgress } from './bag';
+import { DEFAULT_BAG_ITEMS, bagCheer, bagDate, bagNudgeActive, bagProgress } from './bag';
 
 // 한국 시각 → ms (모두 가짜 날짜)
 const kstMs = (y: number, mo: number, d: number, h: number, mi = 0) => Date.UTC(y, mo - 1, d, h - 9, mi);
@@ -44,5 +44,34 @@ describe('bagNudgeActive', () => {
     expect(bagNudgeActive(kstMs(2030, 1, 11, 8, 59))).toBe(true);
     expect(bagNudgeActive(kstMs(2030, 1, 11, 9, 0))).toBe(false);
     expect(bagNudgeActive(kstMs(2030, 1, 11, 13, 0))).toBe(false);
+  });
+});
+
+describe('bagNudgeActive: 요일', () => {
+  // 2030-01-06 = 일요일
+  it('일~목 저녁에는 켜진다', () => {
+    for (const d of [6, 7, 8, 9, 10]) expect(bagNudgeActive(kstMs(2030, 1, d, 19, 0))).toBe(true);
+  });
+  it('금요일 밤과 토요일에는 꺼져 있다', () => {
+    expect(bagNudgeActive(kstMs(2030, 1, 11, 19, 0))).toBe(false); // 금 저녁
+    expect(bagNudgeActive(kstMs(2030, 1, 12, 8, 0))).toBe(false); // 토 아침
+    expect(bagNudgeActive(kstMs(2030, 1, 12, 19, 0))).toBe(false); // 토 저녁
+  });
+  it('일요일 아침은 꺼져 있고, 월~금 아침은 켜진다', () => {
+    expect(bagNudgeActive(kstMs(2030, 1, 6, 8, 0))).toBe(false); // 일 아침
+    expect(bagNudgeActive(kstMs(2030, 1, 7, 8, 0))).toBe(true); // 월 아침 (일요일 밤의 이어짐)
+    expect(bagNudgeActive(kstMs(2030, 1, 11, 8, 0))).toBe(true); // 금 아침
+  });
+});
+
+describe('bagCheer', () => {
+  it('같은 seed는 같은 말, seed가 바뀌면 다른 말도 나온다', () => {
+    expect(bagCheer(3)).toBe(bagCheer(3));
+    const set = new Set([0, 1, 2, 3, 4].map(bagCheer));
+    expect(set.size).toBe(5);
+    expect(bagCheer(5)).toBe(bagCheer(0));
+  });
+  it('음수·소수도 안전', () => {
+    expect(typeof bagCheer(-3.7)).toBe('string');
   });
 });
