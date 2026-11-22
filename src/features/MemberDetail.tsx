@@ -1,5 +1,6 @@
 import { Check, MapPinned, Pencil } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
+import { Portal } from '../components/Portal';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
@@ -53,6 +54,7 @@ export function MemberDetail({
   const nameOf = (id: string) => members.find((x) => x.id === id)?.name;
 
   return (
+    <Portal>
     <div className="modal sheet-bottom" onClick={onClose}>
       <div className="phone-sheet detail" role="dialog" aria-label={`${m.name} 자세히`} onClick={(e) => e.stopPropagation()}>
         <div className={`dt-head pres-${presenceOf(st)}`}>
@@ -150,5 +152,6 @@ export function MemberDetail({
         </button>
       </div>
     </div>
+    </Portal>
   );
 }
