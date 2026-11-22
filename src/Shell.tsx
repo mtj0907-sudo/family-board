@@ -59,7 +59,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
       ) : (
         <ComingSoon title={SUB_TITLES[sub]} stage={4} />
       );
-  } else if (tab === 'today') body = <TodayScreen />;
+  } else if (tab === 'today') body = <TodayScreen onGo={go} />;
   else if (tab === 'status') body = <StatusScreen />;
   else if (tab === 'message') body = <MessageScreen />;
   else if (tab === 'routine') body = <RoutineScreen />;

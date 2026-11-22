@@ -4,12 +4,14 @@ import { Glyph } from '../components/Glyph';
 import { ProgressBar } from '../components/ProgressBar';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
+import { useBag } from '../hooks/useBag';
 import { useNow } from '../hooks/useNow';
 import { DOING_OPTIONS } from '../lib/constants';
 import { path, setDoing, setRoutineDone } from '../lib/db';
 import { routineProgress } from '../lib/routine';
 import { dateKey } from '../lib/time';
 import type { Member, RoutineDoc, RoutineItem } from '../lib/types';
+import { BagCard } from './BagCard';
 
 export function RoutineScreen() {
   const { code, members, me, isParent, settings } = useFamily();
@@ -19,9 +21,14 @@ export function RoutineScreen() {
   const kids = members.filter((m) => m.role === 'child');
   // 아이 기기에는 자기 것만, 부모 기기에는 아이 전체
   const shown = isParent ? kids : kids.filter((k) => k.id === me.id);
+  const bag = useBag(now);
+  const bagKids = shown.filter((k) => bag.schoolKids.includes(k.id));
 
   return (
     <RoutineView
+      before={bagKids.map((k) => (
+        <BagCard key={k.id} kid={k} items={bag.items} bag={bag.bag} onToggle={(key, v) => bag.toggle(k, key, v)} onSkip={(skip) => bag.setSkip(k, skip)} />
+      ))}
       kids={shown}
       items={settings.routineItems}
       routine={routine ?? undefined}
@@ -32,12 +39,15 @@ export function RoutineScreen() {
 }
 
 export function RoutineView({
+  before,
   kids,
   items,
   routine,
   onToggle,
   onDoing,
 }: {
+  /** 맨 위에 놓을 카드들 (가방 챙기기) */
+  before?: React.ReactNode;
   kids: Member[];
   items: RoutineItem[];
   routine?: RoutineDoc;
@@ -46,6 +56,7 @@ export function RoutineView({
 }) {
   return (
     <div className="screen">
+      {before}
       {kids.length === 0 && <div className="card sub">루틴을 볼 아이가 없어요</div>}
       {kids.map((k) => {
         const done = routine?.done?.[k.id];

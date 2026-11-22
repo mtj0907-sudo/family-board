@@ -32,6 +32,10 @@ export interface FamilySettings {
   workTimes?: Record<string, string>;
   /** 직접 만든 장소/상태 (예: "피아노 학원 가는 중") */
   customStatuses?: CustomStatus[];
+  /** 학교 가는 아이 (가방 챙기기를 쓰는 구성원 id) */
+  schoolKids?: string[];
+  /** 가방 챙기기 항목. 없으면 기본 항목 */
+  bagItems?: RoutineItem[];
   /** 알림 서버 주소 (Cloudflare Workers) */
   pushUrl?: string;
   /** 알림 키 (설정에서 한 번 만들어 가족 설정에 저장) */

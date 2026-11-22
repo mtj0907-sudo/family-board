@@ -425,3 +425,12 @@ main { display: flex; flex-direction: column; }
 @keyframes news-in { from { opacity: 0; transform: translate(-50%, -16px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 .check.flat { margin: 0; padding: 4px 0; color: var(--ink); }
+
+/* 가방 챙기기 */
+.bagcard { border-color: var(--ink); }
+.result.no-school { background: var(--bg); color: var(--ink-2); font-size: 16px; }
+.bagcard .tiles .tile { min-height: 96px; }
+.nudge { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--ink); color: #fff; border-radius: var(--r-lg); padding: 14px 18px; text-align: left; font-weight: 700; }
+.nudge small { display: block; font-weight: 500; opacity: .75; font-size: 13.5px; margin-top: 1px; }
+.bagbadge { display: inline-flex; align-items: center; gap: 4px; font-size: 14.5px; font-weight: 700; color: var(--ink-2); }
+.bagbadge.ok { color: var(--ok); }
