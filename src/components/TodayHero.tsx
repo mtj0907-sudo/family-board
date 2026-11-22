@@ -10,8 +10,6 @@ import { heroTheme } from '../lib/heroTheme';
 import { formatClock, formatDateKo } from '../lib/time';
 import type { SpecialKind } from '../lib/specialDay';
 import type { TomorrowItem } from '../lib/tomorrow';
-import { presenceSummary } from '../lib/presence';
-import type { Member, StatusDoc, WithId } from '../lib/types';
 import { fxOf, labelOf, type Weather, type WeatherStatus } from '../lib/weather';
 
 export interface HeroBanner {
@@ -35,8 +33,6 @@ export function TodayHero({
   tomorrow,
   special,
   tree,
-  members,
-  statuses,
   onMessage,
   onWhen,
   effects,
@@ -49,8 +45,6 @@ export function TodayHero({
   tomorrow: TomorrowItem[];
   special: SpecialKind | null;
   tree: boolean;
-  members: Member[];
-  statuses: WithId<StatusDoc>[];
   onMessage: () => void;
   onWhen: () => void;
   /** 효과를 보여줄지 (끄기 설정·움직임 줄이기 반영) */
@@ -60,7 +54,6 @@ export function TodayHero({
   const theme = useMemo(() => heroTheme(now, weather), [now, weather]);
   const [ap, hm] = formatClock(now).split(' ');
   const fx = weather ? fxOf(weather) : null;
-  const sum = presenceSummary(members, statuses);
   const shown = tomorrow.slice(0, 1);
   const more = tomorrow.length - shown.length;
 
@@ -117,8 +110,6 @@ export function TodayHero({
           )}
         </div>
         </div>
-
-        <div className="thero-home">🏠 {sum.text}</div>
 
         <div className="thero-chips">
           {banner && (

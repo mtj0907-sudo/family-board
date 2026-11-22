@@ -685,7 +685,6 @@ h2 { font-size: 21px; }
 .thero-time b { font-size: 50px; line-height: 1.06; }
 .thero-wx { margin-top: 2px; font-size: 14.5px; gap: 2px 9px; }
 .thero-wx b { font-size: 22px; }
-.thero-home { margin-top: 6px; font-size: 13px; font-weight: 600; opacity: .88; }
 .thero-chips { margin-top: 8px; gap: 5px; }
 .glass { padding: 6px 11px; border-radius: 13px; font-size: 13px; }
 .glass.strong { font-size: 13.5px; }
@@ -709,7 +708,6 @@ h2 { font-size: 21px; }
 
 
 @media (max-height: 740px) {
-  .thero-home { display: none; }
   .thero-time b { font-size: 46px; }
 }
 .m-line .locate { width: 34px; height: 34px; min-height: 0; padding: 0; justify-content: center; border-radius: 50%; }
