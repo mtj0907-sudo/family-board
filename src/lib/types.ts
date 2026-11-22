@@ -32,6 +32,11 @@ export interface FamilySettings {
   workTimes?: Record<string, string>;
   /** 직접 만든 장소/상태 (예: "피아노 학원 가는 중") */
   customStatuses?: CustomStatus[];
+  /** 알림 서버 주소 (Cloudflare Workers) */
+  pushUrl?: string;
+  /** 알림 키 (설정에서 한 번 만들어 가족 설정에 저장) */
+  pushPublic?: string;
+  pushPrivate?: string;
   /** 구성원별 퇴근 후 집까지 평소 걸리는 시간(분). 예: { m2: 30 } */
   commuteMinutes?: Record<string, number>;
 }

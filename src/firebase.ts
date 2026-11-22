@@ -19,4 +19,6 @@ if (cfg) {
 }
 
 export { db };
+/** 알림 서버가 Firestore를 읽을 때 쓰는 공개 값 (비밀이 아닙니다) */
+export const firebasePublic = cfg ? { projectId: cfg.projectId, apiKey: cfg.apiKey } : null;
 export const firebaseReady = db !== null;
