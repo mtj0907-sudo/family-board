@@ -29,7 +29,7 @@ export function TodayScreen() {
   const familyWide = todays.filter((e) => e.who.length === 0);
 
   return (
-    <div className="screen">
+    <div className="screen fill">
       <Clock compact />
       {familyWide.length > 0 && (
         <div className="group">
@@ -41,7 +41,7 @@ export function TodayScreen() {
           ))}
         </div>
       )}
-      <div className="group">
+      <div className="group fill">
         {members.map((m) => (
           <MemberRow
             key={m.id}
@@ -82,6 +82,7 @@ export function MemberRow({
 
   return (
     <div className="mrow">
+      <div className="mrow-in">
       <Avatar member={m} size={46} />
       <div className="m-body">
         <div className="m-head">
@@ -146,6 +147,7 @@ export function MemberRow({
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
