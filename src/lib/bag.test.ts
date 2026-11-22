@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_BAG_ITEMS, bagCheer, bagDate, bagNudgeActive, bagProgress } from './bag';
+import { DEFAULT_BAG_ITEMS, bagCheer, bagDate, bagNudgeActive, bagProgress, schoolKidIds } from './bag';
 
 // 한국 시각 → ms (모두 가짜 날짜)
 const kstMs = (y: number, mo: number, d: number, h: number, mi = 0) => Date.UTC(y, mo - 1, d, h - 9, mi);
@@ -73,5 +73,29 @@ describe('bagCheer', () => {
   });
   it('음수·소수도 안전', () => {
     expect(typeof bagCheer(-3.7)).toBe('string');
+  });
+});
+
+describe('schoolKidIds', () => {
+  const members = [
+    { id: 'm1', name: '가나', emoji: '', role: 'parent' as const },
+    { id: 'm3', name: '다라', emoji: '', role: 'child' as const },
+    { id: 'm4', name: '마바', emoji: '', role: 'child' as const },
+  ];
+  it('평일에 가는 곳이 학교인 아이', () => {
+    expect(schoolKidIds({ members, dayPlaces: { m3: '학교', m4: '유치원' } })).toEqual(['m3']);
+  });
+  it('유치원·어린이집·안 가요(빈 값)는 제외', () => {
+    expect(schoolKidIds({ members, dayPlaces: { m3: '유치원', m4: '' } })).toEqual([]);
+  });
+  it('평일에 가는 곳을 정하지 않은 아이는 예전 "학교 가는 아이" 값을 따른다', () => {
+    expect(schoolKidIds({ members, schoolKids: ['m3'], dayPlaces: { m4: '유치원' } })).toEqual(['m3']);
+    expect(schoolKidIds({ members, schoolKids: ['m3'] })).toEqual(['m3']);
+  });
+  it('직접 정한 값이 예전 값보다 우선', () => {
+    expect(schoolKidIds({ members, schoolKids: ['m3'], dayPlaces: { m3: '유치원' } })).toEqual([]);
+  });
+  it('어른은 제외', () => {
+    expect(schoolKidIds({ members, dayPlaces: { m1: '학교' } })).toEqual([]);
   });
 });
