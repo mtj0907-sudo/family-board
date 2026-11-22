@@ -138,6 +138,15 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="board" style={box.style}>
+      {weather && (
+        <div className="board-weather">
+          <WeatherCard
+            w={weather}
+            preview={preview ? PREVIEW_NAME[preview] : undefined}
+            onTap={() => setPreview(PREVIEWS[(PREVIEWS.indexOf(preview) + 1) % PREVIEWS.length])}
+          />
+        </div>
+      )}
       <div className="board-ctl">
         {awake.method === 'none' ? (
           <button className="board-btn" onClick={awake.start}>
@@ -189,13 +198,6 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           <Clock size={180} stacked marks={clockMarkList} />
         </div>
         <div className="side-bottom">
-          {weather && (
-            <WeatherCard
-              w={weather}
-              preview={preview ? PREVIEW_NAME[preview] : undefined}
-              onTap={() => setPreview(PREVIEWS[(PREVIEWS.indexOf(preview) + 1) % PREVIEWS.length])}
-            />
-          )}
 
         {pendingYoutube.length > 0 && (
           <button className="board-alert" onClick={() => requirePin(() => setYtOpen(true))}>
