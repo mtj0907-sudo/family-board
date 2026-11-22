@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ChristmasTree } from './ChristmasTree';
-import { Clock, type ClockMark } from './Clock';
+import { PresenceMini } from './PresenceStrip';
 import { Glyph } from './Glyph';
 import { SpecialFx } from './SpecialFx';
 import { WeatherFx } from './WeatherFx';
@@ -10,6 +10,8 @@ import { heroTheme } from '../lib/heroTheme';
 import { formatClock, formatDateKo } from '../lib/time';
 import type { SpecialKind } from '../lib/specialDay';
 import type { TomorrowItem } from '../lib/tomorrow';
+import { presenceSummary } from '../lib/presence';
+import type { Member, StatusDoc, WithId } from '../lib/types';
 import { fxOf, labelOf, type Weather, type WeatherStatus } from '../lib/weather';
 
 export interface HeroBanner {
@@ -33,7 +35,9 @@ export function TodayHero({
   tomorrow,
   special,
   tree,
-  marks,
+  members,
+  statuses,
+  onOpenStatus,
   effects,
 }: {
   weather: Weather | null;
@@ -44,7 +48,9 @@ export function TodayHero({
   tomorrow: TomorrowItem[];
   special: SpecialKind | null;
   tree: boolean;
-  marks: ClockMark[];
+  members: Member[];
+  statuses: WithId<StatusDoc>[];
+  onOpenStatus?: () => void;
   /** 효과를 보여줄지 (끄기 설정·움직임 줄이기 반영) */
   effects: boolean;
 }) {
@@ -52,7 +58,8 @@ export function TodayHero({
   const theme = useMemo(() => heroTheme(now, weather), [now, weather]);
   const [ap, hm] = formatClock(now).split(' ');
   const fx = weather ? fxOf(weather) : null;
-  const shown = tomorrow.slice(0, 2);
+  const sum = presenceSummary(members, statuses);
+  const shown = tomorrow.slice(0, 1);
   const more = tomorrow.length - shown.length;
 
   return (
@@ -72,16 +79,14 @@ export function TodayHero({
           <div className="thero-main">
             <div className="thero-hello">
               {theme.greeting} <span aria-hidden>{theme.emoji}</span>
+              <span className="thero-date"> · {formatDateKo(now)}</span>
             </div>
             <div className="thero-time">
               <small>{ap}</small>
               <b>{hm}</b>
             </div>
-            <div className="thero-date">{formatDateKo(now)}</div>
           </div>
-          <div className="thero-clock">
-            <Clock size={86} digital={false} marks={marks} />
-          </div>
+          <PresenceMini members={members} statuses={statuses} onOpen={onOpenStatus} />
         </div>
 
         <div className="thero-wx">
@@ -102,14 +107,16 @@ export function TodayHero({
           )}
         </div>
 
+        <div className="thero-home">🏠 {sum.text}</div>
+
         <div className="thero-chips">
           {banner && (
             <div className="glass strong" role="status">
               <span aria-hidden>{banner.emoji}</span>
               <b>{banner.text}</b>
+              {banner.detail && <span className="dim">{banner.detail}</span>}
             </div>
           )}
-          {banner?.detail && <div className="glass">{banner.detail}</div>}
           <div className="glass">
             <b>내일</b>
             {tomorrow.length === 0 ? (
