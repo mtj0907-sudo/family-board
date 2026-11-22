@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// 로그인 없이 "가족 코드"(추측 불가한 긴 코드)를 아는 기기만 접근합니다.
+// - families/{코드}/ 아래 문서만 읽기/쓰기 허용
+// - families 컬렉션 목록 조회는 규칙에 없으므로 자동 차단 (코드를 몰라서 둘러볼 수 없음)
+// - 코드가 20자 미만이면 거부 (짧은 코드 추측 방지)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /families/{code}/{document=**} {
+      allow read, write: if code.size() >= 20;
+    }
+  }
+}
