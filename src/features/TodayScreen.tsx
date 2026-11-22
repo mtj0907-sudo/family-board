@@ -9,12 +9,13 @@ import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { doingOf, statusOf } from '../lib/constants';
+import { doingOf, statusInfo } from '../lib/constants';
 import { openFindMy } from '../lib/findmy';
 import { path } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
 import { estimateEta } from '../lib/whenHome';
+import type { ClockMark } from '../components/Clock';
 import { dateKey, formatElapsed } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
@@ -27,10 +28,14 @@ export function TodayScreen() {
   const events = useColData<EventDoc>(path(code, 'events'));
   const todays = eventsOn(events, dateKey(now));
   const familyWide = todays.filter((e) => e.who.length === 0);
+  const marks: ClockMark[] = members.flatMap((m) => {
+    const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
+    return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
+  });
 
   return (
     <div className="screen fill">
-      <Clock compact />
+      <Clock compact marks={marks} />
       {familyWide.length > 0 && (
         <div className="group">
           <div className="group-head">
@@ -74,7 +79,7 @@ export function MemberRow({
   workOn?: (dateKey: string) => string | undefined;
 }) {
   const { settings, isParent } = useFamily();
-  const def = st ? statusOf(st.key) : undefined;
+  const def = st ? statusInfo(st) : undefined;
   const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const extra = events.length > 0 || !!workOn;

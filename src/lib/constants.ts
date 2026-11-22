@@ -22,6 +22,20 @@ export const STATUSES: StatusDef[] = [
 export const statusOf = (key: string): StatusDef | undefined =>
   STATUSES.find((s) => s.key === key);
 
+export interface StatusLike {
+  key: string;
+  label?: string;
+  emoji?: string;
+  eta?: boolean;
+}
+
+/** 상태 기록 하나를 화면에 보일 모양으로. 직접 만든 장소는 기록에 이름·아이콘이 같이 들어 있습니다. */
+export function statusInfo(st?: StatusLike | null): StatusDef | undefined {
+  if (!st) return undefined;
+  if (st.label) return { key: st.key, emoji: st.emoji ?? '📌', label: st.label, eta: !!st.eta };
+  return statusOf(st.key);
+}
+
 export interface QuickMessage {
   key: string;
   emoji: string;

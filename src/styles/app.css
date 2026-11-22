@@ -395,8 +395,8 @@ main { display: flex; flex-direction: column; }
 .et-home { flex: none; color: var(--ink); }
 .et-left { font-size: 14.5px; color: var(--ink-2); font-weight: 600; }
 .et-none { margin-top: 6px; }
-.etatrack.big .et-when { font-size: 1.3em; }
-.etatrack.big .et-line { height: 6px; margin: 0 17px; }
+.etatrack.big .et-when { font-size: 1.12em; }
+.etatrack.big .et-line { height: 5px; margin: 0 14px; }
 .etatrack.big .et-left { font-size: .8em; }
 
 /* 한마디 새 소식 점, 보드 바로가기 */
@@ -413,3 +413,13 @@ main { display: flex; flex-direction: column; }
 
 .et-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 10px; }
 .et-road { margin: 6px 0 0; }
+
+.check { display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--ink-2); font-weight: 600; margin: 2px 0 4px 60px; }
+.check input { width: 20px; min-height: 20px; height: 20px; accent-color: var(--ink); }
+
+/* 보드: 새 한마디 알림 */
+.board-news { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 18px; background: var(--ink); color: #fff; border-radius: 28px; padding: 18px 30px 18px 20px; max-width: 86%; box-shadow: 0 14px 40px rgba(23, 32, 29, .35); animation: news-in .35s ease-out; }
+.news-text { display: flex; flex-direction: column; min-width: 0; }
+.news-text small { font-size: .75em; opacity: .7; font-weight: 600; }
+.news-text span { font-size: 1.7em; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+@keyframes news-in { from { opacity: 0; transform: translate(-50%, -16px); } to { opacity: 1; transform: translate(-50%, 0); } }

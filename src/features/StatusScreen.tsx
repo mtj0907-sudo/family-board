@@ -4,7 +4,7 @@ import { Glyph } from '../components/Glyph';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
-import { ARRIVAL_ROUTINE_KEY, STATUSES, statusOf } from '../lib/constants';
+import { ARRIVAL_ROUTINE_KEY, STATUSES, statusInfo, type StatusDef } from '../lib/constants';
 import { path, setEta, setRoutineDone, setStatus } from '../lib/db';
 import { dateKey, etaFromTime, formatClock } from '../lib/time';
 import type { Member, StatusDoc } from '../lib/types';
@@ -17,16 +17,18 @@ const QUICK_ETA = [
 ];
 
 export function StatusScreen() {
-  const { code, members, me, isParent } = useFamily();
+  const { code, members, me, isParent, settings } = useFamily();
   const [targetId, setTargetId] = useState(me.id);
   const now = useNow(30000);
   const target = members.find((m) => m.id === targetId) ?? me;
   const st = useDocData<StatusDoc>(path(code, 'status', target.id));
 
-  const pick = (key: string) => {
-    void setStatus(code, target.id, key);
+  const customs: StatusDef[] = (settings.customStatuses ?? []).map((c) => ({ key: c.key, emoji: c.emoji, label: c.label, eta: c.eta }));
+  const pick = (def: StatusDef) => {
+    const isCustom = customs.some((c) => c.key === def.key);
+    void setStatus(code, target.id, def.key, isCustom ? { label: def.label, emoji: def.emoji, eta: def.eta } : undefined);
     // 아이가 "집에 있어요"를 누르면 루틴의 "집 도착"도 자동 체크
-    if (key === 'home' && target.role === 'child') {
+    if (def.key === 'home' && target.role === 'child') {
       void setRoutineDone(code, dateKey(Date.now()), target.id, ARRIVAL_ROUTINE_KEY, true);
     }
   };
@@ -40,6 +42,7 @@ export function StatusScreen() {
       st={st ?? undefined}
       now={now}
       onPick={pick}
+      statuses={[...STATUSES, ...customs]}
       onEta={(at) => void setEta(code, target.id, at)}
     />
   );
@@ -54,6 +57,7 @@ export function StatusView({
   now,
   onPick,
   onEta,
+  statuses,
 }: {
   members: Member[];
   isParent: boolean;
@@ -61,10 +65,11 @@ export function StatusView({
   onTarget: (id: string) => void;
   st?: StatusDoc;
   now: number;
-  onPick: (key: string) => void;
+  onPick: (def: StatusDef) => void;
   onEta: (at: number | null) => void;
+  statuses: StatusDef[];
 }) {
-  const def = st ? statusOf(st.key) : undefined;
+  const def = statusInfo(st);
   const [time, setTime] = useState('');
 
   return (
@@ -81,8 +86,8 @@ export function StatusView({
       )}
 
       <div className="chips">
-        {STATUSES.map((s) => (
-          <button key={s.key} className={st?.key === s.key ? 'chip on' : 'chip'} onClick={() => onPick(s.key)}>
+        {statuses.map((s) => (
+          <button key={s.key} className={st?.key === s.key ? 'chip on' : 'chip'} onClick={() => onPick(s)}>
             <Glyph k={s.emoji} size={24} />
             <span>{s.label}</span>
           </button>

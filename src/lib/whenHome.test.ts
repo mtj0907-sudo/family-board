@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StatusDoc } from './types';
+import { statusInfo } from './constants';
 import { estimateEta, whenHome } from './whenHome';
 
 // 모두 가짜 데이터
@@ -93,5 +94,20 @@ describe('whenHome (엄마 언제 와요?)', () => {
 
   it('받침 있는 이름은 은', () => {
     expect(whenHome({ name: '다름', now, st: st('home') }).headline).toBe('다름은 집에 있어요');
+  });
+
+  it('직접 만든 장소도 기록에 담긴 이름으로 보여준다', () => {
+    const a = whenHome({ name: '가나', now, st: st('c1', { label: '피아노 학원 가는 중', emoji: '🎹', eta: true }) });
+    expect(a.headline).toBe('가나는 피아노 학원 가는 중');
+    expect(a.canAsk).toBe(true);
+  });
+});
+
+describe('statusInfo', () => {
+  it('기본 상태, 직접 만든 장소, 모르는 키', () => {
+    expect(statusInfo({ key: 'home' })?.label).toBe('집에 있어요');
+    expect(statusInfo({ key: 'c9', label: '수영장', emoji: '🏊', eta: true })).toEqual({ key: 'c9', label: '수영장', emoji: '🏊', eta: true });
+    expect(statusInfo({ key: 'nope' })).toBeUndefined();
+    expect(statusInfo(undefined)).toBeUndefined();
   });
 });

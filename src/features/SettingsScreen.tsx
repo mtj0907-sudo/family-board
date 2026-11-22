@@ -8,7 +8,7 @@ import { useFamily } from '../FamilyContext';
 import { saveSettings } from '../lib/db';
 import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
-import type { FamilySettings, Member, RoutineItem } from '../lib/types';
+import type { CustomStatus, FamilySettings, Member, RoutineItem } from '../lib/types';
 import { TIMED_CODES } from '../lib/work';
 
 export function SettingsScreen() {
@@ -30,6 +30,8 @@ function SettingsBody() {
   );
   const [newPin, setNewPin] = useState('');
   const [openIcon, setOpenIcon] = useState<number | null>(null);
+  const [places, setPlaces] = useState<CustomStatus[]>(settings.customStatuses ?? []);
+  const [openPlaceIcon, setOpenPlaceIcon] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState(false);
   const link = buildJoinLink(location.href, code);
@@ -56,6 +58,10 @@ function SettingsBody() {
           .filter(([, v]) => v),
       ),
     };
+    next.customStatuses = places
+      .filter((pl) => pl.label.trim())
+      .slice(0, 10)
+      .map((pl, n) => ({ ...pl, label: pl.label.trim(), key: pl.key || `c${Date.now()}${n}` }));
     next.commuteMinutes = Object.fromEntries(
       Object.entries(commute)
         .map(([k, v]) => [k, Math.round(Number(v))] as const)
@@ -120,6 +126,62 @@ function SettingsBody() {
           <button className="btn" onClick={() => setItems([...items, { key: '', emoji: '📌', label: '' }])}>
             <Plus size={20} strokeWidth={2} aria-hidden />
             항목 추가
+          </button>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>자주 가는 곳</h2>
+        <div className="sub">
+          학원처럼 자주 가는 곳을 만들어 두면 상태 화면에 칩으로 나와요. 예: "피아노 학원 가는 중". 도착 시각을 정하는 곳이면 "도착 시각"을 켜 두세요.
+        </div>
+        {places.map((pl, i) => (
+          <div key={i}>
+            <div className="row">
+              <button className="icon-pick" onClick={() => setOpenPlaceIcon(openPlaceIcon === i ? null : i)} aria-label="아이콘 바꾸기">
+                <Glyph k={pl.emoji} size={22} />
+              </button>
+              <input
+                className="grow"
+                value={pl.label}
+                maxLength={14}
+                placeholder="예: 피아노 학원 가는 중"
+                onChange={(e) => setPlaces(places.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+              />
+              <button className="btn inline" onClick={() => setPlaces(places.filter((_, j) => j !== i))} aria-label="삭제">
+                <Trash2 size={20} strokeWidth={1.75} aria-hidden />
+              </button>
+            </div>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={pl.eta}
+                onChange={(e) => setPlaces(places.map((x, j) => (j === i ? { ...x, eta: e.target.checked } : x)))}
+              />
+              도착 시각 정하기
+            </label>
+            {openPlaceIcon === i && (
+              <div className="icon-grid" style={{ marginTop: 8 }}>
+                {ICON_CHOICES.map((e) => (
+                  <button
+                    key={e}
+                    className={e === pl.emoji ? 'sel' : ''}
+                    onClick={() => {
+                      setPlaces(places.map((x, j) => (j === i ? { ...x, emoji: e } : x)));
+                      setOpenPlaceIcon(null);
+                    }}
+                  >
+                    <Glyph k={e} size={22} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {places.length < 10 && (
+          <button className="btn" onClick={() => setPlaces([...places, { key: '', emoji: '🎹', label: '', eta: true }])}>
+            <Plus size={20} strokeWidth={2} aria-hidden />
+            장소 추가
           </button>
         )}
       </div>
