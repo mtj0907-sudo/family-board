@@ -546,3 +546,8 @@ main { display: flex; flex-direction: column; }
 .board-side.has-photo .board-alert small { display: none; }
 .board-side.has-photo .board-feed .feed-scroll { max-height: 92px; }
 .board-side.has-photo .board-feed .group-head { padding-top: 10px; }
+
+/* 바꾸기 버튼은 카드 오른쪽 위 모서리에 띄워서, 상태 글자가 한 줄로 길게 보이게 */
+.btile { position: relative; }
+.btile .btile-edit { position: absolute; top: 8px; right: 12px; min-height: 32px; padding: 0 12px; font-size: 13.5px; gap: 5px; z-index: 1; }
+.btile-who { min-width: 0; }
