@@ -31,18 +31,24 @@ describe('홈 화면 앱 연결 정보(#c=…&me=…)', () => {
   it('코드와 구성원 번호를 함께 담고 다시 꺼낸다', () => {
     const h = buildHash(code, 'm3');
     expect(h).toBe(`#c=${code}&me=m3`);
-    expect(parseJoinHash(h)).toEqual({ code, me: 'm3' });
+    expect(parseJoinHash(h)).toEqual({ code, me: 'm3', board: false });
   });
   it('구성원 번호 없이도 된다 (공유 링크)', () => {
     expect(buildHash(code)).toBe(`#c=${code}`);
-    expect(parseJoinHash(`#c=${code}`)).toEqual({ code, me: null });
+    expect(parseJoinHash(`#c=${code}`)).toEqual({ code, me: null, board: false });
   });
   it('잘못되거나 빈 주소는 null', () => {
-    expect(parseJoinHash('')).toEqual({ code: null, me: null });
-    expect(parseJoinHash('#c=short&me=m1')).toEqual({ code: null, me: 'm1' });
+    expect(parseJoinHash('')).toEqual({ code: null, me: null, board: false });
+    expect(parseJoinHash('#c=short&me=m1')).toEqual({ code: null, me: 'm1', board: false });
     expect(parseJoinHash(`#c=${code}&me=hack`).me).toBeNull();
   });
   it('공유 링크에는 내 번호(me)가 따라가지 않는다', () => {
     expect(buildJoinLink(`https://example.test/app/${buildHash(code, 'm2')}`, code)).toBe(`https://example.test/app/#c=${code}`);
+  });
+  it('거실 보드 모드(b=1)도 주소에 담아 홈 화면 앱이 바로 보드로 열리게 한다', () => {
+    const h = buildHash(code, 'm1', true);
+    expect(h).toBe(`#c=${code}&me=m1&b=1`);
+    expect(parseJoinHash(h)).toEqual({ code, me: 'm1', board: true });
+    expect(parseJoinHash(`#c=${code}&b=10`).board).toBe(false);
   });
 });

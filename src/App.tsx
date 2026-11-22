@@ -8,6 +8,7 @@ import type { FamilySettings } from './lib/types';
 import { Welcome } from './features/Welcome';
 import { WhoAmI } from './features/WhoAmI';
 import { Shell } from './Shell';
+import { BoardScreen } from './features/BoardScreen';
 
 export default function App() {
   // 홈 화면 앱은 저장 공간이 따로라서, 주소 끝(#c=…&me=…)에 담긴 연결 정보를 이어받습니다.
@@ -15,6 +16,7 @@ export default function App() {
   const [code, setCodeState] = useState<string | null>(getCode());
   const [meId, setMeIdState] = useState<string | null>(getMeId() ?? hashInfo.me);
   const [pickingMe, setPickingMe] = useState(false);
+  const [board, setBoard] = useState(hashInfo.board);
 
   const settings = useDocData<FamilySettings>(code ? path(code, 'settings', 'main') : null);
 
@@ -24,15 +26,19 @@ export default function App() {
     setMeIdState(null);
   }, []);
 
-  const me = settings?.members.find((m) => m.id === meId);
+  // 거실 보드는 '나는 누구'를 고르지 않아도 열립니다. (공용 아이패드: 첫 번째 어른으로 둠)
+  const me =
+    settings?.members.find((m) => m.id === meId) ??
+    (board ? (settings?.members.find((m) => m.role === 'parent') ?? settings?.members[0]) : undefined);
 
   // 연결된 기기는 주소 끝에 항상 #c=가족코드&me=번호 를 유지합니다. (# 뒤는 서버로 전송되지 않아요)
   useEffect(() => {
     if (!code) return;
-    const next = buildHash(code, me?.id ?? null);
+    // 거실 보드 상태도 주소에 담아서, 보드 화면에서 "홈 화면에 추가"하면 아이콘이 바로 보드로 열립니다.
+    const next = buildHash(code, meId && me?.id === meId ? me.id : null, board);
     if (location.hash !== next) history.replaceState(null, '', location.pathname + location.search + next);
-    if (me) setMeId(me.id);
-  }, [code, me]);
+    if (me && me.id === meId) setMeId(me.id);
+  }, [code, me, meId, board]);
 
   if (!firebaseReady) return <ConfigMissing />;
 
@@ -66,7 +72,7 @@ export default function App() {
     );
   }
 
-  if (!me || pickingMe) {
+  if ((!me || pickingMe) && !board) {
     return (
       <WhoAmI
         members={settings.members}
@@ -80,9 +86,11 @@ export default function App() {
     );
   }
 
+  if (!me) return <Loading />;
+
   return (
     <FamilyProvider code={code} settings={settings} me={me} onChangeMe={() => setPickingMe(true)} onLeave={leave}>
-      <Shell />
+      {board ? <BoardScreen onExit={() => setBoard(false)} /> : <Shell onBoard={() => setBoard(true)} />}
     </FamilyProvider>
   );
 }
