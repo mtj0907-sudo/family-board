@@ -22,16 +22,16 @@ export function parseJoinCode(input: string): string | null {
 }
 
 /** 주소 끝(#)에서 가족 코드와 구성원 번호를 꺼냅니다. 홈 화면 앱이 연결 정보를 이어받는 데 씁니다. */
-export function parseJoinHash(hash: string): { code: string | null; me: string | null } {
+export function parseJoinHash(hash: string): { code: string | null; me: string | null; board: boolean } {
   const c = hash.match(/[#&]c=([a-z0-9]+)/i);
   const code = c ? parseJoinCode(`#c=${c[1]}`) : null;
   const m = hash.match(/[#&]me=(m\d{1,2})(?:&|$)/);
-  return { code, me: m ? m[1] : null };
+  return { code, me: m ? m[1] : null, board: /[#&]b=1(?:&|$)/.test(hash) };
 }
 
 /** 현재 주소 끝에 붙일 문자열. 이 주소로 "홈 화면에 추가"하면 아이콘이 같은 가족·같은 사람으로 열립니다. */
-export function buildHash(code: string, meId?: string | null): string {
-  return `#c=${code}${meId ? `&me=${meId}` : ''}`;
+export function buildHash(code: string, meId?: string | null, board = false): string {
+  return `#c=${code}${meId ? `&me=${meId}` : ''}${board ? '&b=1' : ''}`;
 }
 
 /** 다른 가족 기기에서 열 공유 링크. 코드는 # 뒤에 있어 서버로 전송되지 않습니다. */

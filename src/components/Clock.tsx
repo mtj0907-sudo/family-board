@@ -4,12 +4,12 @@ import { clockAngles, formatClock, formatDateKo } from '../lib/time';
 const TICKS = Array.from({ length: 12 }, (_, i) => i);
 
 /** 얇은 선과 눈금만 있는 조용한 아날로그 시계. 초침만 포인트 색입니다. */
-export function Clock({ size = 132 }: { size?: number }) {
+export function Clock({ size = 132, stacked = false }: { size?: number; stacked?: boolean }) {
   const now = useNow(1000);
   const a = clockAngles(now);
   const [ap, hm] = formatClock(now).split(' ');
   return (
-    <div className="hero">
+    <div className={stacked ? 'hero stacked' : 'hero'}>
       <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label="아날로그 시계" style={{ flex: 'none' }}>
         <circle cx="100" cy="100" r="97" fill="#fff" stroke="#17201d" strokeWidth="2" />
         {TICKS.map((i) => {

@@ -31,7 +31,7 @@ const SUB_TITLES: Record<SubPage, string> = {
   help: '홈 화면에 추가',
 };
 
-export function Shell({ initialTab = 'today' }: { initialTab?: Tab }) {
+export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onBoard?: () => void }) {
   const { me } = useFamily();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sub, setSub] = useState<SubPage | null>(null);
@@ -61,7 +61,7 @@ export function Shell({ initialTab = 'today' }: { initialTab?: Tab }) {
   else if (tab === 'status') body = <StatusScreen />;
   else if (tab === 'message') body = <MessageScreen />;
   else if (tab === 'routine') body = <RoutineScreen />;
-  else body = <MoreScreen onOpen={setSub} />;
+  else body = <MoreScreen onOpen={(p) => (p === 'board' && onBoard ? onBoard() : setSub(p))} />;
 
   const title = TABS.find((t) => t.key === tab)!.label;
 
