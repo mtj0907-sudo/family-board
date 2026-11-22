@@ -37,11 +37,13 @@ export type YoutubeAnswer = 'yes' | 'no' | '30';
 
 export interface MessageDoc {
   from: string;
-  kind: 'quick' | 'youtube';
+  kind: 'quick' | 'youtube' | 'note';
   key: string;
   at: number;
   /** 특정 사람에게 보낸 한마디일 때 받는 사람 id (예: "엄마 언제 와요?") */
   to?: string;
+  /** 짧은 메모(kind: 'note')의 내용 */
+  text?: string;
   reply?: { answer: YoutubeAnswer; at: number; by: string };
 }
 

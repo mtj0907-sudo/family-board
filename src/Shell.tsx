@@ -1,7 +1,8 @@
-import { ChevronLeft, Ellipsis, House, ListChecks, MapPin, MessageCircle, type LucideIcon } from 'lucide-react';
+import { ChevronLeft, Ellipsis, House, ListChecks, MapPin, MessageCircle, Monitor, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from './components/Avatar';
 import { useFamily } from './FamilyContext';
+import { useMessageDot } from './hooks/useMessageDot';
 import { TodayScreen } from './features/TodayScreen';
 import { StatusScreen } from './features/StatusScreen';
 import { MessageScreen } from './features/MessageScreen';
@@ -35,6 +36,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
   const { me } = useFamily();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sub, setSub] = useState<SubPage | null>(null);
+  const messageDot = useMessageDot(tab === 'message');
 
   const go = (t: Tab) => {
     setTab(t);
@@ -76,9 +78,17 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
         ) : (
           <h1 className="top-title">{title}</h1>
         )}
-        <span className="who-me">
-          <Avatar member={me} size={30} />
-          {me.name}
+        <span className="top-right">
+          {tab === 'today' && onBoard && (
+            <button className="top-btn" onClick={onBoard} aria-label="거실 보드 열기">
+              <Monitor size={16} strokeWidth={1.75} aria-hidden />
+              보드
+            </button>
+          )}
+          <span className="who-me">
+            <Avatar member={me} size={30} />
+            {me.name}
+          </span>
         </span>
       </header>
       <main>{body}</main>
@@ -87,6 +97,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
           <button key={key} className={tab === key ? 'tab on' : 'tab'} onClick={() => go(key)} aria-current={tab === key ? 'page' : undefined}>
             <Icon size={24} strokeWidth={tab === key ? 2 : 1.75} aria-hidden />
             <span>{label}</span>
+            {key === 'message' && messageDot && tab !== 'message' && <i className="tab-dot" aria-label="새 한마디" />}
           </button>
         ))}
       </nav>

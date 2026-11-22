@@ -1,4 +1,4 @@
-import { Check, Timer, X } from 'lucide-react';
+import { Check, Send, Timer, X } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
@@ -12,7 +12,7 @@ import {
   YOUTUBE_MESSAGE,
   messageOf,
 } from '../lib/constants';
-import { answerYoutube, path, sendMessage, setRoutineDone, setStatus } from '../lib/db';
+import { answerYoutube, path, sendMessage, sendNote, setRoutineDone, setStatus } from '../lib/db';
 import { dateKey, dayStart, formatClock } from '../lib/time';
 import type { MessageDoc, Member, WithId, YoutubeAnswer } from '../lib/types';
 
@@ -70,6 +70,40 @@ export function ChildView({ msgs, now, meId }: { msgs: WithId<MessageDoc>[]; now
       </div>
 
       {lastYoutube?.reply && <YoutubeResult reply={lastYoutube.reply} now={now} />}
+      <NoteBox from={meId} />
+    </div>
+  );
+}
+
+/** 짧은 메모 보내기 (글씨를 쓸 수 있는 아이와 부모용) */
+function NoteBox({ from }: { from: string }) {
+  const { code } = useFamily();
+  const [text, setText] = useState('');
+  const [sent, setSent] = useState(false);
+  const clean = text.trim();
+  function send() {
+    if (!clean) return;
+    void sendNote(code, from, clean);
+    setText('');
+    setSent(true);
+    window.setTimeout(() => setSent(false), 2000);
+  }
+  return (
+    <div className="card">
+      <div className="notebox">
+        <input
+          value={text}
+          maxLength={60}
+          placeholder="가족에게 짧은 메모"
+          aria-label="짧은 메모"
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && send()}
+        />
+        <button className="btn primary inline" disabled={!clean} onClick={send}>
+          <Send size={18} strokeWidth={1.75} aria-hidden />
+          {sent ? '보냈어요' : '보내기'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -140,6 +174,8 @@ export function ParentView({ msgs, now }: { msgs: WithId<MessageDoc>[]; now: num
         );
       })}
 
+      <NoteBox from={me.id} />
+
       <div className="group">
         <div className="group-head">
           <h3>오늘 온 한마디</h3>
@@ -155,7 +191,7 @@ export function ParentView({ msgs, now }: { msgs: WithId<MessageDoc>[]; now: num
               {who && <Avatar member={who} size={36} />}
               <div className="grow">
                 <b>{who?.name}</b>
-                {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} <span className="feed-text">{q?.label}</span>
+                {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} <span className="feed-text">{m.kind === 'note' ? m.text : q?.label}</span>
                 {m.reply && <div className="sub">→ {replyText(m.reply, now)}</div>}
               </div>
               <span className="sub">{formatClock(m.at)}</span>

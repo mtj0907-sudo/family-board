@@ -32,7 +32,10 @@ export function EventRow({ ev, onClick, forMember }: Props) {
   const compact = !!forMember;
   const body = (
     <>
-      <span className="ev-time">{ev.time || '종일'}</span>
+      <span className="ev-time">
+        {ev.time || '종일'}
+        {ev.time && ev.endTime && <small>~{ev.endTime}</small>}
+      </span>
       <span className="ev-ico">
         <Glyph k={ev.emoji} size={20} />
       </span>

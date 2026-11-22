@@ -1,9 +1,9 @@
-import { Clock as ClockIcon, MapPinned } from 'lucide-react';
+import { MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
-import { ProgressBar } from '../components/ProgressBar';
+import { EtaTrack } from '../components/EtaTrack';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
@@ -15,7 +15,7 @@ import { path } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
 import { estimateEta } from '../lib/whenHome';
-import { dateKey, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
+import { dateKey, formatElapsed } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
 export function TodayScreen() {
@@ -104,17 +104,10 @@ export function MemberRow({
           <div className="sub">아직 상태가 없어요</div>
         )}
 
-        {eta && (
-          <>
-            <div className="eta-line">
-              <span>
-                <ClockIcon size={14} strokeWidth={1.75} style={{ verticalAlign: '-2px', marginRight: 4 }} aria-hidden />
-                도착 {eta.estimated ? '예상' : '예정'} <b>{eta.estimated ? '약 ' : ''}{formatClock(eta.at)}</b>
-              </span>
-              <span>{eta.at > now ? formatRemaining(eta.at - now) : '곧 도착해요'}</span>
-            </div>
-            <ProgressBar value={etaProgress(eta.from, eta.at, now)} label="도착까지" />
-          </>
+        {eta ? (
+          <EtaTrack member={m} eta={eta} now={now} />
+        ) : (
+          def?.eta && <div className="sub et-none">도착 시각은 아직 안 정했어요</div>
         )}
 
         {m.role === 'child' && (
