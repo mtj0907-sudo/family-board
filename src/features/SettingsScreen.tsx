@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PinGuard } from '../components/PinGuard';
+import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
 import { EMOJI_CHOICES } from '../lib/constants';
 import { saveSettings } from '../lib/db';
@@ -114,6 +115,7 @@ function SettingsBody() {
       <div className="card">
         <h2>🔗 가족 링크</h2>
         <p className="sub">다른 기기에서 이 링크를 열면 같은 가족으로 연결돼요. 가족 밖에는 공유하지 마세요.</p>
+        <QrCode link={link} />
         <div className="linkbox">{link}</div>
         <button
           className="btn"

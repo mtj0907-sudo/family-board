@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { QrCode } from '../components/QrCode';
 import { DEFAULT_ROUTINE_ITEMS } from '../lib/constants';
 import { familyExists, saveSettings } from '../lib/db';
 import { buildJoinLink, generateCode, parseJoinCode } from '../lib/family';
@@ -224,6 +225,7 @@ function CreatedScreen({ code, onNext }: { code: string; onNext: () => void }) {
           아래 링크를 가족에게 보내세요. 링크를 열면 바로 같은 가족으로 연결돼요.
           <br />이 링크는 우리 가족만 알아야 해요 (공개 게시판에 올리지 마세요).
         </p>
+        <QrCode link={link} />
         <div className="linkbox">{link}</div>
         {'share' in navigator && (
           <button className="btn primary" onClick={share}>
