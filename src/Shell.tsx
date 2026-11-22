@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Avatar } from './components/Avatar';
 import { useFamily } from './FamilyContext';
 import { useMessageDot } from './hooks/useMessageDot';
+import { useLiveAlerts } from './hooks/useLiveAlerts';
+import { LiveAlertBanner } from './components/LiveAlertBanner';
 import { TodayScreen } from './features/TodayScreen';
 import { StatusScreen } from './features/StatusScreen';
 import { MessageScreen } from './features/MessageScreen';
@@ -37,6 +39,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sub, setSub] = useState<SubPage | null>(null);
   const messageDot = useMessageDot(tab === 'message');
+  const live = useLiveAlerts(tab);
 
   const go = (t: Tab) => {
     setTab(t);
@@ -69,6 +72,13 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
 
   return (
     <div className="app">
+      <LiveAlertBanner
+        alert={live.alert}
+        onOpen={(t) => {
+          live.dismiss();
+          go(t);
+        }}
+      />
       <header className="topbar">
         {tab === 'more' && sub ? (
           <button className="back" onClick={() => setSub(null)}>
