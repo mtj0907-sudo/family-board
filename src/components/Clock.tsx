@@ -17,11 +17,14 @@ export function Clock({
   size = 132,
   stacked = false,
   compact = false,
+  digital = true,
   marks = [],
 }: {
   size?: number;
   stacked?: boolean;
   compact?: boolean;
+  /** false면 아날로그 시계만 */
+  digital?: boolean;
   /** 가족이 도착하는 시각을 시계 테두리에 색 점으로 표시 */
   marks?: ClockMark[];
 }) {
@@ -75,6 +78,7 @@ export function Clock({
         <line x1="100" y1="116" x2="100" y2="26" stroke="#e0a526" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${a.second} 100 100)`} />
         <circle cx="100" cy="100" r="6" fill="#e0a526" />
       </svg>
+      {digital && (
       <div className="clock-text">
         <div className="clock-digital">
           <span className="ampm">{ap}</span>
@@ -82,6 +86,7 @@ export function Clock({
         </div>
         <div className="clock-date">{formatDateKo(now)}</div>
       </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventDoc } from './events';
-import { placesOf, previewSpecial, specialDayOf, weekStartCheer } from './specialDay';
+import { placesOf, previewSpecial, specialDayOf, treeSeason, weekStartCheer } from './specialDay';
 import type { Member, WithId } from './types';
 
 // 모두 가짜 데이터
@@ -21,15 +21,22 @@ describe('특별한 날', () => {
   it('매년 반복하는 생일도 해당 날짜에 잡힌다', () => {
     expect(specialDayOf(at('2028-03-10T10:00'), [ev('마바 생일', { repeat: 'yearly' })])?.kind).toBe('birthday');
   });
-  it('크리스마스: 12/20~25, 남은 날 문구', () => {
-    expect(specialDayOf(at('2026-12-19T10:00'), [])).toBeNull();
+  it('크리스마스: 12월 한 달, 남은 날 문구', () => {
+    expect(specialDayOf(at('2026-11-30T10:00'), [])).toBeNull();
+    expect(specialDayOf(at('2026-12-01T10:00'), [])?.text).toBe('크리스마스까지 24일');
     expect(specialDayOf(at('2026-12-21T10:00'), [])?.text).toBe('크리스마스까지 4일');
     expect(specialDayOf(at('2026-12-24T10:00'), [])?.text).toBe('오늘은 크리스마스 이브예요');
     expect(specialDayOf(at('2026-12-25T10:00'), [])?.text).toBe('메리 크리스마스!');
-    expect(specialDayOf(at('2026-12-26T10:00'), [])).toBeNull();
+    expect(specialDayOf(at('2026-12-28T10:00'), [])?.text).toBe('즐거운 연말 보내세요');
+    expect(specialDayOf(at('2026-12-31T17:59'), [])?.kind).toBe('christmas');
+  });
+  it('트리는 12월 내내 (새해 문구가 나오는 12/31 저녁에도)', () => {
+    expect(treeSeason(at('2026-11-30T23:00'))).toBe(false);
+    expect(treeSeason(at('2026-12-01T00:30'))).toBe(true);
+    expect(treeSeason(at('2026-12-31T21:00'))).toBe(true);
+    expect(treeSeason(at('2027-01-01T09:00'))).toBe(false);
   });
   it('새해: 12/31 저녁 6시부터 1/1', () => {
-    expect(specialDayOf(at('2026-12-31T17:59'), [])).toBeNull();
     expect(specialDayOf(at('2026-12-31T18:00'), [])?.kind).toBe('newyear');
     expect(specialDayOf(at('2027-01-01T09:00'), [])?.text).toBe('새해 복 많이 받으세요!');
   });

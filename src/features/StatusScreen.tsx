@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
@@ -86,6 +87,7 @@ export function StatusView({
           <button key={s.key} className={st?.key === s.key ? 'chip on' : 'chip'} onClick={() => onPick(s)}>
             <Glyph k={s.emoji} size={24} />
             <span>{s.label}</span>
+            {st?.key === s.key && <Check className="chk" size={18} strokeWidth={2.5} aria-hidden />}
           </button>
         ))}
       </div>

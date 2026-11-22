@@ -13,11 +13,15 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
  * 거실 보드 위에 날씨 모습을 그립니다. 눌러도 아래 화면이 그대로 눌리도록 터치는 통과시킵니다.
  * 비: 빗방울과 바닥의 물결 / 눈: 내리다가 아래에 쌓임 / 바람: 낙엽이 불어가는 쪽으로 날아감
  */
-export function WeatherFx({ fx, scale }: { fx: Fx; scale: number }) {
+export function WeatherFx({ fx, scale, pile: showPile = true, tone = 'dark' }: { fx: Fx; scale: number; pile?: boolean; tone?: 'dark' | 'light' }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef(fx);
   fxRef.current = fx;
   const pile = useRef(0);
+  const toneRef = useRef(tone);
+  toneRef.current = tone;
+  const pileOnRef = useRef(showPile);
+  pileOnRef.current = showPile;
 
   useEffect(() => {
     const cv = ref.current;
@@ -76,7 +80,7 @@ export function WeatherFx({ fx, scale }: { fx: Fx; scale: number }) {
       if (drops.length > wantDrops) drops.length = wantDrops;
       if (drops.length) {
         const tilt = 0.12 + f.windDx * 0.5; // 가로로 얼마나 기울어 떨어지는지
-        ctx.strokeStyle = 'rgba(70, 104, 140, .42)';
+        ctx.strokeStyle = toneRef.current === 'light' ? 'rgba(255, 255, 255, .5)' : 'rgba(70, 104, 140, .42)';
         ctx.lineWidth = 1.6;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -100,7 +104,7 @@ export function WeatherFx({ fx, scale }: { fx: Fx; scale: number }) {
           ripples.splice(i, 1);
           continue;
         }
-        ctx.strokeStyle = `rgba(70, 104, 140, ${0.35 * (1 - r.age / 0.7)})`;
+        ctx.strokeStyle = `${toneRef.current === 'light' ? 'rgba(255, 255, 255,' : 'rgba(70, 104, 140,'} ${0.35 * (1 - r.age / 0.7)})`;
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.ellipse(r.x, r.y, 4 + r.age * 22, 1.5 + r.age * 7, 0, 0, 6.28);
@@ -130,7 +134,7 @@ export function WeatherFx({ fx, scale }: { fx: Fx; scale: number }) {
         }
       }
       // 쌓인 눈
-      if (pile.current > 0.5) {
+      if (pileOnRef.current && pile.current > 0.5) {
         const lv = pile.current;
         ctx.beginPath();
         ctx.moveTo(0, H);
