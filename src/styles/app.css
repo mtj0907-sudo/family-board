@@ -783,3 +783,7 @@ button.mcard:active { transform: scale(.985); background: #fafbfa; }
 .result.ok { animation: ok-pop .5s cubic-bezier(.3, 1.4, .5, 1); }
 @keyframes ok-pop { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .result.ok { animation: none; } }
+
+.howto { border-top: 1px solid var(--line-2); padding-top: 10px; }
+.howto summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.howto .steps ul { margin: 6px 0 0 4px; padding-left: 18px; font-weight: 500; color: var(--ink-2); }
