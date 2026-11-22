@@ -1,5 +1,7 @@
 import { Clock } from '../components/Clock';
+import { EventRow } from '../components/EventRow';
 import { ProgressBar } from '../components/ProgressBar';
+import { eventsOn, type EventDoc } from '../lib/events';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
@@ -14,12 +16,23 @@ export function TodayScreen() {
   const now = useNow(30000);
   const statuses = useColData<StatusDoc>(path(code, 'status'));
   const routine = useDocData<RoutineDoc>(path(code, 'routines', dateKey(now)));
+  const events = useColData<EventDoc>(path(code, 'events'));
+  const todays = eventsOn(events, dateKey(now));
+  const familyWide = todays.filter((e) => e.who.length === 0);
 
   return (
     <div className="screen">
       <div className="card clockcard">
         <Clock />
       </div>
+      {familyWide.length > 0 && (
+        <div className="card">
+          <h3>👪 오늘 가족 일정</h3>
+          {familyWide.map((ev) => (
+            <EventRow key={ev.id} ev={ev} />
+          ))}
+        </div>
+      )}
       {members.map((m) => (
         <MemberCard
           key={m.id}
@@ -27,13 +40,26 @@ export function TodayScreen() {
           st={statuses.find((s: WithId<StatusDoc>) => s.id === m.id)}
           routine={routine ?? undefined}
           now={now}
+          events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
         />
       ))}
     </div>
   );
 }
 
-function MemberCard({ m, st, routine, now }: { m: Member; st?: StatusDoc; routine?: RoutineDoc; now: number }) {
+function MemberCard({
+  m,
+  st,
+  routine,
+  now,
+  events,
+}: {
+  m: Member;
+  st?: StatusDoc;
+  routine?: RoutineDoc;
+  now: number;
+  events: WithId<EventDoc>[];
+}) {
   const { settings } = useFamily();
   const def = st ? statusOf(st.key) : undefined;
   const doing = doingOf(routine?.doing?.[m.id]);
@@ -79,6 +105,15 @@ function MemberCard({ m, st, routine, now }: { m: Member; st?: StatusDoc; routin
                 {doing.emoji} {doing.label}
               </span>
             )}
+          </div>
+        )}
+
+        {events.length > 0 && (
+          <div className="today-events">
+            <div className="sub">📅 오늘 일정</div>
+            {events.map((ev) => (
+              <EventRow key={ev.id} ev={ev} forMember={m} />
+            ))}
           </div>
         )}
       </div>

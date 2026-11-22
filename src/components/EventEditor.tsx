@@ -1,0 +1,135 @@
+import { useState } from 'react';
+import { useFamily } from '../FamilyContext';
+import { deleteEvent, saveEvent } from '../lib/db';
+import { EVENT_EMOJIS, REPEAT_OPTIONS, type EventDoc, type Repeat } from '../lib/events';
+import type { WithId } from '../lib/types';
+
+interface Props {
+  initial?: WithId<EventDoc>;
+  defaultDate: string;
+  onClose: () => void;
+}
+
+/** 일정 추가/수정 시트 (부모용) */
+export function EventEditor({ initial, defaultDate, onClose }: Props) {
+  const { code, members } = useFamily();
+  const [emoji, setEmoji] = useState(initial?.emoji ?? '📌');
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [date, setDate] = useState(initial?.date ?? defaultDate);
+  const [time, setTime] = useState(initial?.time ?? '');
+  const [who, setWho] = useState<string[]>(initial?.who ?? []);
+  const [pickupBy, setPickupBy] = useState(initial?.pickupBy ?? '');
+  const [repeat, setRepeat] = useState<Repeat>(initial?.repeat ?? 'none');
+  const [error, setError] = useState('');
+
+  const toggleWho = (id: string) => setWho(who.includes(id) ? who.filter((w) => w !== id) : [...who, id]);
+
+  function save() {
+    if (!title.trim()) return setError('일정 이름을 적어 주세요');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setError('날짜를 골라 주세요');
+    void saveEvent(code, initial?.id ?? null, {
+      title: title.trim(),
+      emoji,
+      date,
+      time,
+      who,
+      pickupBy,
+      repeat,
+    });
+    onClose();
+  }
+
+  function remove() {
+    if (!initial) return;
+    const msg =
+      initial.repeat === 'none'
+        ? '이 일정을 지울까요?'
+        : '반복 일정이에요. 지우면 모든 날짜에서 사라져요. 지울까요?';
+    if (confirm(msg)) {
+      void deleteEvent(code, initial.id);
+      onClose();
+    }
+  }
+
+  return (
+    <div className="modal top">
+      <div className="card sheet">
+        <h2>{initial ? '일정 고치기' : '일정 추가'}</h2>
+
+        <div className="emoji-grid ev">
+          {EVENT_EMOJIS.map((e) => (
+            <button key={e} className={e === emoji ? 'btnreset sel' : 'btnreset'} onClick={() => setEmoji(e)}>
+              {e}
+            </button>
+          ))}
+        </div>
+
+        <label className="field">
+          <span>일정 이름</span>
+          <input value={title} maxLength={20} placeholder="예: 학예회, 치과" onChange={(e) => setTitle(e.target.value)} />
+        </label>
+
+        <div className="row">
+          <label className="field grow">
+            <span>날짜</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </label>
+          <label className="field grow">
+            <span>시간 (비우면 하루 종일)</span>
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </label>
+        </div>
+
+        <div className="field">
+          <span>누구 일정이에요? (고르지 않으면 가족 전체)</span>
+          <div className="picker wrap">
+            {members.map((m) => (
+              <button key={m.id} className={who.includes(m.id) ? 'pick on' : 'pick'} onClick={() => toggleWho(m.id)}>
+                <span className="avatar sm">{m.emoji}</span>
+                <span>{m.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="field">
+          <span>🚗 데리러 갈 사람</span>
+          <select value={pickupBy} onChange={(e) => setPickupBy(e.target.value)}>
+            <option value="">없음</option>
+            {members
+              .filter((m) => m.role === 'parent')
+              .map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.emoji} {m.name}
+                </option>
+              ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span>🔁 반복</span>
+          <select value={repeat} onChange={(e) => setRepeat(e.target.value as Repeat)}>
+            {REPEAT_OPTIONS.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {error && <div className="error">{error}</div>}
+        <button className="btn primary" onClick={save}>
+          저장
+        </button>
+        <button className="btn" onClick={onClose}>
+          취소
+        </button>
+        {initial && (
+          <button className="btn no" onClick={remove}>
+            🗑 지우기
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

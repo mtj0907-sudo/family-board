@@ -158,3 +158,30 @@ select { width: auto; }
   .chips { grid-template-columns: repeat(4, 1fr); }
   .grid4 { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* 2단계: 일정·달력 */
+.modal.top { align-items: flex-start; overflow-y: auto; }
+.sheet { width: 100%; max-width: 480px; margin: 8px auto; display: flex; flex-direction: column; gap: 6px; }
+.emoji-grid.ev { grid-template-columns: repeat(8, 1fr); }
+.emoji-grid .sel { background: var(--accent); border-radius: 10px; }
+.emoji-grid button { font-size: 28px; min-height: 44px; }
+.picker.wrap { flex-wrap: wrap; overflow: visible; }
+.eventrow { display: flex; align-items: center; gap: 10px; width: 100%; background: none; padding: 10px 0; border-top: 2px solid #f4efd9; min-height: 64px; font-size: 18px; text-align: left; }
+.eventrow:first-of-type { border-top: 0; }
+.ev-time { width: 62px; flex: none; font-size: 14px; color: var(--sub); font-weight: 800; }
+.pickup { color: var(--accent); font-size: 16px; font-weight: 800; }
+.today-events { margin-top: 10px; border-top: 2px dashed #f0e2a8; padding-top: 8px; }
+.btn.small { min-height: 40px; font-size: 15px; margin-top: 8px; }
+.calhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.calmonth { font-size: 24px; font-weight: 900; }
+.calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+.dow { text-align: center; font-size: 14px; color: var(--sub); padding: 4px 0; }
+.dow.sun, .day.sun .dnum { color: var(--no); }
+.dow.sat { color: #3b6fd4; }
+.day { min-height: 58px; border-radius: 12px; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 0; }
+.day.out { opacity: .35; }
+.day.today { background: var(--soft); }
+.day.sel { outline: 4px solid var(--accent); }
+.dnum { font-size: 16px; font-weight: 800; }
+.dem { font-size: 13px; line-height: 1.1; min-height: 14px; }
+@media (min-width: 900px) { .day { min-height: 78px; } .dem { font-size: 18px; } }

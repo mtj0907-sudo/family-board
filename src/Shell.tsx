@@ -6,6 +6,8 @@ import { MessageScreen } from './features/MessageScreen';
 import { RoutineScreen } from './features/RoutineScreen';
 import { ComingSoon, HelpScreen, MoreScreen, type SubPage } from './features/MoreScreen';
 import { SettingsScreen } from './features/SettingsScreen';
+import { ScheduleScreen } from './features/ScheduleScreen';
+import { CalendarScreen } from './features/CalendarScreen';
 
 type Tab = 'today' | 'status' | 'message' | 'routine' | 'more';
 
@@ -41,10 +43,14 @@ export function Shell() {
     body =
       sub === 'settings' ? (
         <SettingsScreen />
+      ) : sub === 'schedule' ? (
+        <ScheduleScreen />
+      ) : sub === 'calendar' ? (
+        <CalendarScreen />
       ) : sub === 'help' ? (
         <HelpScreen />
       ) : (
-        <ComingSoon title={SUB_TITLES[sub]} stage={sub === 'work' ? 3 : sub === 'board' ? 4 : 2} />
+        <ComingSoon title={SUB_TITLES[sub]} stage={sub === 'work' ? 3 : 4} />
       );
   } else if (tab === 'today') body = <TodayScreen />;
   else if (tab === 'status') body = <StatusScreen />;

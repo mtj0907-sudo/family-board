@@ -1,12 +1,14 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import type { EventDoc } from './events';
 import type { FamilySettings, YoutubeAnswer } from './types';
 
 function need() {
@@ -62,3 +64,12 @@ export const setRoutineDone = (
 
 export const setDoing = (code: string, date: string, memberId: string, value: string) =>
   setDoc(doc(need(), path(code, 'routines', date)), { doing: { [memberId]: value } }, { merge: true });
+
+/** id가 있으면 수정, 없으면 새 일정 */
+export async function saveEvent(code: string, id: string | null, ev: EventDoc): Promise<void> {
+  if (id) await setDoc(doc(need(), path(code, 'events', id)), ev);
+  else await addDoc(collection(need(), path(code, 'events')), ev);
+}
+
+export const deleteEvent = (code: string, id: string) =>
+  deleteDoc(doc(need(), path(code, 'events', id)));

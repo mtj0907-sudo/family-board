@@ -3,8 +3,8 @@ import { useFamily } from '../FamilyContext';
 export type SubPage = 'settings' | 'schedule' | 'calendar' | 'work' | 'board' | 'help';
 
 const ITEMS: { key: SubPage; emoji: string; label: string; note?: string; parentOnly?: boolean }[] = [
-  { key: 'schedule', emoji: '🗓', label: '일정', note: '2단계에서 만들어요' },
-  { key: 'calendar', emoji: '📅', label: '달력', note: '2단계에서 만들어요' },
+  { key: 'schedule', emoji: '🗓', label: '일정', note: '오늘·내일' },
+  { key: 'calendar', emoji: '📅', label: '달력', note: '한 달 보기' },
   { key: 'work', emoji: '👩‍💼', label: '근무 가져오기', note: '3단계 · PIN 필요', parentOnly: true },
   { key: 'board', emoji: '🖥', label: '거실 보드', note: '4단계에서 만들어요' },
   { key: 'settings', emoji: '⚙️', label: '설정', note: 'PIN 필요', parentOnly: true },
