@@ -3,7 +3,7 @@ import { Copy, Plus, Trash2 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Glyph, ICON_CHOICES } from '../components/Glyph';
 import { PinGuard } from '../components/PinGuard';
-import { DEFAULT_BAG_ITEMS } from '../lib/bag';
+import { DEFAULT_BAG_ITEMS, schoolKidIds } from '../lib/bag';
 import { defaultKeysFor, selectableFor } from '../lib/statusSets';
 import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
@@ -40,7 +40,6 @@ function SettingsBody() {
   const [openIcon, setOpenIcon] = useState<number | null>(null);
   const [statusSets, setStatusSets] = useState<Record<string, string[]>>(settings.statusSets ?? {});
   const [statusMemberId, setStatusMemberId] = useState<string>(settings.members[0]?.id ?? '');
-  const [school, setSchool] = useState<string[]>(settings.schoolKids ?? []);
   const [dayPlaces, setDayPlaces] = useState<Record<string, string>>(settings.dayPlaces ?? {});
   const [bagItems, setBagItems] = useState<RoutineItem[]>(settings.bagItems?.length ? settings.bagItems : DEFAULT_BAG_ITEMS);
   const [openBagIcon, setOpenBagIcon] = useState<number | null>(null);
@@ -76,10 +75,10 @@ function SettingsBody() {
     next.statusSets = Object.fromEntries(
       Object.entries(statusSets).filter(([id, keys]) => members.some((m) => m.id === id) && keys.length > 0),
     );
-    next.schoolKids = school.filter((id) => members.some((m) => m.id === id && m.role === 'child'));
     const dayPl = Object.fromEntries(Object.entries(dayPlaces).filter(([id]) => members.some((m) => m.id === id && m.role === 'child')));
     if (Object.keys(dayPl).length) next.dayPlaces = dayPl;
     else delete next.dayPlaces;
+    next.schoolKids = schoolKidIds({ members, dayPlaces: dayPl, schoolKids: settings.schoolKids });
     next.bagItems = bagItems
       .filter((i) => i.label.trim())
       .slice(0, 12)
@@ -147,7 +146,7 @@ function SettingsBody() {
               <span className="wk-code">{m.name}</span>
               <select
                 className="grow"
-                value={dayPlaces[m.id] ?? (school.includes(m.id) ? '학교' : '')}
+                value={dayPlaces[m.id] ?? ((settings.schoolKids ?? []).includes(m.id) ? '학교' : '')}
                 onChange={(e) => setDayPlaces({ ...dayPlaces, [m.id]: e.target.value })}
                 aria-label={`${m.name} 평일에 가는 곳`}
               >
@@ -213,22 +212,12 @@ function SettingsBody() {
       </div>
 
       <div className="card">
-        <h2>가방 챙기기 (학교 가는 아이)</h2>
-        <div className="sub">학교 가는 아이를 고르면, 밤에 스스로 가방을 챙기는 체크리스트가 루틴 탭에 생겨요. 부모는 오늘 화면과 루틴 탭에서 결과를 볼 수 있어요.</div>
-        <div className="picker wrap">
-          {members
-            .filter((m) => m.role === 'child')
-            .map((m) => (
-              <button
-                key={m.id}
-                className={school.includes(m.id) ? 'pick on' : 'pick'}
-                aria-pressed={school.includes(m.id)}
-                onClick={() => setSchool(school.includes(m.id) ? school.filter((x) => x !== m.id) : [...school, m.id])}
-              >
-                <Avatar member={m} size={38} />
-                {m.name}
-              </button>
-            ))}
+        <h2>가방 챙기기</h2>
+        <div className="sub">
+          위의 <b>평일에 가는 곳</b>이 <b>학교</b>인 아이에게, 밤에 스스로 가방을 챙기는 체크리스트가 루틴 탭에 생겨요. 부모는 오늘 화면과 루틴 탭에서 결과를 볼 수 있어요.
+        </div>
+        <div className="sub">
+          지금 나오는 아이: <b>{members.filter((m) => schoolKidIds({ members, dayPlaces, schoolKids: settings.schoolKids }).includes(m.id)).map((m) => m.name).join(', ') || '없음 (평일에 가는 곳을 학교로 고르세요)'}</b>
         </div>
         <div className="sub">체크할 항목</div>
         {bagItems.map((it, i) => (

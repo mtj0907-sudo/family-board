@@ -1,5 +1,5 @@
 import { dateKey, kst } from './time';
-import type { RoutineItem } from './types';
+import type { FamilySettings, RoutineItem } from './types';
 
 /** 가방 챙기기 기록 문서: bag/{날짜}. 날짜는 "밤에 챙기는 그날"이고, 다음 날 정오까지 같은 문서를 씁니다. */
 export interface BagDoc {
@@ -49,3 +49,17 @@ export const DEFAULT_BAG_ITEMS: RoutineItem[] = [
   { key: 'supplies', emoji: '🎒', label: '준비물 챙겼어요' },
   { key: 'water', emoji: '💧', label: '물통 챙겼어요' },
 ];
+
+/**
+ * 가방 챙기기가 나오는 아이들: "평일에 가는 곳"이 학교인 아이.
+ * (예전에 "학교 가는 아이"로 따로 고른 값은, 평일에 가는 곳을 아직 정하지 않은 아이에게만 따릅니다)
+ */
+export function schoolKidIds(s: Pick<FamilySettings, 'members' | 'schoolKids' | 'dayPlaces'>): string[] {
+  return s.members
+    .filter((m) => m.role === 'child')
+    .filter((m) => {
+      const place = s.dayPlaces?.[m.id];
+      return place !== undefined ? place === '학교' : (s.schoolKids ?? []).includes(m.id);
+    })
+    .map((m) => m.id);
+}

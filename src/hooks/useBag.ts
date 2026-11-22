@@ -1,5 +1,5 @@
 import { useFamily } from '../FamilyContext';
-import { DEFAULT_BAG_ITEMS, bagDate, bagProgress, type BagDoc } from '../lib/bag';
+import { DEFAULT_BAG_ITEMS, bagDate, bagProgress, schoolKidIds, type BagDoc } from '../lib/bag';
 import { path, setBagDoneAt, setBagItem, setBagSkip } from '../lib/db';
 import type { Member } from '../lib/types';
 import { useDocData } from './useFirestore';
@@ -12,7 +12,7 @@ export function useBag(now: number) {
   const date = bagDate(now);
   const bag = useDocData<BagDoc>(path(code, 'bag', date)) ?? undefined;
   const items = settings.bagItems?.length ? settings.bagItems : DEFAULT_BAG_ITEMS;
-  const schoolKids = settings.schoolKids ?? [];
+  const schoolKids = schoolKidIds(settings);
 
   function toggle(kid: Member, key: string, value: boolean) {
     const before = bagProgress(items, bag?.done?.[kid.id]);
