@@ -119,11 +119,16 @@ export function weatherUrl(): string {
   return `https://api.open-meteo.com/v1/forecast?${q}`;
 }
 
-export async function fetchWeather(signal?: AbortSignal): Promise<Weather | null> {
+/** 날씨를 가져옵니다. 실패하면 이유가 담긴 오류를 던져서, 화면에 원인을 보여줄 수 있게 합니다. */
+export async function fetchWeather(signal?: AbortSignal): Promise<Weather> {
   const res = await fetch(weatherUrl(), { signal });
-  if (!res.ok) return null;
-  return parseWeather(await res.json());
+  if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
+  const w = parseWeather(await res.json());
+  if (!w) throw new Error('날씨 값을 읽지 못함');
+  return w;
 }
+
+export type WeatherStatus = 'loading' | 'ok' | 'error';
 
 /** 눈·비·바람 모습을 미리 보여주기 위한 가짜 날씨 */
 export type Preview = 'rain' | 'snow' | 'wind';

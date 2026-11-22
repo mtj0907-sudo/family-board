@@ -1,7 +1,7 @@
 import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
-import { WeatherLine } from '../components/WeatherCard';
+import { WeatherLine, WeatherPending } from '../components/WeatherCard';
 import { useWeather } from '../hooks/useWeather';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
@@ -42,7 +42,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
   const events = useColData<EventDoc>(path(code, 'events'));
   const todays = eventsOn(events, dateKey(now));
   const familyWide = todays.filter((e) => e.who.length === 0);
-  const weather = useWeather();
+  const { weather, status: wStatus, error: wError, retry: wRetry } = useWeather();
   const marks: ClockMark[] = members.flatMap((m) => {
     const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
     return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
@@ -51,7 +51,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
   return (
     <div className="screen fill">
       <Clock compact marks={marks} />
-      {weather && <WeatherLine w={weather} />}
+      {weather ? <WeatherLine w={weather} /> : <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />}
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
