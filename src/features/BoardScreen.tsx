@@ -1,4 +1,4 @@
-import { Check, Clock as ClockIcon, Maximize2, MonitorPlay, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { Backpack, Check, Clock as ClockIcon, ListChecks, Maximize2, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { Clock, type ClockMark } from '../components/Clock';
@@ -9,6 +9,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { useBag } from '../hooks/useBag';
 import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
@@ -23,6 +24,8 @@ import { routineProgress } from '../lib/routine';
 import { dateKey, dayStart, formatClock, formatElapsed } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 import { estimateEta, whenHome } from '../lib/whenHome';
+import { bagProgress } from '../lib/bag';
+import { MemberSheet, YoutubeSheet, type SheetTab } from './BoardSheets';
 
 /**
  * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
@@ -68,6 +71,9 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const awake = useKeepAwake();
   const box = useBoardBox();
   const [ask, setAsk] = useState<{ parent: Member; kid: Member } | null>(null);
+  const [sheet, setSheet] = useState<{ member: Member; tab: SheetTab } | null>(null);
+  const [ytOpen, setYtOpen] = useState(false);
+  const bag = useBag(now);
   const [toast, setToast] = useState('');
   const [news, setNews] = useState<WithId<MessageDoc> | null>(null);
   const [muted, setMutedState] = useState(isMuted);
@@ -159,13 +165,13 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         <Clock size={180} stacked marks={clockMarkList} />
 
         {pendingYoutube.length > 0 && (
-          <div className="board-alert">
+          <button className="board-alert" onClick={() => requirePin(() => setYtOpen(true))}>
             <MonitorPlay size={26} strokeWidth={1.75} aria-hidden />
             <span>
               {youtubeAsker(pendingYoutube.map((m) => nameOf(m.from)?.name ?? ''))} 유튜브를 물어봤어요
-              <small>부모 폰에서 답해 주세요</small>
+              <small>눌러서 답하기 (부모 PIN)</small>
             </span>
-          </div>
+          </button>
         )}
 
         {familyWide.length > 0 && (
@@ -215,6 +221,12 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
             now={now}
+            onEdit={() => (m.role === 'child' ? setSheet({ member: m, tab: 'status' }) : requirePin(() => setSheet({ member: m, tab: 'status' })))}
+            bagStat={
+              m.role === 'child' && bag.schoolKids.includes(m.id)
+                ? { ...bagProgress(bag.items, bag.bag?.done?.[m.id]), skip: !!bag.bag?.skip?.[m.id], onOpen: () => setSheet({ member: m, tab: 'bag' }) }
+                : undefined
+            }
             kid={
               m.role === 'child'
                 ? {
@@ -222,6 +234,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
                     onWhen: (p) => setAsk({ parent: p, kid: m }),
                     onSent: flash,
                     onToggle: (key, value) => void setRoutineDone(code, today, m.id, key, value),
+                    onTodo: () => setSheet({ member: m, tab: 'todo' }),
                   }
                 : undefined
             }
@@ -239,6 +252,10 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         </div>
       )}
       {toast && <div className="board-toast">{toast}</div>}
+      {sheet && <MemberSheet member={sheet.member} initial={sheet.tab} now={now} onClose={() => setSheet(null)} onFlash={flash} />}
+      {ytOpen && (
+        <YoutubeSheet pending={pendingYoutube} members={members} answeredBy={parents[0]?.id ?? ''} onClose={() => setYtOpen(false)} onFlash={flash} />
+      )}
       {ask && (
         <WhenSheet
           parent={ask.parent}
@@ -403,10 +420,16 @@ export function BoardTile({
   workOn,
   now,
   kid,
+  onEdit,
+  bagStat,
 }: {
   m: Member;
   st?: StatusDoc;
   routine?: RoutineDoc;
+  /** 눌러서 상태를 바꾸는 창 열기 (어른은 PIN 뒤에 열림) */
+  onEdit?: () => void;
+  /** 학교 가는 아이: 가방 챙기기 진행 */
+  bagStat?: { done: number; total: number; complete: boolean; skip: boolean; onOpen: () => void };
   events: WithId<EventDoc>[];
   workOn?: (dateKey: string) => string | undefined;
   now: number;
@@ -416,6 +439,7 @@ export function BoardTile({
     onWhen: (parent: Member) => void;
     onSent: (text: string) => void;
     onToggle: (itemKey: string, value: boolean) => void;
+    onTodo: () => void;
   };
 }) {
   const { settings } = useFamily();
@@ -441,6 +465,12 @@ export function BoardTile({
             <div className="btile-status sub">상태 없음</div>
           )}
         </div>
+        {onEdit && (
+          <button className="btile-edit" onClick={onEdit} aria-label={`${m.name} 상태 바꾸기`}>
+            <Pencil size={18} strokeWidth={1.75} aria-hidden />
+            바꾸기
+          </button>
+        )}
       </header>
 
       {eta ? (
@@ -468,6 +498,18 @@ export function BoardTile({
           <span className="sub">
             {prog.done}/{prog.total}
           </span>
+          {bagStat && (
+            <button className={bagStat.complete ? 'bagchip on' : 'bagchip'} onClick={bagStat.onOpen} aria-label="가방 챙기기">
+              {bagStat.complete ? <Check size={18} strokeWidth={2.25} aria-hidden /> : <Backpack size={18} strokeWidth={1.75} aria-hidden />}
+              {bagStat.skip ? '쉬는 날' : `${bagStat.done}/${bagStat.total}`}
+            </button>
+          )}
+          {kid && (
+            <button className="bagchip" onClick={kid.onTodo} aria-label="할 일과 지금 하는 일">
+              <ListChecks size={18} strokeWidth={1.75} aria-hidden />
+              할 일
+            </button>
+          )}
           {doing && (
             <span className="badge">
               <Glyph k={doing.emoji} size={20} />

@@ -446,3 +446,36 @@ main { display: flex; flex-direction: column; }
 .live-alert small { opacity: .65; font-size: 12px; white-space: nowrap; }
 @keyframes live-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .live-alert { animation: none; } }
+
+/* ───────── 거실 보드: 직접 바꾸기 ───────── */
+/* 시계와 날짜는 왼쪽 칸 가운데에 */
+.board-side .hero.stacked { align-items: center; text-align: center; }
+.board-side .hero.stacked .clock-text { text-align: center; }
+.board-alert { border: 0; text-align: left; font: inherit; font-weight: 700; width: 100%; }
+.board-alert:active { opacity: .85; }
+
+.btile-head { position: relative; }
+.btile-who { flex: 1; }
+.btile-edit { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: 15px; font-weight: 700; color: var(--ink); }
+.btile-edit:active { background: var(--accent-soft); border-color: var(--accent); }
+.bagchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; font-weight: 700; color: var(--ink); }
+.bagchip:active { background: var(--accent-soft); border-color: var(--accent); }
+.bagchip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+.board-sheet.wide { width: min(940px, 94%); max-height: 92%; align-items: stretch; text-align: left; gap: 16px; padding: 28px; }
+.sheet-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.sheet-head h2 { font-size: 1.6em; }
+.sheet-tabs { display: flex; gap: 8px; margin-left: auto; }
+.stab { display: inline-flex; align-items: center; gap: 6px; min-height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; font-size: 16px; color: var(--ink-2); }
+.stab.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.sheet-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; min-height: 0; padding-bottom: 4px; }
+.board-sheet.wide .chips { grid-template-columns: repeat(3, 1fr); }
+.board-sheet.wide .chip { min-height: 68px; font-size: 18px; }
+.board-sheet.wide .chips .chip.small { min-height: 56px; font-size: 16px; }
+.board-sheet.wide .tiles { grid-template-columns: repeat(4, 1fr); }
+.board-sheet.wide .btn { align-self: center; }
+.sheet-eta-pick { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; }
+.sheet-eta-pick .chips { grid-template-columns: repeat(4, 1fr); }
+.yt-ask { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.yt-ask .answers { width: 100%; }
+.yt-ask + .yt-ask { border-top: 1px solid var(--line); padding-top: 16px; }
