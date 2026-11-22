@@ -1,4 +1,6 @@
+import { ChevronLeft, Ellipsis, House, ListChecks, MapPin, MessageCircle, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
+import { Avatar } from './components/Avatar';
 import { useFamily } from './FamilyContext';
 import { TodayScreen } from './features/TodayScreen';
 import { StatusScreen } from './features/StatusScreen';
@@ -8,15 +10,16 @@ import { ComingSoon, HelpScreen, MoreScreen, type SubPage } from './features/Mor
 import { SettingsScreen } from './features/SettingsScreen';
 import { ScheduleScreen } from './features/ScheduleScreen';
 import { CalendarScreen } from './features/CalendarScreen';
+import { WorkScreen } from './features/WorkScreen';
 
-type Tab = 'today' | 'status' | 'message' | 'routine' | 'more';
+export type Tab = 'today' | 'status' | 'message' | 'routine' | 'more';
 
-const TABS: { key: Tab; emoji: string; label: string }[] = [
-  { key: 'today', emoji: '🏠', label: '오늘' },
-  { key: 'status', emoji: '📍', label: '상태' },
-  { key: 'message', emoji: '💌', label: '한마디' },
-  { key: 'routine', emoji: '✅', label: '루틴' },
-  { key: 'more', emoji: '➕', label: '더보기' },
+const TABS: { key: Tab; Icon: LucideIcon; label: string }[] = [
+  { key: 'today', Icon: House, label: '오늘' },
+  { key: 'status', Icon: MapPin, label: '상태' },
+  { key: 'message', Icon: MessageCircle, label: '한마디' },
+  { key: 'routine', Icon: ListChecks, label: '루틴' },
+  { key: 'more', Icon: Ellipsis, label: '더보기' },
 ];
 
 const SUB_TITLES: Record<SubPage, string> = {
@@ -28,9 +31,9 @@ const SUB_TITLES: Record<SubPage, string> = {
   help: '홈 화면에 추가',
 };
 
-export function Shell() {
+export function Shell({ initialTab = 'today' }: { initialTab?: Tab }) {
   const { me } = useFamily();
-  const [tab, setTab] = useState<Tab>('today');
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [sub, setSub] = useState<SubPage | null>(null);
 
   const go = (t: Tab) => {
@@ -47,10 +50,12 @@ export function Shell() {
         <ScheduleScreen />
       ) : sub === 'calendar' ? (
         <CalendarScreen />
+      ) : sub === 'work' ? (
+        <WorkScreen />
       ) : sub === 'help' ? (
         <HelpScreen />
       ) : (
-        <ComingSoon title={SUB_TITLES[sub]} stage={sub === 'work' ? 3 : 4} />
+        <ComingSoon title={SUB_TITLES[sub]} stage={4} />
       );
   } else if (tab === 'today') body = <TodayScreen />;
   else if (tab === 'status') body = <StatusScreen />;
@@ -58,26 +63,30 @@ export function Shell() {
   else if (tab === 'routine') body = <RoutineScreen />;
   else body = <MoreScreen onOpen={setSub} />;
 
+  const title = TABS.find((t) => t.key === tab)!.label;
+
   return (
     <div className="app">
       <header className="topbar">
         {tab === 'more' && sub ? (
           <button className="back" onClick={() => setSub(null)}>
-            ‹ {SUB_TITLES[sub]}
+            <ChevronLeft size={26} strokeWidth={1.75} aria-hidden />
+            {SUB_TITLES[sub]}
           </button>
         ) : (
-          <span className="title">🏡 우리집 보드</span>
+          <h1 className="top-title">{title}</h1>
         )}
         <span className="who-me">
-          {me.emoji} {me.name}
+          <Avatar member={me} size={30} />
+          {me.name}
         </span>
       </header>
       <main>{body}</main>
-      <nav className="tabbar">
-        {TABS.map((t) => (
-          <button key={t.key} className={tab === t.key ? 'tab on' : 'tab'} onClick={() => go(t.key)}>
-            <span className="tab-emoji">{t.emoji}</span>
-            <span>{t.label}</span>
+      <nav className="tabbar" aria-label="메뉴">
+        {TABS.map(({ key, Icon, label }) => (
+          <button key={key} className={tab === key ? 'tab on' : 'tab'} onClick={() => go(key)} aria-current={tab === key ? 'page' : undefined}>
+            <Icon size={24} strokeWidth={tab === key ? 2 : 1.75} aria-hidden />
+            <span>{label}</span>
           </button>
         ))}
       </nav>

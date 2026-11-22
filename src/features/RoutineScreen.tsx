@@ -1,3 +1,6 @@
+import { Check } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
+import { Glyph } from '../components/Glyph';
 import { ProgressBar } from '../components/ProgressBar';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
@@ -6,7 +9,7 @@ import { DOING_OPTIONS } from '../lib/constants';
 import { path, setDoing, setRoutineDone } from '../lib/db';
 import { routineProgress } from '../lib/routine';
 import { dateKey } from '../lib/time';
-import type { RoutineDoc } from '../lib/types';
+import type { Member, RoutineDoc, RoutineItem } from '../lib/types';
 
 export function RoutineScreen() {
   const { code, members, me, isParent, settings } = useFamily();
@@ -18,59 +21,86 @@ export function RoutineScreen() {
   const shown = isParent ? kids : kids.filter((k) => k.id === me.id);
 
   return (
+    <RoutineView
+      kids={shown}
+      items={settings.routineItems}
+      routine={routine ?? undefined}
+      onToggle={(kid, key, value) => void setRoutineDone(code, date, kid, key, value)}
+      onDoing={(kid, value) => void setDoing(code, date, kid, value)}
+    />
+  );
+}
+
+export function RoutineView({
+  kids,
+  items,
+  routine,
+  onToggle,
+  onDoing,
+}: {
+  kids: Member[];
+  items: RoutineItem[];
+  routine?: RoutineDoc;
+  onToggle: (kidId: string, key: string, value: boolean) => void;
+  onDoing: (kidId: string, value: string) => void;
+}) {
+  return (
     <div className="screen">
-      {shown.length === 0 && <div className="card sub">루틴을 볼 아이가 없어요</div>}
-      {shown.map((k) => {
+      {kids.length === 0 && <div className="card sub">루틴을 볼 아이가 없어요</div>}
+      {kids.map((k) => {
         const done = routine?.done?.[k.id];
         const doing = routine?.doing?.[k.id];
-        const prog = routineProgress(settings.routineItems, done);
+        const prog = routineProgress(items, done);
         return (
           <div key={k.id} className="card">
             <div className="row">
-              <span className="avatar">{k.emoji}</span>
+              <Avatar member={k} size={46} />
               <div className="grow">
-                <div className="name">{k.name}</div>
+                <div className="m-name">{k.name}</div>
                 <ProgressBar value={prog.ratio} label="오늘 루틴" />
               </div>
-              <b className="count">
+              <span className="count">
                 {prog.done}/{prog.total}
-              </b>
+              </span>
             </div>
 
-            <div className="grid4">
-              {settings.routineItems.map((it) => {
+            <div className="tiles">
+              {items.map((it) => {
                 const on = !!done?.[it.key];
                 return (
                   <button
                     key={it.key}
-                    className={on ? 'rt on' : 'rt'}
-                    onClick={() => setRoutineDone(code, date, k.id, it.key, !on)}
+                    className={on ? 'tile on' : 'tile'}
+                    onClick={() => onToggle(k.id, it.key, !on)}
                     aria-pressed={on}
                   >
-                    <span className="big-emoji">{it.emoji}</span>
+                    <Glyph k={it.emoji} size={32} />
                     <span>{it.label}</span>
-                    <span className="mark">{on ? '✔' : '✖'}</span>
+                    <span className="mark">
+                      <Check size={14} strokeWidth={2.5} aria-hidden />
+                    </span>
                   </button>
                 );
               })}
             </div>
 
             <div className="sub">지금 하는 일</div>
-            <div className="chips row4">
+            <div className="chips">
               {DOING_OPTIONS.map((d) => (
                 <button
                   key={d.key}
                   className={doing === d.key ? 'chip small on' : 'chip small'}
-                  onClick={() => setDoing(code, date, k.id, doing === d.key ? '' : d.key)}
+                  onClick={() => onDoing(k.id, doing === d.key ? '' : d.key)}
                 >
-                  {d.emoji} {d.label}
+                  <Glyph k={d.emoji} size={18} />
+                  {d.label}
                 </button>
               ))}
             </div>
           </div>
         );
       })}
-      <div className="sub center-text">🌙 매일 자정(한국 시간)에 새로 시작돼요</div>
+      <div className="sub center-text">매일 자정(한국 시간)에 새로 시작돼요</div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EventEditor } from '../components/EventEditor';
 import { EventRow } from '../components/EventRow';
@@ -5,7 +6,7 @@ import { useFamily } from '../FamilyContext';
 import { useColData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { path } from '../lib/db';
-import { eventsOn, monthCells, shiftMonth, type EventDoc } from '../lib/events';
+import { eventsOn, shiftMonth, visibleCells, type EventDoc } from '../lib/events';
 import { dateKey, kst } from '../lib/time';
 import type { WithId } from '../lib/types';
 
@@ -21,38 +22,36 @@ export function CalendarScreen() {
   const [selected, setSelected] = useState(today);
   const [editing, setEditing] = useState<WithId<EventDoc> | 'new' | null>(null);
 
-  const cells = monthCells(ym.y, ym.m);
+  const cells = visibleCells(ym.y, ym.m);
   const move = (d: number) => setYm(shiftMonth(ym.y, ym.m, d));
   const dayEvents = eventsOn(events, selected);
   const [, sm, sd] = selected.split('-').map(Number);
 
   return (
     <div className="screen">
-      <div className="card cal">
+      <div className="card">
         <div className="calhead">
-          <button className="btn inline" onClick={() => move(-1)} aria-label="이전 달">
-            ‹
+          <button className="btn" onClick={() => move(-1)} aria-label="이전 달">
+            <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
           </button>
-          <div className="calmonth">
+          <button
+            className="calmonth"
+            onClick={() => {
+              setYm({ y: t.y, m: t.m });
+              setSelected(today);
+            }}
+            aria-label="오늘로 돌아가기"
+          >
             {ym.y}년 {ym.m}월
-          </div>
-          <button className="btn inline" onClick={() => move(1)} aria-label="다음 달">
-            ›
+          </button>
+          <button className="btn" onClick={() => move(1)} aria-label="다음 달">
+            <ChevronRight size={22} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
-        <button
-          className="btn small"
-          onClick={() => {
-            setYm({ y: t.y, m: t.m });
-            setSelected(today);
-          }}
-        >
-          오늘로
-        </button>
 
         <div className="calgrid">
           {DOW.map((d, i) => (
-            <div key={d} className={i === 0 ? 'dow sun' : i === 6 ? 'dow sat' : 'dow'}>
+            <div key={d} className={i === 0 ? 'dow sun' : 'dow'}>
               {d}
             </div>
           ))}
@@ -65,11 +64,12 @@ export function CalendarScreen() {
             if (c.key === selected) cls.push('sel');
             if (i % 7 === 0) cls.push('sun');
             return (
-              <button key={c.key} className={cls.join(' ')} onClick={() => setSelected(c.key)}>
+              <button key={c.key} className={cls.join(' ')} onClick={() => setSelected(c.key)} aria-label={`${day}일 일정 ${list.length}개`}>
                 <span className="dnum">{day}</span>
-                <span className="dem">
-                  {list.slice(0, 3).map((e) => e.emoji).join('')}
-                  {list.length > 3 ? '+' : ''}
+                <span className="dots">
+                  {list.slice(0, 3).map((e) => (
+                    <i key={e.id} />
+                  ))}
                 </span>
               </button>
             );
@@ -77,20 +77,22 @@ export function CalendarScreen() {
         </div>
       </div>
 
-      <div className="card">
-        <h2>
-          {sm}월 {sd}일
-        </h2>
-        {dayEvents.length === 0 && <div className="sub">일정이 없어요 🌿</div>}
+      <div className="group">
+        <div className="group-head">
+          <h2>
+            {sm}월 {sd}일
+          </h2>
+        </div>
+        {dayEvents.length === 0 && <div className="group-empty sub">일정이 없어요</div>}
         {dayEvents.map((ev) => (
           <EventRow key={ev.id} ev={ev} onClick={isParent ? () => setEditing(ev) : undefined} />
         ))}
-        {isParent && (
-          <button className="btn primary" onClick={() => setEditing('new')}>
-            ➕ 이 날 일정 추가
-          </button>
-        )}
       </div>
+      {isParent && (
+        <button className="btn primary" onClick={() => setEditing('new')}>
+          <Plus size={20} strokeWidth={2} aria-hidden />이 날 일정 추가
+        </button>
+      )}
 
       {editing && (
         <EventEditor

@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EventEditor } from '../components/EventEditor';
 import { EventRow } from '../components/EventRow';
@@ -27,9 +28,11 @@ export function ScheduleScreen() {
       {days.map((d) => {
         const list = eventsOn(events, d.key);
         return (
-          <div className="card" key={d.key}>
-            <h2>{d.title}</h2>
-            {list.length === 0 && <div className="sub">일정이 없어요 🌿</div>}
+          <div className="group" key={d.key}>
+            <div className="group-head">
+              <h2>{d.title}</h2>
+            </div>
+            {list.length === 0 && <div className="group-empty sub">일정이 없어요</div>}
             {list.map((ev) => (
               <EventRow key={ev.id} ev={ev} onClick={isParent ? () => setEditing(ev) : undefined} />
             ))}
@@ -39,7 +42,8 @@ export function ScheduleScreen() {
 
       {isParent && (
         <button className="btn primary" onClick={() => setEditing('new')}>
-          ➕ 일정 추가
+          <Plus size={20} strokeWidth={2} aria-hidden />
+          일정 추가
         </button>
       )}
       <div className="sub center-text">더 먼 일정은 더보기 → 달력에서 볼 수 있어요</div>

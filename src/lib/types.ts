@@ -18,6 +18,10 @@ export interface FamilySettings {
   routineItems: RoutineItem[];
   pinHash: string;
   createdAt: number;
+  /** 근무표를 쓰는 구성원 id (설정에서 고름) */
+  workOwnerId?: string;
+  /** 근무 코드별 근무 시간 글자 (예: { D: '08:00~17:00' }). 비어 있으면 코드만 표시 */
+  workTimes?: Record<string, string>;
 }
 
 export interface StatusDoc {

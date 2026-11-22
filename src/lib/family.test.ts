@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildJoinLink, generateCode, parseJoinCode } from './family';
+import { buildHash, buildJoinLink, generateCode, parseJoinCode, parseJoinHash } from './family';
 
 describe('family code', () => {
   it('충분히 길고 서로 다른 코드를 만든다', () => {
@@ -23,5 +23,26 @@ describe('family code', () => {
     expect(buildJoinLink('https://example.test/app/#old', 'x'.repeat(20))).toBe(
       `https://example.test/app/#c=${'x'.repeat(20)}`,
     );
+  });
+});
+
+describe('홈 화면 앱 연결 정보(#c=…&me=…)', () => {
+  const code = 'abcdefghjkmnpqrstuvwxyz23456'; // 가짜 코드
+  it('코드와 구성원 번호를 함께 담고 다시 꺼낸다', () => {
+    const h = buildHash(code, 'm3');
+    expect(h).toBe(`#c=${code}&me=m3`);
+    expect(parseJoinHash(h)).toEqual({ code, me: 'm3' });
+  });
+  it('구성원 번호 없이도 된다 (공유 링크)', () => {
+    expect(buildHash(code)).toBe(`#c=${code}`);
+    expect(parseJoinHash(`#c=${code}`)).toEqual({ code, me: null });
+  });
+  it('잘못되거나 빈 주소는 null', () => {
+    expect(parseJoinHash('')).toEqual({ code: null, me: null });
+    expect(parseJoinHash('#c=short&me=m1')).toEqual({ code: null, me: 'm1' });
+    expect(parseJoinHash(`#c=${code}&me=hack`).me).toBeNull();
+  });
+  it('공유 링크에는 내 번호(me)가 따라가지 않는다', () => {
+    expect(buildJoinLink(`https://example.test/app/${buildHash(code, 'm2')}`, code)).toBe(`https://example.test/app/#c=${code}`);
   });
 });

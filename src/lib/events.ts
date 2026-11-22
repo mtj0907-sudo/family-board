@@ -100,3 +100,10 @@ export function monthCells(y: number, m: number): { key: string; inMonth: boolea
     return { key, inMonth: key.startsWith(`${y}-${pad(m)}-`) };
   });
 }
+
+/** 이번 달 마지막 날이 있는 주까지만 보여줍니다 (마지막 주가 통째로 비면 그 줄을 뺍니다). */
+export function visibleCells(y: number, m: number): { key: string; inMonth: boolean }[] {
+  const cells = monthCells(y, m);
+  const last = cells.map((c) => c.inMonth).lastIndexOf(true);
+  return cells.slice(0, Math.ceil((last + 1) / 7) * 7);
+}
