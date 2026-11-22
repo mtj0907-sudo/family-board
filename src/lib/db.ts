@@ -113,3 +113,15 @@ export const savePushDevice = (
 ) => setDoc(doc(need(), path(code, 'push', deviceId)), { ...data, updatedAt: Date.now() });
 
 export const deletePushDevice = (code: string, deviceId: string) => deleteDoc(doc(need(), path(code, 'push', deviceId)));
+
+/** 가방 챙기기: 항목 하나 체크/해제 (bag/{날짜}) */
+export const setBagItem = (code: string, date: string, kidId: string, key: string, value: boolean) =>
+  setDoc(doc(need(), path(code, 'bag', date)), { done: { [kidId]: { [key]: value } } }, { merge: true });
+
+/** 다 챙긴 시각 기록/지우기 */
+export const setBagDoneAt = (code: string, date: string, kidId: string, at: number | null) =>
+  setDoc(doc(need(), path(code, 'bag', date)), { doneAt: { [kidId]: at ?? deleteField() } }, { merge: true });
+
+/** "내일은 학교 안 가요" */
+export const setBagSkip = (code: string, date: string, kidId: string, skip: boolean) =>
+  setDoc(doc(need(), path(code, 'bag', date)), { skip: { [kidId]: skip } }, { merge: true });

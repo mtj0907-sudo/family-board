@@ -1,4 +1,4 @@
-import { MapPinned } from 'lucide-react';
+import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
 import { EventRow } from '../components/EventRow';
@@ -7,8 +7,10 @@ import { EtaTrack } from '../components/EtaTrack';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { useBag } from '../hooks/useBag';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
+import { bagNudgeActive, bagProgress } from '../lib/bag';
 import { doingOf, statusInfo } from '../lib/constants';
 import { openFindMy } from '../lib/findmy';
 import { path } from '../lib/db';
@@ -19,10 +21,20 @@ import type { ClockMark } from '../components/Clock';
 import { dateKey, formatElapsed } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
-export function TodayScreen() {
-  const { code, members, settings } = useFamily();
+export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
+  const { code, members, settings, me, isParent } = useFamily();
   const now = useNow(30000);
   const workOn = useWorkWindow(code, dateKey(now));
+  const bag = useBag(now);
+  const bagInfo = (kidId: string) => {
+    if (!bag.schoolKids.includes(kidId)) return undefined;
+    const p = bagProgress(bag.items, bag.bag?.done?.[kidId]);
+    const skip = !!bag.bag?.skip?.[kidId];
+    // 저녁~다음 날 아침에만 보여주고, 낮에는 다 챙겼을 때만 남겨 둡니다.
+    return bagNudgeActive(now) || p.complete ? { ...p, skip } : undefined;
+  };
+  const myBag = !isParent ? bagInfo(me.id) : undefined;
+  const showNudge = !!myBag && !myBag.complete && !myBag.skip && bagNudgeActive(now);
   const statuses = useColData<StatusDoc>(path(code, 'status'));
   const routine = useDocData<RoutineDoc>(path(code, 'routines', dateKey(now)));
   const events = useColData<EventDoc>(path(code, 'events'));
@@ -36,6 +48,7 @@ export function TodayScreen() {
   return (
     <div className="screen fill">
       <Clock compact marks={marks} />
+      {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
           <div className="group-head">
@@ -56,6 +69,7 @@ export function TodayScreen() {
             now={now}
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
+            bag={bagInfo(m.id)}
           />
         ))}
       </div>
@@ -70,6 +84,7 @@ export function MemberRow({
   now,
   events,
   workOn,
+  bag,
 }: {
   m: Member;
   st?: StatusDoc;
@@ -77,6 +92,8 @@ export function MemberRow({
   now: number;
   events: WithId<EventDoc>[];
   workOn?: (dateKey: string) => string | undefined;
+  /** 학교 가는 아이의 가방 챙기기 현황 */
+  bag?: { done: number; total: number; complete: boolean; skip: boolean };
 }) {
   const { settings, isParent } = useFamily();
   const def = st ? statusInfo(st) : undefined;
@@ -134,6 +151,12 @@ export function MemberRow({
                 {doing.label}
               </span>
             )}
+            {bag && (
+              <span className={bag.complete ? 'bagbadge ok' : 'bagbadge'}>
+                <Backpack size={15} strokeWidth={1.75} aria-hidden />
+                {bag.skip ? '학교 안 가요' : bag.complete ? '가방 다 챙겼어요' : `가방 ${bag.done}/${bag.total}`}
+              </span>
+            )}
           </div>
         )}
 
@@ -180,5 +203,21 @@ function WorkStrip({
         </span>
       ))}
     </div>
+  );
+}
+
+/** 저녁에 아이 폰 오늘 화면 맨 위에 뜨는 "가방 챙길 시간이에요" */
+export function BagNudge({ done, total, onClick }: { done: number; total: number; onClick: () => void }) {
+  return (
+    <button className="nudge" onClick={onClick}>
+      <Backpack size={26} strokeWidth={1.75} aria-hidden />
+      <span className="grow">
+        가방 챙길 시간이에요
+        <small>
+          {done}/{total} 챙겼어요 · 눌러서 이어서 하기
+        </small>
+      </span>
+      <ChevronRight size={20} strokeWidth={1.75} aria-hidden />
+    </button>
   );
 }

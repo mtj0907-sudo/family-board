@@ -3,6 +3,7 @@ import { Copy, Plus, Trash2 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Glyph, ICON_CHOICES } from '../components/Glyph';
 import { PinGuard } from '../components/PinGuard';
+import { DEFAULT_BAG_ITEMS } from '../lib/bag';
 import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
@@ -31,6 +32,9 @@ function SettingsBody() {
   );
   const [newPin, setNewPin] = useState('');
   const [openIcon, setOpenIcon] = useState<number | null>(null);
+  const [school, setSchool] = useState<string[]>(settings.schoolKids ?? []);
+  const [bagItems, setBagItems] = useState<RoutineItem[]>(settings.bagItems?.length ? settings.bagItems : DEFAULT_BAG_ITEMS);
+  const [openBagIcon, setOpenBagIcon] = useState<number | null>(null);
   const [places, setPlaces] = useState<CustomStatus[]>(settings.customStatuses ?? []);
   const [openPlaceIcon, setOpenPlaceIcon] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
@@ -59,6 +63,11 @@ function SettingsBody() {
           .filter(([, v]) => v),
       ),
     };
+    next.schoolKids = school.filter((id) => members.some((m) => m.id === id && m.role === 'child'));
+    next.bagItems = bagItems
+      .filter((i) => i.label.trim())
+      .slice(0, 12)
+      .map((i, n) => ({ ...i, label: i.label.trim(), key: i.key || `b${Date.now()}${n}` }));
     next.customStatuses = places
       .filter((pl) => pl.label.trim())
       .slice(0, 10)
@@ -125,6 +134,68 @@ function SettingsBody() {
         ))}
         {items.length < 8 && (
           <button className="btn" onClick={() => setItems([...items, { key: '', emoji: '📌', label: '' }])}>
+            <Plus size={20} strokeWidth={2} aria-hidden />
+            항목 추가
+          </button>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>가방 챙기기 (학교 가는 아이)</h2>
+        <div className="sub">학교 가는 아이를 고르면, 밤에 스스로 가방을 챙기는 체크리스트가 루틴 탭에 생겨요. 부모는 오늘 화면과 루틴 탭에서 결과를 볼 수 있어요.</div>
+        <div className="picker wrap">
+          {members
+            .filter((m) => m.role === 'child')
+            .map((m) => (
+              <button
+                key={m.id}
+                className={school.includes(m.id) ? 'pick on' : 'pick'}
+                aria-pressed={school.includes(m.id)}
+                onClick={() => setSchool(school.includes(m.id) ? school.filter((x) => x !== m.id) : [...school, m.id])}
+              >
+                <Avatar member={m} size={38} />
+                {m.name}
+              </button>
+            ))}
+        </div>
+        <div className="sub">체크할 항목</div>
+        {bagItems.map((it, i) => (
+          <div key={i}>
+            <div className="row">
+              <button className="icon-pick" onClick={() => setOpenBagIcon(openBagIcon === i ? null : i)} aria-label="아이콘 바꾸기">
+                <Glyph k={it.emoji} size={22} />
+              </button>
+              <input
+                className="grow"
+                value={it.label}
+                maxLength={14}
+                placeholder="예: 연필 다 깎았어요"
+                onChange={(e) => setBagItems(bagItems.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+              />
+              <button className="btn inline" onClick={() => setBagItems(bagItems.filter((_, j) => j !== i))} aria-label="삭제">
+                <Trash2 size={20} strokeWidth={1.75} aria-hidden />
+              </button>
+            </div>
+            {openBagIcon === i && (
+              <div className="icon-grid" style={{ marginTop: 8 }}>
+                {ICON_CHOICES.map((e) => (
+                  <button
+                    key={e}
+                    className={e === it.emoji ? 'sel' : ''}
+                    onClick={() => {
+                      setBagItems(bagItems.map((x, j) => (j === i ? { ...x, emoji: e } : x)));
+                      setOpenBagIcon(null);
+                    }}
+                  >
+                    <Glyph k={e} size={22} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {bagItems.length < 12 && (
+          <button className="btn" onClick={() => setBagItems([...bagItems, { key: '', emoji: '🎒', label: '' }])}>
             <Plus size={20} strokeWidth={2} aria-hidden />
             항목 추가
           </button>

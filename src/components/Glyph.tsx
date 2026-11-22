@@ -7,6 +7,9 @@ import {
   Briefcase,
   Bus,
   Cake,
+  ClipboardList,
+  Droplets,
+  NotebookPen,
   Clock,
   Car,
   Dumbbell,
@@ -83,6 +86,9 @@ export const ICONS: Record<string, LucideIcon> = {
   '🚌': Bus,
   '📌': Pin,
   '🕐': Clock,
+  '📋': ClipboardList,
+  '📝': NotebookPen,
+  '💧': Droplets,
 };
 
 /** 일정·루틴 항목에서 고를 수 있는 아이콘(대표 이모지 키) */
@@ -91,6 +97,7 @@ export const ICON_CHOICES = [
   '✈️', '🏖', '⚽', '🎹', '📚', '🛒', '🍽', '🎉',
   '👪', '🚗', '🎒', '💼', '🎁', '🏊', '🚌', '☎️',
   '🏠', '✏️', '🍚', '🪥', '🛁', '🧸', '📺', '😴',
+  '📋', '📝', '💧',
 ];
 
 export function Glyph({ k, size = 24, className }: { k: string; size?: number; className?: string }) {
