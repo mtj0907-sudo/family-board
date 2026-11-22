@@ -25,6 +25,9 @@ function SettingsBody() {
   const [items, setItems] = useState<RoutineItem[]>(settings.routineItems);
   const [owner, setOwner] = useState(settings.workOwnerId ?? '');
   const [times, setTimes] = useState<Record<string, string>>(settings.workTimes ?? {});
+  const [commute, setCommute] = useState<Record<string, string>>(
+    Object.fromEntries(Object.entries(settings.commuteMinutes ?? {}).map(([k, v]) => [k, String(v)])),
+  );
   const [newPin, setNewPin] = useState('');
   const [openIcon, setOpenIcon] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
@@ -53,6 +56,11 @@ function SettingsBody() {
           .filter(([, v]) => v),
       ),
     };
+    next.commuteMinutes = Object.fromEntries(
+      Object.entries(commute)
+        .map(([k, v]) => [k, Math.round(Number(v))] as const)
+        .filter(([k, n]) => members.some((m) => m.id === k && m.role === 'parent') && Number.isFinite(n) && n > 0 && n <= 300),
+    );
     // Firestore는 undefined 값을 저장할 수 없어서, 선택 안 했으면 항목 자체를 뺍니다.
     if (owner) next.workOwnerId = owner;
     else delete next.workOwnerId;
@@ -144,6 +152,31 @@ function SettingsBody() {
             />
           </div>
         ))}
+      </div>
+
+      <div className="card">
+        <h2>퇴근 후 집까지 걸리는 시간</h2>
+        <div className="sub">
+          "집에 가는 중"을 누르면 이 시간을 더해 도착 시각을 짐작해서 보여줘요. 위치를 읽는 것이 아니라 평소 시간 기준이에요. 비워 두면 짐작하지 않아요.
+        </div>
+        {members
+          .filter((m) => m.role === 'parent')
+          .map((m) => (
+            <div className="row" key={m.id}>
+              <Avatar member={m} size={40} />
+              <span className="wk-code">{m.name}</span>
+              <input
+                className="grow"
+                inputMode="numeric"
+                maxLength={3}
+                placeholder="분"
+                value={commute[m.id] ?? ''}
+                onChange={(e) => setCommute({ ...commute, [m.id]: e.target.value.replace(/\D/g, '') })}
+                aria-label={`${m.name} 집까지 걸리는 시간(분)`}
+              />
+              <span className="sub">분</span>
+            </div>
+          ))}
       </div>
 
       <div className="card">

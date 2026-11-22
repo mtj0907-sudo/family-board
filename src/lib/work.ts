@@ -124,3 +124,18 @@ export function workEndText(code: string, times?: Record<string, string>): strin
   const h12 = hh % 12 === 0 ? 12 : hh % 12;
   return `${hh < 12 ? '오전' : '오후'} ${h12}:${mm}`;
 }
+
+/**
+ * 'HH:MM~HH:MM' 근무 시간 글자에서 끝나는 시각(ms)을 계산합니다. dayStartMs는 그날 한국 0시.
+ * 끝나는 시각이 시작보다 이르면(야간 근무) 다음 날 아침으로 봅니다. 못 읽으면 null
+ */
+export function workEndAt(code: string, times: Record<string, string> | undefined, dayStartMs: number): number | null {
+  const m = times?.[code]?.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const [sh, sm, eh, em] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  if (eh > 23 || em > 59 || sh > 23 || sm > 59) return null;
+  const start = sh * 60 + sm;
+  let end = eh * 60 + em;
+  if (end <= start) end += 24 * 60;
+  return dayStartMs + end * 60000;
+}

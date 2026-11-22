@@ -14,6 +14,7 @@ import { openFindMy } from '../lib/findmy';
 import { path } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
+import { estimateEta } from '../lib/whenHome';
 import { dateKey, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
@@ -77,6 +78,7 @@ export function MemberRow({
   const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const extra = events.length > 0 || !!workOn;
+  const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
     <div className="mrow">
@@ -101,16 +103,16 @@ export function MemberRow({
           <div className="sub">아직 상태가 없어요</div>
         )}
 
-        {st?.etaAt && (
+        {eta && (
           <>
             <div className="eta-line">
               <span>
                 <ClockIcon size={14} strokeWidth={1.75} style={{ verticalAlign: '-2px', marginRight: 4 }} aria-hidden />
-                도착 예정 <b>{formatClock(st.etaAt)}</b>
+                도착 {eta.estimated ? '예상' : '예정'} <b>{eta.estimated ? '약 ' : ''}{formatClock(eta.at)}</b>
               </span>
-              <span>{formatRemaining(st.etaAt - now)}</span>
+              <span>{eta.at > now ? formatRemaining(eta.at - now) : '곧 도착해요'}</span>
             </div>
-            <ProgressBar value={etaProgress(st.etaFrom ?? st.since, st.etaAt, now)} label="도착까지" />
+            <ProgressBar value={etaProgress(eta.from, eta.at, now)} label="도착까지" />
           </>
         )}
 

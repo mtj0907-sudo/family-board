@@ -18,7 +18,7 @@ import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
 import { dateKey, dayStart, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
-import { whenHome } from '../lib/whenHome';
+import { estimateEta, whenHome } from '../lib/whenHome';
 
 /**
  * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
@@ -184,6 +184,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           st={statuses.find((x) => x.id === ask.parent.id)}
           workCode={ask.parent.id === settings.workOwnerId ? workOn(today) : undefined}
           workTimes={settings.workTimes}
+          commuteMin={settings.commuteMinutes?.[ask.parent.id]}
           now={now}
           onClose={() => setAsk(null)}
         />
@@ -259,6 +260,7 @@ export function WhenSheet({
   st,
   workCode,
   workTimes,
+  commuteMin,
   now,
   onClose,
 }: {
@@ -267,12 +269,13 @@ export function WhenSheet({
   st?: StatusDoc;
   workCode?: string;
   workTimes?: Record<string, string>;
+  commuteMin?: number;
   now: number;
   onClose: () => void;
 }) {
   const { code } = useFamily();
   const [asked, setAsked] = useState(false);
-  const a = whenHome({ name: parent.name, st, now, workCode, workTimes });
+  const a = whenHome({ name: parent.name, st, now, workCode, workTimes, commuteMin });
 
   // 화면이 갱신돼도 닫힘 시간이 처음부터 다시 세어지지 않도록, 닫는 함수는 ref로 들고 있습니다.
   const closeRef = useRef(onClose);
@@ -290,12 +293,16 @@ export function WhenSheet({
         {a.eta && (
           <div className="sheet-eta">
             <div className="sheet-big">{a.eta.text}</div>
-            <div className="sub">{a.eta.clock} 도착 예정</div>
+            <div className="sub">{a.eta.clockLabel}</div>
             <ProgressBar value={a.eta.ratio} label="도착까지" />
           </div>
         )}
-        {a.detail && <div className="sheet-detail">{a.detail}</div>}
-        {!a.eta && a.canAsk && !asked && <div className="sub">몇 시에 오는지는 아직 몰라요</div>}
+        {a.details.map((d) => (
+          <div key={d} className={a.eta ? 'sub' : 'sheet-detail'}>
+            {d}
+          </div>
+        ))}
+        {!a.eta && a.details.length === 0 && a.canAsk && !asked && <div className="sub">몇 시에 오는지는 아직 몰라요</div>}
         {asked ? (
           <div className="sheet-done">
             <Check size={28} strokeWidth={2.25} aria-hidden />
@@ -345,6 +352,7 @@ export function BoardTile({
   const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const today = dateKey(now);
+  const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
     <article className="btile">
@@ -364,13 +372,19 @@ export function BoardTile({
         </div>
       </header>
 
-      {st?.etaAt && (
+      {eta && (
         <div>
           <div className="btile-eta">
             <ClockIcon size={22} strokeWidth={1.75} aria-hidden />
-            <b>{formatClock(st.etaAt)}</b> 도착 · {formatRemaining(st.etaAt - now)}
+            <span>
+              <b>
+                {eta.estimated ? '약 ' : ''}
+                {formatClock(eta.at)}
+              </b>{' '}
+              도착 · {eta.at > now ? formatRemaining(eta.at - now) : '곧 도착해요'}
+            </span>
           </div>
-          <ProgressBar value={etaProgress(st.etaFrom ?? st.since, st.etaAt, now)} label="도착까지" />
+          <ProgressBar value={etaProgress(eta.from, eta.at, now)} label="도착까지" />
         </div>
       )}
 
