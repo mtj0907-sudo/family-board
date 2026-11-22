@@ -289,7 +289,7 @@ button.eventrow:active { background: var(--line-2); }
   padding: calc(env(safe-area-inset-top) + 28px) 32px calc(env(safe-area-inset-bottom) + 28px);
   overflow: hidden; font-size: 20px;
 }
-.board-ctl { position: absolute; top: calc(env(safe-area-inset-top) + 10px); right: 14px; display: flex; align-items: center; gap: 8px; z-index: 2; }
+.board-ctl { flex: none; margin-left: auto; display: flex; align-items: center; gap: 8px; z-index: 2; }
 .board-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: rgba(255, 255, 255, .7); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink-2); }
 .board-btn.icon { width: 44px; padding: 0; justify-content: center; }
 .board-note { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); font-weight: 600; }
@@ -521,7 +521,8 @@ main { display: flex; flex-direction: column; }
 .weather-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding: 0 4px; color: var(--ink-2); font-size: 14.5px; font-weight: 600; }
 .weather-line b { color: var(--ink); font-size: 1.25em; font-weight: 700; letter-spacing: -0.02em; }
 .weather-line .sub { font-weight: 500; }
-.board-weather { position: absolute; left: 32px; top: calc(env(safe-area-inset-top) + 10px); z-index: 2; max-width: 40%; }
+.board-top { position: absolute; left: 32px; right: 14px; top: calc(env(safe-area-inset-top) + 10px); z-index: 2; display: flex; align-items: center; gap: 16px; }
+.board-weather { flex: none; max-width: 36%; }
 .weather-card { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 0 16px 0 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .8); color: var(--ink); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; }
 .weather-card b { font-size: 1.3em; font-weight: 700; letter-spacing: -0.02em; }
 .weather-card .sub { font-size: .92em; font-weight: 500; }
@@ -564,3 +565,15 @@ main { display: flex; flex-direction: column; }
 .picker:not(.wrap) { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); overflow: visible; gap: 8px; }
 .picker:not(.wrap) .pick { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 4px 9px; min-height: 0; border-radius: 20px; font-size: 14.5px; min-width: 0; }
 .picker:not(.wrap) .pick .avatar { margin: 0; }
+
+/* 내일 일정: 배경 없이 글씨만 */
+.tomorrow { display: flex; align-items: center; gap: 6px 14px; min-width: 0; color: var(--ink-2); font-size: 15px; font-weight: 600; }
+.tomorrow .t-label { color: var(--ink); font-weight: 800; letter-spacing: -0.02em; flex: none; }
+.tomorrow .t-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.tomorrow .t-time { font-variant-numeric: tabular-nums; flex: none; }
+.tomorrow .t-title { color: var(--ink); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tomorrow small { font-size: .82em; font-weight: 500; color: var(--ink-3); flex: none; }
+.tomorrow .t-none, .tomorrow .t-more { color: var(--ink-3); font-weight: 500; flex: none; }
+.tomorrow.tb-board { flex: 1; min-width: 0; justify-content: center; font-size: 17px; text-shadow: 0 0 6px rgba(242, 244, 243, .9); }
+.tomorrow.tb-phone { flex-wrap: wrap; padding: 0 4px; font-size: 14px; }
+@media (max-width: 820px) { .tomorrow.tb-board { display: none; } .board-top { left: auto; } }
