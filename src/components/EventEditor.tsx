@@ -19,6 +19,7 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [date, setDate] = useState(initial?.date ?? defaultDate);
   const [time, setTime] = useState(initial?.time ?? '');
+  const [endTime, setEndTime] = useState(initial?.endTime ?? '');
   const [who, setWho] = useState<string[]>(initial?.who ?? []);
   const [pickupBy, setPickupBy] = useState(initial?.pickupBy ?? '');
   const [repeat, setRepeat] = useState<Repeat>(initial?.repeat ?? 'none');
@@ -29,11 +30,15 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
   function save() {
     if (!title.trim()) return setError('일정 이름을 적어 주세요');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setError('날짜를 골라 주세요');
+    if (endTime && !time) return setError('끝나는 시간을 쓰려면 시작 시간을 먼저 정해 주세요');
+    if (endTime && time && endTime <= time) return setError('끝나는 시간이 시작보다 빨라요');
     void saveEvent(code, initial?.id ?? null, {
       title: title.trim(),
       emoji,
       date,
       time,
+      // Firestore는 undefined를 저장할 수 없어서, 비어 있으면 항목 자체를 뺍니다.
+      ...(endTime ? { endTime } : {}),
       who,
       pickupBy,
       repeat,
@@ -77,8 +82,12 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
           <label className="field grow">
-            <span>시간 (비우면 종일)</span>
+            <span>시작 (비우면 종일)</span>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </label>
+          <label className="field grow">
+            <span>끝 (선택)</span>
+            <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
           </label>
         </div>
 

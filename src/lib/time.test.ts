@@ -6,6 +6,8 @@ import {
   etaFromTime,
   etaProgress,
   formatClock,
+  formatClockKo,
+  formatLeftKo,
   formatElapsed,
   formatRemaining,
 } from './time';
@@ -62,5 +64,20 @@ describe('time (KST)', () => {
     expect(a.hour).toBe(90);
     expect(a.minute).toBe(0);
     expect(a.second).toBe(0);
+  });
+
+  it('formatClockKo: 말로 읽는 시각', () => {
+    expect(formatClockKo(Date.UTC(2030, 0, 1, 9, 28))).toBe('오후 6시 28분');
+    expect(formatClockKo(Date.UTC(2030, 0, 1, 9, 0))).toBe('오후 6시');
+    expect(formatClockKo(Date.UTC(2030, 0, 1, 15, 0))).toBe('오전 12시');
+    expect(formatClockKo(Date.UTC(2030, 0, 1, 3, 5))).toBe('오후 12시 5분');
+  });
+
+  it('formatLeftKo: 남은 시간 말투', () => {
+    expect(formatLeftKo(-1)).toBe('곧 도착해요');
+    expect(formatLeftKo(35 * 60000)).toBe('35분 남았어요');
+    expect(formatLeftKo(61000)).toBe('2분 남았어요');
+    expect(formatLeftKo(110 * 60000)).toBe('1시간 50분 남았어요');
+    expect(formatLeftKo(120 * 60000)).toBe('2시간 남았어요');
   });
 });

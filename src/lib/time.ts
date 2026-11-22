@@ -86,3 +86,21 @@ export function clockAngles(ms: number) {
     second: t.ss * 6,
   };
 }
+
+/** "오후 6시 28분" (정각이면 "오후 6시"). 아이도 읽기 쉬운 말투용 */
+export function formatClockKo(ms: number): string {
+  const t = kst(ms);
+  const ap = t.hh < 12 ? '오전' : '오후';
+  const h = t.hh % 12 === 0 ? 12 : t.hh % 12;
+  return t.mm === 0 ? `${ap} ${h}시` : `${ap} ${h}시 ${t.mm}분`;
+}
+
+/** "35분 남았어요" / "1시간 50분 남았어요" / 지났으면 "곧 도착해요" */
+export function formatLeftKo(ms: number): string {
+  if (ms <= 0) return '곧 도착해요';
+  const m = Math.ceil(ms / 60000);
+  if (m < 60) return `${m}분 남았어요`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}시간 ${r}분 남았어요` : `${h}시간 남았어요`;
+}

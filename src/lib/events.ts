@@ -8,6 +8,8 @@ export interface EventDoc {
   emoji: string;
   date: string;
   time: string;
+  /** 끝나는 시간 'HH:MM' (선택, 시작 시간이 있을 때만) */
+  endTime?: string;
   /** 대상 구성원 id (비어 있으면 가족 전체) */
   who: string[];
   /** 데리러 갈 사람 id (없으면 빈 문자열) */

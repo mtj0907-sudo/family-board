@@ -2,6 +2,7 @@ import { Check, Clock as ClockIcon, Maximize2, MonitorPlay, Sun, X } from 'lucid
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { Clock } from '../components/Clock';
+import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
 import { ProgressBar } from '../components/ProgressBar';
@@ -11,12 +12,12 @@ import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusOf } from '../lib/constants';
-import { path, sendMessage } from '../lib/db';
+import { path, sendMessage, setRoutineDone } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { useKeepAwake } from '../lib/keepAwake';
 import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
-import { dateKey, dayStart, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
+import { dateKey, dayStart, formatClock, formatElapsed } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 import { estimateEta, whenHome } from '../lib/whenHome';
 
@@ -135,13 +136,13 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           </div>
         )}
 
-        {todayMsgs.filter((m) => m.kind === 'quick').length > 0 && (
+        {todayMsgs.filter((m) => m.kind !== 'youtube').length > 0 && (
           <div className="group">
             <div className="group-head">
               <h3>오늘 온 한마디</h3>
             </div>
             {todayMsgs
-              .filter((m) => m.kind === 'quick')
+              .filter((m) => m.kind !== 'youtube')
               .slice(0, pendingYoutube.length > 0 && familyWide.length > 0 ? 2 : 3)
               .map((m) => {
                 const who = nameOf(m.from);
@@ -151,7 +152,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
                     {who && <Avatar member={who} size={36} />}
                     <div className="grow">
                       <b>{who?.name}</b>
-                      {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} {q?.label}
+                      {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} {m.kind === 'note' ? m.text : q?.label}
                     </div>
                     <span className="sub">{formatClock(m.at)}</span>
                   </div>
@@ -171,7 +172,16 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
             now={now}
-            kid={m.role === 'child' ? { parents, onWhen: (p) => setAsk({ parent: p, kid: m }), onSent: flash } : undefined}
+            kid={
+              m.role === 'child'
+                ? {
+                    parents,
+                    onWhen: (p) => setAsk({ parent: p, kid: m }),
+                    onSent: flash,
+                    onToggle: (key, value) => void setRoutineDone(code, today, m.id, key, value),
+                  }
+                : undefined
+            }
           />
         ))}
       </section>
@@ -345,7 +355,12 @@ export function BoardTile({
   workOn?: (dateKey: string) => string | undefined;
   now: number;
   /** 아이 카드에만: 그림 버튼에 필요한 정보 */
-  kid?: { parents: Member[]; onWhen: (parent: Member) => void; onSent: (text: string) => void };
+  kid?: {
+    parents: Member[];
+    onWhen: (parent: Member) => void;
+    onSent: (text: string) => void;
+    onToggle: (itemKey: string, value: boolean) => void;
+  };
 }) {
   const { settings } = useFamily();
   const def = st ? statusOf(st.key) : undefined;
@@ -372,28 +387,24 @@ export function BoardTile({
         </div>
       </header>
 
-      {eta && (
-        <div>
-          <div className="btile-eta">
-            <ClockIcon size={22} strokeWidth={1.75} aria-hidden />
-            <span>
-              <b>
-                {eta.estimated ? '약 ' : ''}
-                {formatClock(eta.at)}
-              </b>{' '}
-              도착 · {eta.at > now ? formatRemaining(eta.at - now) : '곧 도착해요'}
-            </span>
-          </div>
-          <ProgressBar value={etaProgress(eta.from, eta.at, now)} label="도착까지" />
-        </div>
+      {eta ? (
+        <EtaTrack member={m} eta={eta} now={now} big />
+      ) : (
+        def?.eta && <div className="sub et-none">도착 시각은 아직 안 정했어요</div>
       )}
 
       {m.role === 'child' && (
         <div className="btile-pips">
           {settings.routineItems.map((it) => {
             const on = !!routine?.done?.[m.id]?.[it.key];
-            return (
-              <span key={it.key} className={on ? 'pip big on' : 'pip big'} aria-label={`${it.label} ${on ? '완료' : '아직'}`}>
+            const cls = on ? 'pip big on' : 'pip big';
+            // 아이가 보드에서 직접 눌러 체크할 수 있어요
+            return kid ? (
+              <button key={it.key} className={cls} onClick={() => kid.onToggle(it.key, !on)} aria-pressed={on} aria-label={`${it.label} ${on ? '완료' : '아직'}`}>
+                <Glyph k={it.emoji} size={20} />
+              </button>
+            ) : (
+              <span key={it.key} className={cls} aria-label={`${it.label} ${on ? '완료' : '아직'}`}>
                 <Glyph k={it.emoji} size={20} />
               </span>
             );
