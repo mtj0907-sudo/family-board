@@ -16,6 +16,7 @@ import type { CustomStatus, FamilySettings, Member, RoutineItem } from '../lib/t
 import { PhotoCropper } from '../components/PhotoCropper';
 import { loadPhoto, renderFit } from '../lib/photo';
 import { TIMED_CODES } from '../lib/work';
+import { PLACE_CHOICES } from '../lib/specialDay';
 
 export function SettingsScreen() {
   return (
@@ -39,6 +40,7 @@ function SettingsBody() {
   const [statusSets, setStatusSets] = useState<Record<string, string[]>>(settings.statusSets ?? {});
   const [statusMemberId, setStatusMemberId] = useState<string>(settings.members[0]?.id ?? '');
   const [school, setSchool] = useState<string[]>(settings.schoolKids ?? []);
+  const [dayPlaces, setDayPlaces] = useState<Record<string, string>>(settings.dayPlaces ?? {});
   const [bagItems, setBagItems] = useState<RoutineItem[]>(settings.bagItems?.length ? settings.bagItems : DEFAULT_BAG_ITEMS);
   const [openBagIcon, setOpenBagIcon] = useState<number | null>(null);
   const [places, setPlaces] = useState<CustomStatus[]>(settings.customStatuses ?? []);
@@ -74,6 +76,9 @@ function SettingsBody() {
       Object.entries(statusSets).filter(([id, keys]) => members.some((m) => m.id === id) && keys.length > 0),
     );
     next.schoolKids = school.filter((id) => members.some((m) => m.id === id && m.role === 'child'));
+    const dayPl = Object.fromEntries(Object.entries(dayPlaces).filter(([id]) => members.some((m) => m.id === id && m.role === 'child')));
+    if (Object.keys(dayPl).length) next.dayPlaces = dayPl;
+    else delete next.dayPlaces;
     next.bagItems = bagItems
       .filter((i) => i.label.trim())
       .slice(0, 12)
@@ -129,6 +134,31 @@ function SettingsBody() {
         <div className="sub">동그라미를 누르면 얼굴 사진을 고를 수 있어요. 사진은 우리 가족 Firebase에만 저장되고, 아래 저장하기를 눌러야 반영돼요.</div>
       </div>
       <BoardPhotoCard code={code} />
+      <div className="card">
+        <h2>평일에 가는 곳</h2>
+        <div className="sub">일요일 오후에 "새로운 한 주, 힘차게 시작해요! 내일은 승우 학교 · 아림 유치원"처럼 응원 메시지를 보여줘요.</div>
+        {members
+          .filter((m) => m.role === 'child')
+          .map((m) => (
+            <div className="row" key={m.id}>
+              <Avatar member={m} size={40} />
+              <span className="wk-code">{m.name}</span>
+              <select
+                className="grow"
+                value={dayPlaces[m.id] ?? (school.includes(m.id) ? '학교' : '')}
+                onChange={(e) => setDayPlaces({ ...dayPlaces, [m.id]: e.target.value })}
+                aria-label={`${m.name} 평일에 가는 곳`}
+              >
+                <option value="">안 가요</option>
+                {PLACE_CHOICES.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+      </div>
       {cropFor && (
         <PhotoCropper
           file={cropFor.file}

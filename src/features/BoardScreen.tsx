@@ -1,4 +1,4 @@
-import { Backpack, Check, CloudSun, ListChecks, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { Backpack, Check, CloudSun, ListChecks, PartyPopper, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { Clock, type ClockMark } from '../components/Clock';
@@ -8,7 +8,10 @@ import { Glyph } from '../components/Glyph';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { ChristmasTree } from '../components/ChristmasTree';
+import { SpecialFx } from '../components/SpecialFx';
 import { TomorrowBar } from '../components/TomorrowBar';
+import { cheerOf, previewSpecial, specialDayOf, weekStartCheer, type SpecialKind } from '../lib/specialDay';
 import { tomorrowItems } from '../lib/tomorrow';
 import { BoardFeed } from '../components/BoardFeed';
 import { loadHidden, saveHidden } from '../lib/boardFeed';
@@ -86,6 +89,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const hiddenSet = new Set(hiddenIds);
   const { weather: realWeather, status: wStatus, error: wError, retry: wRetry } = useWeather();
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [specialPreview, setSpecialPreview] = useState<SpecialKind | 'cheer' | null>(null);
   const [fxOn, setFxOn] = useState(() => store.get('fb.fx') !== '0');
   const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const weather = preview ? previewWeather(preview, realWeather) : realWeather;
@@ -138,6 +142,9 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
 
   const todays = eventsOn(events, today);
   const tomorrow = tomorrowItems(events, today, members);
+  const special = specialPreview && specialPreview !== 'cheer' ? previewSpecial(specialPreview) : specialDayOf(now, events);
+  const cheer = specialPreview === 'cheer' ? cheerOf(settings) : weekStartCheer(now, settings);
+  const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
   const familyWide = todays.filter((e) => e.who.length === 0);
   const todayMsgs = msgs.filter((m) => m.at >= dayStart(now));
   const pendingYoutube = todayMsgs.filter((m) => m.kind === 'youtube' && !m.reply);
@@ -157,7 +164,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           <WeatherPending status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />
         )}
       </div>
-      <TomorrowBar items={tomorrow} variant="board" />
+      <TomorrowBar items={tomorrow} variant="board" banner={banner} />
       <div className="board-ctl">
         {awake.method === 'none' ? (
           <button className="board-btn" onClick={awake.start}>
@@ -181,6 +188,19 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           aria-pressed={muted}
         >
           {muted ? <VolumeX size={18} strokeWidth={1.75} aria-hidden /> : <Volume2 size={18} strokeWidth={1.75} aria-hidden />}
+        </button>
+        <button
+          className="board-btn icon"
+          onClick={() => {
+            const order: (SpecialKind | 'cheer' | null)[] = [null, 'birthday', 'christmas', 'newyear', 'kids', 'cheer'];
+            const next = order[(order.indexOf(specialPreview) + 1) % order.length];
+            setSpecialPreview(next);
+            flash(next ? `특별한 날 미리보기: ${{ birthday: '생일', christmas: '크리스마스', newyear: '새해', kids: '어린이날', cheer: '새 한 주 응원' }[next]}` : '특별한 날 미리보기를 껐어요');
+          }}
+          aria-label="특별한 날 모습 미리보기"
+          title="특별한 날 미리보기"
+        >
+          <PartyPopper size={18} strokeWidth={1.75} aria-hidden />
         </button>
         <button
           className="board-btn icon"
@@ -279,6 +299,12 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         ))}
       </section>
 
+      {special && fxOn && !reduceMotion && <SpecialFx kind={special.kind} scale={box.scale} />}
+      {special?.kind === 'christmas' && (
+        <div className="xmas-corner">
+          <ChristmasTree />
+        </div>
+      )}
       {weather && fxOn && !reduceMotion && <WeatherFx fx={fxOf(weather)} scale={box.scale} />}
 
       {news && (

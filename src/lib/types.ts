@@ -40,6 +40,8 @@ export interface FamilySettings {
   statusSets?: Record<string, string[]>;
   /** 학교 가는 아이 (가방 챙기기를 쓰는 구성원 id) */
   schoolKids?: string[];
+  /** 평일에 가는 곳 (아이 id → '학교' | '유치원' | '어린이집'). 일요일 저녁 응원 메시지에 씁니다 */
+  dayPlaces?: Record<string, string>;
   /** 가방 챙기기 항목. 없으면 기본 항목 */
   bagItems?: RoutineItem[];
   /** 알림 서버 주소 (Cloudflare Workers) */

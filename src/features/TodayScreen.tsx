@@ -2,6 +2,7 @@ import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
 import { TomorrowBar } from '../components/TomorrowBar';
+import { specialDayOf, weekStartCheer } from '../lib/specialDay';
 import { tomorrowItems } from '../lib/tomorrow';
 import { WeatherLine, WeatherPending } from '../components/WeatherCard';
 import { useWeather } from '../hooks/useWeather';
@@ -45,6 +46,9 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
   const todays = eventsOn(events, dateKey(now));
   const familyWide = todays.filter((e) => e.who.length === 0);
   const { weather, status: wStatus, error: wError, retry: wRetry } = useWeather();
+  const special = specialDayOf(now, events);
+  const cheer = weekStartCheer(now, settings);
+  const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
   const marks: ClockMark[] = members.flatMap((m) => {
     const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
     return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
@@ -54,7 +58,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
     <div className="screen fill">
       <Clock compact marks={marks} />
       {weather ? <WeatherLine w={weather} /> : <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />}
-      <TomorrowBar items={tomorrowItems(events, dateKey(now), members)} variant="phone" />
+      <TomorrowBar items={tomorrowItems(events, dateKey(now), members)} variant="phone" banner={banner} />
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
