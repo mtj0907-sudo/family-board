@@ -8,6 +8,7 @@ import { ComingSoon, HelpScreen, MoreScreen, type SubPage } from './features/Mor
 import { SettingsScreen } from './features/SettingsScreen';
 import { ScheduleScreen } from './features/ScheduleScreen';
 import { CalendarScreen } from './features/CalendarScreen';
+import { WorkScreen } from './features/WorkScreen';
 
 type Tab = 'today' | 'status' | 'message' | 'routine' | 'more';
 
@@ -47,10 +48,12 @@ export function Shell() {
         <ScheduleScreen />
       ) : sub === 'calendar' ? (
         <CalendarScreen />
+      ) : sub === 'work' ? (
+        <WorkScreen />
       ) : sub === 'help' ? (
         <HelpScreen />
       ) : (
-        <ComingSoon title={SUB_TITLES[sub]} stage={sub === 'work' ? 3 : 4} />
+        <ComingSoon title={SUB_TITLES[sub]} stage={4} />
       );
   } else if (tab === 'today') body = <TodayScreen />;
   else if (tab === 'status') body = <StatusScreen />;

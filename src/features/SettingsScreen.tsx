@@ -7,6 +7,7 @@ import { saveSettings } from '../lib/db';
 import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
 import type { FamilySettings, Member, RoutineItem } from '../lib/types';
+import { TIMED_CODES } from '../lib/work';
 
 export function SettingsScreen() {
   return (
@@ -20,6 +21,8 @@ function SettingsBody() {
   const { code, settings, leave } = useFamily();
   const [members, setMembers] = useState<Member[]>(settings.members);
   const [items, setItems] = useState<RoutineItem[]>(settings.routineItems);
+  const [owner, setOwner] = useState(settings.workOwnerId ?? '');
+  const [times, setTimes] = useState<Record<string, string>>(settings.workTimes ?? {});
   const [newPin, setNewPin] = useState('');
   const [openEmoji, setOpenEmoji] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
@@ -42,7 +45,15 @@ function SettingsBody() {
         .filter((i) => i.label.trim())
         .map((i, n) => ({ ...i, label: i.label.trim(), key: i.key || `c${Date.now()}${n}` })),
       pinHash: newPin ? await hashPin(newPin, code) : settings.pinHash,
+      workTimes: Object.fromEntries(
+        Object.entries(times)
+          .map(([k, v]) => [k, v.trim()] as const)
+          .filter(([, v]) => v),
+      ),
     };
+    // Firestore는 undefined 값을 저장할 수 없어서, 선택 안 했으면 항목 자체를 뺍니다.
+    if (owner) next.workOwnerId = owner;
+    else delete next.workOwnerId;
     void saveSettings(code, next);
     setNewPin('');
     setMsg('저장했어요 ✅');
@@ -100,6 +111,36 @@ function SettingsBody() {
             ➕ 항목 추가
           </button>
         )}
+      </div>
+
+      <div className="card">
+        <h2>👩‍💼 근무표</h2>
+        <label className="field">
+          <span>근무표를 쓰는 사람</span>
+          <select value={owner} onChange={(e) => setOwner(e.target.value)}>
+            <option value="">선택 안 함</option>
+            {members
+              .filter((m) => m.role === 'parent')
+              .map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.emoji} {m.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <div className="sub">코드별 근무 시간 (비워 두면 코드만 보여요. 예: 08:00~17:00)</div>
+        {TIMED_CODES.map((c) => (
+          <div className="row" key={c}>
+            <span className="wk-code">{c}</span>
+            <input
+              className="grow"
+              value={times[c] ?? ''}
+              maxLength={15}
+              placeholder="시간"
+              onChange={(e) => setTimes({ ...times, [c]: e.target.value })}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="card">

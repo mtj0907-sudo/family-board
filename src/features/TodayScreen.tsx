@@ -1,7 +1,9 @@
 import { Clock } from '../components/Clock';
 import { EventRow } from '../components/EventRow';
 import { ProgressBar } from '../components/ProgressBar';
-import { eventsOn, type EventDoc } from '../lib/events';
+import { WorkChip } from '../components/WorkChip';
+import { useWorkWindow } from '../hooks/useWork';
+import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
@@ -12,8 +14,9 @@ import { dateKey, etaProgress, formatClock, formatElapsed, formatRemaining } fro
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
 export function TodayScreen() {
-  const { code, members } = useFamily();
+  const { code, members, settings } = useFamily();
   const now = useNow(30000);
+  const workOn = useWorkWindow(code, dateKey(now));
   const statuses = useColData<StatusDoc>(path(code, 'status'));
   const routine = useDocData<RoutineDoc>(path(code, 'routines', dateKey(now)));
   const events = useColData<EventDoc>(path(code, 'events'));
@@ -41,6 +44,7 @@ export function TodayScreen() {
           routine={routine ?? undefined}
           now={now}
           events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
+          workOn={m.id === settings.workOwnerId ? workOn : undefined}
         />
       ))}
     </div>
@@ -53,12 +57,14 @@ function MemberCard({
   routine,
   now,
   events,
+  workOn,
 }: {
   m: Member;
   st?: StatusDoc;
   routine?: RoutineDoc;
   now: number;
   events: WithId<EventDoc>[];
+  workOn?: (dateKey: string) => string | undefined;
 }) {
   const { settings } = useFamily();
   const def = st ? statusOf(st.key) : undefined;
@@ -108,6 +114,8 @@ function MemberCard({
           </div>
         )}
 
+        {workOn && <WorkStrip workOn={workOn} now={now} times={settings.workTimes} />}
+
         {events.length > 0 && (
           <div className="today-events">
             <div className="sub">📅 오늘 일정</div>
@@ -116,6 +124,39 @@ function MemberCard({
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** 엄마 카드의 오늘 근무 칩 + 내일·모레 미리보기 */
+function WorkStrip({
+  workOn,
+  now,
+  times,
+}: {
+  workOn: (dateKey: string) => string | undefined;
+  now: number;
+  times?: Record<string, string>;
+}) {
+  const today = dateKey(now);
+  const todayCode = workOn(today);
+  const next = [
+    { label: '내일', code: workOn(addDays(today, 1)) },
+    { label: '모레', code: workOn(addDays(today, 2)) },
+  ];
+  return (
+    <div className="workstrip">
+      <div className="workrow">
+        <span className="sub">👩‍💼 오늘 근무</span>
+        {todayCode ? <WorkChip code={todayCode} times={times} /> : <span className="sub">등록 안 됨</span>}
+      </div>
+      <div className="workrow">
+        {next.map((n) => (
+          <span key={n.label} className="workpreview">
+            <span className="sub">{n.label}</span> {n.code ? <WorkChip code={n.code} /> : <span className="sub">-</span>}
+          </span>
+        ))}
       </div>
     </div>
   );

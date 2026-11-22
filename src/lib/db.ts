@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   setDoc,
@@ -73,3 +74,15 @@ export async function saveEvent(code: string, id: string | null, ev: EventDoc): 
 
 export const deleteEvent = (code: string, id: string) =>
   deleteDoc(doc(need(), path(code, 'events', id)));
+
+/** 한 달 근무를 통째로 저장(그 달의 기존 내용은 교체) */
+export const saveWorkMonth = (code: string, ym: string, days: Record<string, string>) =>
+  setDoc(doc(need(), path(code, 'work', ym)), { days, updatedAt: Date.now() });
+
+/** 하루만 수정. value가 null이면 그날 기록 삭제 */
+export const setWorkDay = (code: string, ym: string, day: number, value: string | null) =>
+  setDoc(
+    doc(need(), path(code, 'work', ym)),
+    { days: { [String(day)]: value ?? deleteField() }, updatedAt: Date.now() },
+    { merge: true },
+  );
