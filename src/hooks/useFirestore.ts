@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { collection, doc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase';
+import { isStatusPath, normalizeStatus } from '../lib/statusDoc';
 import type { WithId } from '../lib/types';
+
+/** 단축어가 바꾼 상태 기록을 앱이 쓰는 모양으로 맞춥니다 */
+const fix = <T,>(path: string, d: T): T => (isStatusPath(path) ? normalizeStatus(d as never) : d);
 
 /** 문서 하나를 실시간 구독. undefined=불러오는 중, null=문서 없음 */
 export function useDocData<T>(path: string | null): T | null | undefined {
@@ -14,7 +18,7 @@ export function useDocData<T>(path: string | null): T | null | undefined {
     setData(undefined);
     return onSnapshot(
       doc(db, path),
-      (s) => setData(s.exists() ? (s.data() as T) : null),
+      (s) => setData(s.exists() ? fix(path, s.data() as T) : null),
       () => setData(null),
     );
   }, [path]);
@@ -44,7 +48,7 @@ export function useColData<T>(path: string | null, opts: ColOpts = {}): WithId<T
           : base;
     return onSnapshot(
       q,
-      (s) => setRows(s.docs.map((d) => ({ id: d.id, ...(d.data() as T) }))),
+      (s) => setRows(s.docs.map((d) => ({ id: d.id, ...fix(path, d.data() as T) }))),
       () => setRows([]),
     );
   }, [path, orderField, limitN]);

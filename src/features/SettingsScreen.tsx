@@ -17,6 +17,7 @@ import { PhotoCropper } from '../components/PhotoCropper';
 import { loadPhoto, renderFit } from '../lib/photo';
 import { TIMED_CODES } from '../lib/work';
 import { PLACE_CHOICES } from '../lib/specialDay';
+import { ShortcutHelper } from './ShortcutHelper';
 
 export function SettingsScreen() {
   return (
@@ -134,6 +135,7 @@ function SettingsBody() {
         <div className="sub">동그라미를 누르면 얼굴 사진을 고를 수 있어요. 사진은 우리 가족 Firebase에만 저장되고, 아래 저장하기를 눌러야 반영돼요.</div>
       </div>
       <BoardPhotoCard code={code} />
+      <ShortcutHelper />
       <div className="card">
         <h2>평일에 가는 곳</h2>
         <div className="sub">일요일 오후에 "새로운 한 주, 힘차게 시작해요! 내일은 승우 학교 · 아림 유치원"처럼 응원 메시지를 보여줘요.</div>
