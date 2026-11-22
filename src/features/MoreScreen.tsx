@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CalendarRange,
   ChevronRight,
+  MapPinned,
   Monitor,
   Settings,
   Smartphone,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { useFamily } from '../FamilyContext';
+import { openFindMy } from '../lib/findmy';
 
 export type SubPage = 'settings' | 'schedule' | 'calendar' | 'work' | 'board' | 'help';
 
@@ -49,6 +51,15 @@ export function MoreScreen({ onOpen }: { onOpen: (p: SubPage) => void }) {
             <ChevronRight size={20} strokeWidth={1.75} className="chev" aria-hidden />
           </button>
         ))}
+        {isParent && (
+          <button className="listitem" onClick={openFindMy}>
+            <MapPinned size={24} strokeWidth={1.75} aria-hidden />
+            <span className="grow left">
+              위치 확인<span className="sub"> · 나의 찾기 앱 열기</span>
+            </span>
+            <ChevronRight size={20} strokeWidth={1.75} className="chev" aria-hidden />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Clock as ClockIcon } from 'lucide-react';
+import { Clock as ClockIcon, MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
 import { EventRow } from '../components/EventRow';
@@ -10,6 +10,7 @@ import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { doingOf, statusOf } from '../lib/constants';
+import { openFindMy } from '../lib/findmy';
 import { path } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
@@ -71,7 +72,7 @@ export function MemberRow({
   events: WithId<EventDoc>[];
   workOn?: (dateKey: string) => string | undefined;
 }) {
-  const { settings } = useFamily();
+  const { settings, isParent } = useFamily();
   const def = st ? statusOf(st.key) : undefined;
   const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
@@ -81,7 +82,15 @@ export function MemberRow({
     <div className="mrow">
       <Avatar member={m} size={46} />
       <div className="m-body">
-        <div className="m-name">{m.name}</div>
+        <div className="m-head">
+          <div className="m-name">{m.name}</div>
+          {isParent && m.role === 'child' && (
+            <button className="locate" onClick={openFindMy} aria-label={`${m.name} 위치 확인 (나의 찾기 열기)`}>
+              <MapPinned size={18} strokeWidth={1.75} aria-hidden />
+              위치
+            </button>
+          )}
+        </div>
         {st && def ? (
           <div className="m-status">
             <Glyph k={def.emoji} size={18} />
