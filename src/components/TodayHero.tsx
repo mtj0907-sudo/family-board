@@ -114,10 +114,12 @@ export function TodayHero({
         </div>
           <div className="thero-qa">
             <button className="tq" onClick={onMessage} aria-label="한마디 보내기">
-              <MessageCircleHeart size={20} strokeWidth={1.75} aria-hidden />
+              <MessageCircleHeart size={19} strokeWidth={1.75} aria-hidden />
+              <span>한마디</span>
             </button>
             <button className="tq" onClick={onWhen} aria-label="언제 와요?">
-              <ClockIcon size={20} strokeWidth={1.75} aria-hidden />
+              <ClockIcon size={19} strokeWidth={1.75} aria-hidden />
+              <span>언제 와요?</span>
             </button>
           </div>
         </div>
