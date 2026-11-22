@@ -41,9 +41,11 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
   const messageDot = useMessageDot(tab === 'message');
   const live = useLiveAlerts(tab);
 
-  const go = (t: Tab) => {
+  const [statusFor, setStatusFor] = useState<string | null>(null);
+  const go = (t: Tab, who?: string) => {
     setTab(t);
     setSub(null);
+    setStatusFor(who ?? null);
   };
 
   let body;
@@ -63,7 +65,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
         <ComingSoon title={SUB_TITLES[sub]} stage={4} />
       );
   } else if (tab === 'today') body = <TodayScreen onGo={go} />;
-  else if (tab === 'status') body = <StatusScreen />;
+  else if (tab === 'status') body = <StatusScreen key={statusFor ?? 'me'} initialTarget={statusFor} />;
   else if (tab === 'message') body = <MessageScreen />;
   else if (tab === 'routine') body = <RoutineScreen />;
   else body = <MoreScreen onOpen={(p) => (p === 'board' && onBoard ? onBoard() : setSub(p))} />;

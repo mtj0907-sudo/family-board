@@ -1,4 +1,4 @@
-import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
+import { Backpack, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { TodayHero } from '../components/TodayHero';
@@ -8,28 +8,26 @@ import { specialDayOf, treeSeason, weekStartCheer } from '../lib/specialDay';
 import { store } from '../lib/storage';
 import { tomorrowItems } from '../lib/tomorrow';
 import { useWeather } from '../hooks/useWeather';
+import { MemberDetail } from './MemberDetail';
 import { PhoneWhenSheet } from './PhoneSheets';
 import { useFitZoom } from '../hooks/useFitZoom';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
-import { EtaTrack } from '../components/EtaTrack';
-import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useBag } from '../hooks/useBag';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { bagNudgeActive, bagProgress } from '../lib/bag';
-import { doingOf, statusInfo } from '../lib/constants';
-import { openFindMy } from '../lib/findmy';
+import { statusInfo } from '../lib/constants';
 import { path } from '../lib/db';
-import { addDays, eventsOn, type EventDoc } from '../lib/events';
+import { eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
 import { estimateEta } from '../lib/whenHome';
-import { dateKey, formatElapsed } from '../lib/time';
+import { dateKey, formatClockKo, formatElapsed, formatLeftKo } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
-export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'routine') => void }) {
+export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'routine', who?: string) => void }) {
   const { code, members, settings, me, isParent } = useFamily();
   const now = useNow(30000);
   const workOn = useWorkWindow(code, dateKey(now));
@@ -50,6 +48,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
   const familyWide = todays.filter((e) => e.who.length === 0);
   const { weather, status: wStatus, error: wError, retry: wRetry } = useWeather();
   const [whenOpen, setWhenOpen] = useState(false);
+  const [detail, setDetail] = useState<string | null>(null);
   const fit = useFitZoom();
   const special = specialDayOf(now, events);
   const cheer = weekStartCheer(now, settings);
@@ -95,10 +94,24 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
             bag={bagInfo(m.id)}
+            onOpen={() => setDetail(m.id)}
           />
         ))}
       </div>
       {whenOpen && <PhoneWhenSheet onClose={() => setWhenOpen(false)} />}
+      {detail && members.find((x) => x.id === detail) && (
+        <MemberDetail
+          m={members.find((x) => x.id === detail)!}
+          st={statuses.find((x) => x.id === detail)}
+          routine={routine ?? undefined}
+          now={now}
+          events={todays.filter((e) => e.who.includes(detail) || e.pickupBy === detail)}
+          workOn={detail === settings.workOwnerId ? workOn : undefined}
+          bag={bagInfo(detail)}
+          onClose={() => setDetail(null)}
+          onChangeStatus={isParent && detail !== me.id ? () => onGo?.('status', detail) : undefined}
+        />
+      )}
     </div>
   );
 }
@@ -111,6 +124,7 @@ export function MemberRow({
   events,
   workOn,
   bag,
+  onOpen,
 }: {
   m: Member;
   st?: StatusDoc;
@@ -120,17 +134,17 @@ export function MemberRow({
   workOn?: (dateKey: string) => string | undefined;
   /** 학교 가는 아이의 가방 챙기기 현황 */
   bag?: { done: number; total: number; complete: boolean; skip: boolean };
+  /** 누르면 이 사람의 자세한 모습 */
+  onOpen?: () => void;
 }) {
-  const { settings, isParent } = useFamily();
+  const { settings } = useFamily();
   const def = st ? statusInfo(st) : undefined;
-  const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
-  const extra = events.length > 0 || !!workOn;
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
+  const workCode = workOn?.(dateKey(now));
 
   return (
-    <div className={`mcard pres-${presenceOf(st)}${isParent && m.role === 'child' ? ' has-loc' : ''}`} style={{ ['--c' as string]: toneOf(m.id).fg }}>
-      <div className="mrow-in">
+    <button className={`mcard pres-${presenceOf(st)}`} style={{ ['--c' as string]: toneOf(m.id).fg }} onClick={onOpen} aria-label={`${m.name} 자세히 보기`}>
       <Avatar member={m} size={46} />
       <div className="m-body">
         <div className="m-line">
@@ -146,90 +160,35 @@ export function MemberRow({
           ) : (
             <span className="sub">아직 상태가 없어요</span>
           )}
-          {isParent && m.role === 'child' && (
-            <button className="locate" onClick={openFindMy} aria-label={`${m.name} 위치 확인 (나의 찾기 열기)`}>
-              <MapPinned size={18} strokeWidth={1.75} aria-hidden />
-            </button>
-          )}
         </div>
-
         {eta ? (
-          <EtaTrack member={m} eta={eta} now={now} />
+          <div className="m-eta">
+            {formatClockKo(eta.at)}
+            {eta.estimated ? '쯤' : ''} 도착 <span className="sub">· {formatLeftKo(eta.at - now)}</span>
+          </div>
         ) : (
           def?.eta && <div className="sub et-none">도착 시각은 아직 안 정했어요</div>
         )}
-
-        {m.role === 'child' && (
-          <div className="pips">
-            {settings.routineItems.map((it) => {
-              const on = !!routine?.done?.[m.id]?.[it.key];
-              return (
-                <span key={it.key} className={on ? 'pip on' : 'pip'} title={`${it.label} ${on ? '완료' : '아직'}`} aria-label={`${it.label} ${on ? '완료' : '아직'}`}>
-                  <Glyph k={it.emoji} size={14} />
-                </span>
-              );
-            })}
-            <span className="sub">
-              {prog.done}/{prog.total}
-            </span>
-            {doing && (
-              <span className="badge sub">
-                <Glyph k={doing.emoji} size={15} />
-                {doing.label}
+        {(m.role === 'child' || workCode || events.length > 0) && (
+          <div className="mchips">
+            {m.role === 'child' && (
+              <span className={prog.done === prog.total ? 'mchip ok' : 'mchip'}>
+                할 일 {prog.done}/{prog.total}
               </span>
             )}
-            {bag && (
-              <span className={bag.complete ? 'bagbadge ok' : 'bagbadge'}>
-                <Backpack size={15} strokeWidth={1.75} aria-hidden />
-                {bag.skip ? '학교 안 가요' : bag.complete ? '가방 다 챙겼어요' : `가방 ${bag.done}/${bag.total}`}
+            {m.role === 'child' && bag && (
+              <span className={bag.complete ? 'mchip ok' : 'mchip'}>
+                <Backpack size={13} strokeWidth={1.75} aria-hidden />
+                {bag.skip ? '학교 안 가요' : bag.complete ? '가방 다 챙김' : `가방 ${bag.done}/${bag.total}`}
               </span>
             )}
-          </div>
-        )}
-
-        {extra && (
-          <div className="m-extra">
-            {workOn && <WorkStrip workOn={workOn} now={now} times={settings.workTimes} />}
-            {events.map((ev) => (
-              <EventRow key={ev.id} ev={ev} forMember={m} />
-            ))}
+            {workCode && <span className="mchip">근무 {workCode}</span>}
+            {events.length > 0 && <span className="mchip">일정 {events.length}</span>}
           </div>
         )}
       </div>
-      </div>
-    </div>
-  );
-}
-
-/** 엄마 카드의 오늘 근무 칩 + 내일·모레 미리보기 */
-function WorkStrip({
-  workOn,
-  now,
-  times,
-}: {
-  workOn: (dateKey: string) => string | undefined;
-  now: number;
-  times?: Record<string, string>;
-}) {
-  const today = dateKey(now);
-  const todayCode = workOn(today);
-  const next = [
-    { label: '내일', code: workOn(addDays(today, 1)) },
-    { label: '모레', code: workOn(addDays(today, 2)) },
-  ];
-  return (
-    <div className="workrow">
-      <span className="workpreview">
-        <span className="sub">오늘</span>
-        {todayCode ? <WorkChip code={todayCode} times={times} /> : <span className="sub">등록 안 됨</span>}
-      </span>
-      {next.map((n) => (
-        <span key={n.label} className="workpreview">
-          <span className="sub">{n.label}</span>
-          {n.code ? <WorkChip code={n.code} /> : <span className="sub">-</span>}
-        </span>
-      ))}
-    </div>
+      <ChevronRight size={20} strokeWidth={1.75} className="chev" aria-hidden />
+    </button>
   );
 }
 

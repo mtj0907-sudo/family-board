@@ -737,11 +737,46 @@ h2 { font-size: 21px; }
 /* 화면에 여유가 있으면 사람 카드가 남는 높이를 나눠 가져서, 아래가 비지 않게 */
 .screen.today { flex: 1 0 auto; }
 .screen.today .mlist { flex: 1 1 auto; }
-.screen.today .mcard { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+.screen.today .mcard { flex: 1 1 auto; }
 
 /* 맨 위 카드의 얼굴 동그라미를 없앤 대신, 사람 카드의 사진 테두리 색이 집(초록)·밖(노랑)·자는 중(파랑)을 알려줘요 */
 .mcard.pres-home { --ring: #38b27a; }
 .mcard.pres-away { --ring: #e0a526; }
 .mcard.pres-sleep { --ring: #7d8fb3; }
 .mcard.pres-none { --ring: #c3ccc7; }
-.mcard .mrow-in > .avatar { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ring, transparent); }
+.mcard > .avatar { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ring, transparent); }
+
+.linkbtn { align-self: center; border: 0; background: none; color: var(--ink-3); font-size: 13.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; padding: 10px 14px; min-height: 40px; }
+.linkbtn:active { color: var(--ink); }
+
+/* ───────── 사람 카드: 한 번 누르면 자세히 ───────── */
+button.mcard { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 10px 12px 10px 18px; }
+button.mcard:active { transform: scale(.985); background: #fafbfa; }
+.mcard > .avatar { flex: none; width: 48px !important; height: 48px !important; font-size: 20px !important; margin: 3px; }
+.mcard .m-body { flex: 1; min-width: 0; }
+.mcard .chev { flex: none; color: var(--ink-3); }
+.m-eta { margin-top: 3px; font-size: 15px; font-weight: 700; }
+.mchips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.mchip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; background: var(--bg); color: var(--ink-2); font-size: 12.5px; font-weight: 700; }
+.mchip.ok { background: #e4f3ea; color: #1f6b45; }
+
+/* 자세히 보기 창 */
+.phone-sheet.detail { gap: 14px; }
+.dt-head { display: flex; align-items: center; gap: 14px; }
+.dt-head h2 { font-size: 24px; }
+.dt-head .avatar { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ring, transparent); }
+.dt-head.pres-home { --ring: #38b27a; --pbg: #e4f3ea; --pfg: #1f6b45; }
+.dt-head.pres-away { --ring: #e0a526; --pbg: #f6ecd2; --pfg: #86650f; }
+.dt-head.pres-sleep { --ring: #7d8fb3; --pbg: #e3e9f4; --pfg: #40557f; }
+.dt-head.pres-none { --ring: #c3ccc7; --pbg: #eef1ef; --pfg: #7a8780; }
+.dt-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 13px 4px 10px; border-radius: 999px; background: var(--pbg); color: var(--pfg); font-size: 16px; }
+.dt-sec { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line-2); padding-top: 12px; }
+.dt-title { font-weight: 800; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+.dt-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.dt-item { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-3); font-size: 14px; font-weight: 600; }
+.dt-item.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.dt-bag { font-weight: 700; font-size: 14.5px; color: var(--ink-2); }
+.dt-bag.ok { color: #1f6b45; }
+.dt-msg { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: 15px; }
+.dt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dt-actions .btn { flex: 1; min-width: 140px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
