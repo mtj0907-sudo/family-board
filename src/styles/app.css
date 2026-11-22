@@ -657,9 +657,6 @@ h2 { font-size: 21px; }
 .mcard .pips { margin-top: 10px; }
 
 /* ───────── 빠른 버튼과 아래 창 ───────── */
-.qa { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 84px); display: flex; justify-content: center; gap: 10px; z-index: 15; pointer-events: none; }
-.qb { pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .94); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ink); font-weight: 700; font-size: 15px; box-shadow: 0 8px 22px rgba(23, 32, 29, .2); }
-.qb.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
 .modal.sheet-bottom { align-items: flex-end; padding: 0; }
 .phone-sheet { width: 100%; max-width: 520px; background: var(--surface); border-radius: 28px 28px 0 0; padding: 22px 18px calc(env(safe-area-inset-bottom) + 18px); display: flex; flex-direction: column; gap: 12px; max-height: 88dvh; overflow-y: auto; animation: sheet-up .25s ease-out; }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -668,8 +665,8 @@ h2 { font-size: 21px; }
 .ws-done { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 
 /* ───────── 누르는 느낌 ───────── */
-.btn, .chip, .tile, .qb, .pst, .kbtn, .saybtn, .whobtn, .stab, .bagchip, .talkhint, .btile-edit, .tab, .board-btn, .pick, .top-btn, .locate { transition: transform .12s ease, background-color .15s, border-color .15s; }
-.btn:active:not(:disabled), .chip:active, .tile:active, .qb:active, .pst:active, .saybtn:active:not(:disabled), .whobtn:active, .stab:active, .bagchip:active, .talkhint:active, .btile-edit:active, .pick:active, .top-btn:active, .locate:active { transform: scale(.96); }
+.btn, .chip, .tile, .tq, .pst, .kbtn, .saybtn, .whobtn, .stab, .bagchip, .talkhint, .btile-edit, .tab, .board-btn, .pick, .top-btn, .locate { transition: transform .12s ease, background-color .15s, border-color .15s; }
+.btn:active:not(:disabled), .chip:active, .tile:active, .tq:active, .pst:active, .saybtn:active:not(:disabled), .whobtn:active, .stab:active, .bagchip:active, .talkhint:active, .btile-edit:active, .pick:active, .top-btn:active, .locate:active { transform: scale(.96); }
 .chip .chk { margin-left: auto; flex: none; animation: chk-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
 .chip.on { animation: chip-pop .3s ease-out; }
 @keyframes chip-pop { 0% { transform: scale(.94); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
@@ -685,10 +682,11 @@ h2 { font-size: 21px; }
 .thero-date { opacity: .8; font-size: .92em; }
 .thero-time { margin-top: 0; }
 .thero-time small { font-size: 18px; }
-.thero-time b { font-size: 54px; line-height: 1.08; }
+.thero-time b { font-size: 50px; line-height: 1.06; }
 .thero-wx { margin-top: 2px; font-size: 14.5px; gap: 2px 9px; }
 .thero-wx b { font-size: 22px; }
-.thero-home { margin-top: 6px; font-size: 13px; font-weight: 600; opacity: .88; }
+.thero-home { display: none; margin-top: 6px; font-size: 13px; font-weight: 600; opacity: .88; }
+@media (min-height: 900px) { .thero-home { display: block; } }
 .thero-chips { margin-top: 8px; gap: 5px; }
 .glass { padding: 6px 11px; border-radius: 13px; font-size: 13px; }
 .glass.strong { font-size: 13.5px; }
@@ -715,9 +713,6 @@ h2 { font-size: 21px; }
 .mcard .et-when { font-size: 15px; }
 .mcard .m-extra { margin-top: 4px; padding-top: 4px; }
 
-/* 아래에 붙어 있는 빠른 버튼: 화면이 모자라면 아래에 따라다니고, 여유가 있으면 카드 바로 아래에 있어요 */
-.qa { position: sticky; left: auto; right: auto; bottom: 8px; margin-top: 2px; z-index: 5; pointer-events: none; }
-.qb { min-height: 44px; font-size: 14.5px; padding: 0 17px; }
 
 @media (max-height: 740px) {
   .thero-home { display: none; }
@@ -735,3 +730,11 @@ h2 { font-size: 21px; }
 .mcard .pips .sub, .mcard .pips .badge, .mcard .bagbadge { font-size: 12.5px; }
 .mcard.has-loc .m-line { padding-right: 40px; }
 .mcard .m-line .locate { position: absolute; right: 12px; top: 10px; margin: 0; }
+
+/* 맨 위 카드 안의 빠른 버튼: 한마디 보내기, 언제 와요? */
+.thero-wxrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.thero-wxrow .thero-wx { margin-top: 0; min-width: 0; }
+.thero-qa { display: flex; gap: 8px; flex: none; }
+.tq { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .92); color: var(--ink); border: 0; box-shadow: 0 4px 12px rgba(0, 0, 0, .22); }
+.tq:active { transform: scale(.93); }
+.screen.today { padding-bottom: 6px; }
