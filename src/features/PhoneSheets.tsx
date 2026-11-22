@@ -1,4 +1,4 @@
-import { Check, Clock as ClockIcon, MessageCircleHeart } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { ProgressBar } from '../components/ProgressBar';
@@ -12,22 +12,6 @@ import { path, sendMessage } from '../lib/db';
 import { dateKey } from '../lib/time';
 import type { StatusDoc } from '../lib/types';
 import { whenHome } from '../lib/whenHome';
-
-/** 화면 아래에 떠 있는 빠른 버튼 두 개 */
-export function QuickActions({ onMessage, onWhen }: { onMessage: () => void; onWhen: () => void }) {
-  return (
-    <div className="qa">
-      <button className="qb primary" onClick={onMessage}>
-        <MessageCircleHeart size={19} strokeWidth={1.75} aria-hidden />
-        한마디 보내기
-      </button>
-      <button className="qb" onClick={onWhen}>
-        <ClockIcon size={19} strokeWidth={1.75} aria-hidden />
-        언제 와요?
-      </button>
-    </div>
-  );
-}
 
 /** "언제 와요?" 창: 다른 어른들의 도착 시각을 보여주고, 모를 때는 물어볼 수 있어요. */
 export function PhoneWhenSheet({ onClose }: { onClose: () => void }) {

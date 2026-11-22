@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ChristmasTree } from './ChristmasTree';
+import { Clock as ClockIcon, MessageCircleHeart } from 'lucide-react';
 import { PresenceMini } from './PresenceStrip';
 import { Glyph } from './Glyph';
 import { SpecialFx } from './SpecialFx';
@@ -38,6 +39,8 @@ export function TodayHero({
   members,
   statuses,
   onOpenStatus,
+  onMessage,
+  onWhen,
   effects,
 }: {
   weather: Weather | null;
@@ -51,6 +54,8 @@ export function TodayHero({
   members: Member[];
   statuses: WithId<StatusDoc>[];
   onOpenStatus?: () => void;
+  onMessage: () => void;
+  onWhen: () => void;
   /** 효과를 보여줄지 (끄기 설정·움직임 줄이기 반영) */
   effects: boolean;
 }) {
@@ -89,7 +94,8 @@ export function TodayHero({
           <PresenceMini members={members} statuses={statuses} onOpen={onOpenStatus} />
         </div>
 
-        <div className="thero-wx">
+        <div className="thero-wxrow">
+          <div className="thero-wx">
           {weather ? (
             <>
               <WeatherIcon w={weather} size={22} />
@@ -105,6 +111,15 @@ export function TodayHero({
           ) : (
             <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={onRetryWeather} />
           )}
+        </div>
+          <div className="thero-qa">
+            <button className="tq" onClick={onMessage} aria-label="한마디 보내기">
+              <MessageCircleHeart size={20} strokeWidth={1.75} aria-hidden />
+            </button>
+            <button className="tq" onClick={onWhen} aria-label="언제 와요?">
+              <ClockIcon size={20} strokeWidth={1.75} aria-hidden />
+            </button>
+          </div>
         </div>
 
         <div className="thero-home">🏠 {sum.text}</div>

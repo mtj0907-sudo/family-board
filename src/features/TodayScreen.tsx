@@ -8,7 +8,8 @@ import { specialDayOf, treeSeason, weekStartCheer } from '../lib/specialDay';
 import { store } from '../lib/storage';
 import { tomorrowItems } from '../lib/tomorrow';
 import { useWeather } from '../hooks/useWeather';
-import { PhoneWhenSheet, QuickActions } from './PhoneSheets';
+import { PhoneWhenSheet } from './PhoneSheets';
+import { useFitZoom } from '../hooks/useFitZoom';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
 import { EtaTrack } from '../components/EtaTrack';
@@ -49,13 +50,14 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
   const familyWide = todays.filter((e) => e.who.length === 0);
   const { weather, status: wStatus, error: wError, retry: wRetry } = useWeather();
   const [whenOpen, setWhenOpen] = useState(false);
+  const fit = useFitZoom();
   const special = specialDayOf(now, events);
   const cheer = weekStartCheer(now, settings);
   const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
   const effects = store.get('fb.fx') !== '0' && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
   return (
-    <div className="screen today">
+    <div className="screen today" ref={fit}>
       <TodayHero
         weather={weather}
         wStatus={wStatus}
@@ -68,6 +70,8 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
         members={members}
         statuses={statuses}
         onOpenStatus={() => onGo?.('status')}
+        onMessage={() => onGo?.('message')}
+        onWhen={() => setWhenOpen(true)}
         effects={effects}
       />
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
@@ -95,7 +99,6 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
           />
         ))}
       </div>
-      <QuickActions onMessage={() => onGo?.('message')} onWhen={() => setWhenOpen(true)} />
       {whenOpen && <PhoneWhenSheet onClose={() => setWhenOpen(false)} />}
     </div>
   );
