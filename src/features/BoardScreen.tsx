@@ -11,7 +11,7 @@ import { useColData, useDocData } from '../hooks/useFirestore';
 import { ChristmasTree } from '../components/ChristmasTree';
 import { SpecialFx } from '../components/SpecialFx';
 import { TomorrowBar } from '../components/TomorrowBar';
-import { cheerOf, previewSpecial, specialDayOf, weekStartCheer, type SpecialKind } from '../lib/specialDay';
+import { cheerOf, previewSpecial, specialDayOf, treeSeason, weekStartCheer, type SpecialKind } from '../lib/specialDay';
 import { tomorrowItems } from '../lib/tomorrow';
 import { BoardFeed } from '../components/BoardFeed';
 import { loadHidden, saveHidden } from '../lib/boardFeed';
@@ -300,7 +300,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
       </section>
 
       {special && fxOn && !reduceMotion && <SpecialFx kind={special.kind} scale={box.scale} />}
-      {special?.kind === 'christmas' && (
+      {(special?.kind === 'christmas' || (!specialPreview && treeSeason(now))) && (
         <div className="xmas-corner">
           <ChristmasTree />
         </div>

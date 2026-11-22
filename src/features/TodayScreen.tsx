@@ -1,11 +1,15 @@
 import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
+import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
-import { Clock } from '../components/Clock';
-import { TomorrowBar } from '../components/TomorrowBar';
-import { specialDayOf, weekStartCheer } from '../lib/specialDay';
+import { PresenceStrip } from '../components/PresenceStrip';
+import { TodayHero } from '../components/TodayHero';
+import { toneOf } from '../components/Avatar';
+import { presenceOf } from '../lib/presence';
+import { specialDayOf, treeSeason, weekStartCheer } from '../lib/specialDay';
+import { store } from '../lib/storage';
 import { tomorrowItems } from '../lib/tomorrow';
-import { WeatherLine, WeatherPending } from '../components/WeatherCard';
 import { useWeather } from '../hooks/useWeather';
+import { PhoneWhenSheet, QuickActions } from './PhoneSheets';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
 import { EtaTrack } from '../components/EtaTrack';
@@ -26,7 +30,7 @@ import type { ClockMark } from '../components/Clock';
 import { dateKey, formatElapsed } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
-export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
+export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'routine') => void }) {
   const { code, members, settings, me, isParent } = useFamily();
   const now = useNow(30000);
   const workOn = useWorkWindow(code, dateKey(now));
@@ -46,19 +50,31 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
   const todays = eventsOn(events, dateKey(now));
   const familyWide = todays.filter((e) => e.who.length === 0);
   const { weather, status: wStatus, error: wError, retry: wRetry } = useWeather();
+  const [whenOpen, setWhenOpen] = useState(false);
   const special = specialDayOf(now, events);
   const cheer = weekStartCheer(now, settings);
   const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
+  const effects = store.get('fb.fx') !== '0' && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   const marks: ClockMark[] = members.flatMap((m) => {
     const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
     return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
   });
 
   return (
-    <div className="screen fill">
-      <Clock compact marks={marks} />
-      {weather ? <WeatherLine w={weather} /> : <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />}
-      <TomorrowBar items={tomorrowItems(events, dateKey(now), members)} variant="phone" banner={banner} />
+    <div className="screen today">
+      <TodayHero
+        weather={weather}
+        wStatus={wStatus}
+        wError={wError}
+        onRetryWeather={wRetry}
+        banner={banner}
+        tomorrow={tomorrowItems(events, dateKey(now), members)}
+        special={special?.kind ?? null}
+        tree={treeSeason(now) || special?.kind === 'christmas'}
+        marks={marks}
+        effects={effects}
+      />
+      <PresenceStrip members={members} statuses={statuses} onOpen={() => onGo?.('status')} />
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
@@ -70,7 +86,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
           ))}
         </div>
       )}
-      <div className="group fill">
+      <div className="mlist">
         {members.map((m) => (
           <MemberRow
             key={m.id}
@@ -84,6 +100,8 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
           />
         ))}
       </div>
+      <QuickActions onMessage={() => onGo?.('message')} onWhen={() => setWhenOpen(true)} />
+      {whenOpen && <PhoneWhenSheet onClose={() => setWhenOpen(false)} />}
     </div>
   );
 }
@@ -114,9 +132,9 @@ export function MemberRow({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
-    <div className="mrow">
+    <div className={`mcard pres-${presenceOf(st)}`} style={{ ['--c' as string]: toneOf(m.id).fg }}>
       <div className="mrow-in">
-      <Avatar member={m} size={46} />
+      <Avatar member={m} size={56} />
       <div className="m-body">
         <div className="m-head">
           <div className="m-name">{m.name}</div>
@@ -128,9 +146,11 @@ export function MemberRow({
           )}
         </div>
         {st && def ? (
-          <div className="m-status">
-            <Glyph k={def.emoji} size={18} />
-            <span>{def.label}</span>
+          <div className="m-status-row">
+            <span className="m-status">
+              <Glyph k={def.emoji} size={18} />
+              <span>{def.label}</span>
+            </span>
             <span className="sub">{formatElapsed(now - st.since)}</span>
           </div>
         ) : (

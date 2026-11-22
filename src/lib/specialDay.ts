@@ -21,7 +21,7 @@ function birthdayToday(events: WithId<EventDoc>[], todayKey: string): WithId<Eve
 /**
  * 오늘의 특별한 날 하나 (우선순위: 생일 > 크리스마스 > 새해 > 어린이날).
  * - 생일: 달력에 '생일'이 들어간 일정(또는 🎂)이 오늘 열릴 때
- * - 크리스마스: 12/20~12/25 (25일은 "메리 크리스마스", 그 전에는 남은 날)
+ * - 크리스마스: 12월 한 달 (25일 전에는 남은 날, 25일은 "메리 크리스마스", 그 뒤는 연말 인사)
  * - 새해: 12/31 저녁 6시부터 1/1 하루
  * - 어린이날: 5/5
  */
@@ -31,9 +31,13 @@ export function specialDayOf(now: number, events: WithId<EventDoc>[]): SpecialDa
   const b = birthdayToday(events, k);
   if (b) return { kind: 'birthday', emoji: '🎂', text: `${b.title.replace(/\s*축하.*$/, '')} 축하해요!` };
 
-  if (t.m === 12 && t.d >= 20 && t.d <= 25) {
-    const left = 25 - t.d;
-    return { kind: 'christmas', emoji: '🎄', text: left === 0 ? '메리 크리스마스!' : left === 1 ? '오늘은 크리스마스 이브예요' : `크리스마스까지 ${left}일` };
+  if (t.m === 12) {
+    // 새해 전야(12/31 저녁)는 아래 새해가 먼저 나오고, 트리는 12월 내내 그대로 있어요.
+    if (!(t.d === 31 && t.hh >= 18)) {
+      const left = 25 - t.d;
+      const text = left > 1 ? `크리스마스까지 ${left}일` : left === 1 ? '오늘은 크리스마스 이브예요' : left === 0 ? '메리 크리스마스!' : '즐거운 연말 보내세요';
+      return { kind: 'christmas', emoji: '🎄', text };
+    }
   }
   if (t.m === 12 && t.d === 31 && t.hh >= 18) return { kind: 'newyear', emoji: '🎆', text: '올해도 수고했어요. 내일은 새해예요!' };
   if (t.m === 1 && t.d === 1) return { kind: 'newyear', emoji: '🎆', text: '새해 복 많이 받으세요!' };
@@ -83,4 +87,9 @@ export function weekStartCheer(now: number, settings: Pick<FamilySettings, 'dayP
   const t = kst(now);
   if (t.dow !== 0 || t.hh < 15) return null;
   return cheerOf(settings);
+}
+
+/** 12월 한 달 동안은 트리를 세워 둡니다 (생일이나 새해 문구가 나오는 날에도 트리는 그대로) */
+export function treeSeason(now: number): boolean {
+  return kst(now).m === 12;
 }

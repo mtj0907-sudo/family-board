@@ -591,8 +591,87 @@ main { display: flex; flex-direction: column; }
 
 .special-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
 .xmas-corner { position: absolute; right: 36px; bottom: 34px; z-index: 5; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(23, 32, 29, .18)); }
-.xmas-tree .bulb { animation: twinkle 1.8s ease-in-out infinite; filter: drop-shadow(0 0 4px currentColor); }
-.xmas-tree .xmas-star { animation: twinkle 2.4s ease-in-out infinite; transform-origin: 70px 10px; }
-@keyframes twinkle { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.xmas-tree .bulb { animation: twinkle 1.8s ease-in-out infinite; }
+.xmas-tree .xmas-star { animation: star-pulse 2.6s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes star-pulse { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .xmas-tree .bulb, .xmas-tree .xmas-star, .t-banner { animation: none; } }
 @media (max-width: 820px) { .xmas-corner { display: none; } }
+
+/* ───────── 글꼴: 이름·제목·큰 숫자는 둥글고 따뜻한 주아체, 읽을 글은 Pretendard ───────── */
+:root { --font-display: 'Jua', var(--font); }
+h1, h2, .top-title, .m-name, .btile-who h2, .btile-head h2, .clock-digital, .thero-hello, .thero-time, .t-banner b, .pst-name, .m-status, .btile-status span, .weather-card b, .weather-line b, .wc-top b, .ws-big, .sheet-head h2, .whobtn span, .nudge { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.005em; }
+.top-title { font-size: 30px; }
+h2 { font-size: 21px; }
+.m-name { font-size: 20px; }
+
+/* ───────── 폰 오늘 화면: 맨 위 카드 ───────── */
+.screen.today { gap: 12px; padding-bottom: 84px; }
+.thero { position: relative; overflow: hidden; border-radius: 28px; padding: 18px 18px 14px; color: #fff; box-shadow: 0 10px 28px rgba(23, 32, 29, .16); transition: background .6s; }
+.thero.has-tree { min-height: 292px; }
+.thero .star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; opacity: .7; animation: star-blink 3.4s ease-in-out infinite; }
+.thero .star:nth-of-type(2) { animation-delay: .8s; } .thero .star:nth-of-type(3) { animation-delay: 1.6s; } .thero .star:nth-of-type(4) { animation-delay: 2.4s; }
+@keyframes star-blink { 0%, 100% { opacity: .25; } 50% { opacity: .85; } }
+.thero .weather-fx, .thero .special-fx { z-index: 1; }
+.thero-body { position: relative; z-index: 2; }
+.thero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.thero-hello { font-size: 17px; opacity: .92; }
+.thero-time { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+.thero-time small { font-size: 20px; opacity: .85; font-family: var(--font-display); }
+.thero-time b { font-size: 62px; line-height: 1.05; font-weight: 400; }
+.thero-date { font-size: 14px; opacity: .8; font-weight: 600; margin-top: 2px; }
+.thero-clock { flex: none; padding-top: 2px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .25)); }
+.thero-clock .hero { padding: 0; }
+.thero-wx { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 10px; font-size: 15px; font-weight: 600; }
+.thero-wx b { font-size: 24px; font-weight: 400; font-family: var(--font-display); }
+.thero .dim, .thero small { opacity: .7; font-weight: 500; }
+.thero .weather-line.pending { color: rgba(255, 255, 255, .85); padding: 0; font-size: 14px; }
+.thero-chips { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.thero.has-tree .thero-chips { max-width: calc(100% - 112px); }
+.glass { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; padding: 8px 12px; border-radius: 14px; background: rgba(255, 255, 255, .15); border: 1px solid rgba(255, 255, 255, .2); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.glass b { font-weight: 800; }
+.glass.strong { background: rgba(255, 255, 255, .22); font-size: 14.5px; }
+.glass .g-item { display: inline-flex; align-items: center; gap: 5px; }
+.thero-tree { position: absolute; right: 4px; bottom: 4px; z-index: 2; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .3)); }
+
+/* ───────── 지금 우리집 ───────── */
+.pstrip { padding: 2px 2px 0; }
+.pstrip-row { display: flex; justify-content: space-between; gap: 4px; }
+.pst { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; }
+.pst-ring { position: relative; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--line); background: var(--bg); }
+.pst-badge { position: absolute; right: -7px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 1px 5px rgba(23, 32, 29, .25); font-style: normal; color: var(--ink); }
+.pst-name { font-size: 15px; }
+.pstrip-sum { margin: 8px 4px 0; font-size: 14px; font-weight: 600; color: var(--ink-2); text-align: center; }
+
+/* ───────── 사람 카드 ───────── */
+.mlist { display: flex; flex-direction: column; gap: 10px; }
+.mcard { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 14px 16px 14px 20px; }
+.mcard::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--c, var(--line)); }
+.mcard .mrow-in > .avatar { width: 56px !important; height: 56px !important; font-size: 23px !important; margin-top: 2px; }
+.mcard.pres-home { --pbg: #e4f3ea; --pfg: #1f6b45; }
+.mcard.pres-away { --pbg: #f6ecd2; --pfg: #86650f; }
+.mcard.pres-sleep { --pbg: #e3e9f4; --pfg: #40557f; }
+.mcard.pres-none { --pbg: #eef1ef; --pfg: #7a8780; }
+.m-status-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
+.mcard .m-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 0; padding: 5px 13px 5px 10px; border-radius: 999px; background: var(--pbg); color: var(--pfg); font-size: 16px; }
+.mcard .pips { margin-top: 10px; }
+
+/* ───────── 빠른 버튼과 아래 창 ───────── */
+.qa { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 84px); display: flex; justify-content: center; gap: 10px; z-index: 15; pointer-events: none; }
+.qb { pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .94); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ink); font-weight: 700; font-size: 15px; box-shadow: 0 8px 22px rgba(23, 32, 29, .2); }
+.qb.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+.modal.sheet-bottom { align-items: flex-end; padding: 0; }
+.phone-sheet { width: 100%; max-width: 520px; background: var(--surface); border-radius: 28px 28px 0 0; padding: 22px 18px calc(env(safe-area-inset-bottom) + 18px); display: flex; flex-direction: column; gap: 12px; max-height: 88dvh; overflow-y: auto; animation: sheet-up .25s ease-out; }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ws-card { border: 1px solid var(--line); border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.ws-big { font-size: 28px; line-height: 1.1; margin-top: 2px; }
+.ws-done { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+
+/* ───────── 누르는 느낌 ───────── */
+.btn, .chip, .tile, .qb, .pst, .kbtn, .saybtn, .whobtn, .stab, .bagchip, .talkhint, .btile-edit, .tab, .board-btn, .pick, .top-btn, .locate { transition: transform .12s ease, background-color .15s, border-color .15s; }
+.btn:active:not(:disabled), .chip:active, .tile:active, .qb:active, .pst:active, .saybtn:active:not(:disabled), .whobtn:active, .stab:active, .bagchip:active, .talkhint:active, .btile-edit:active, .pick:active, .top-btn:active, .locate:active { transform: scale(.96); }
+.chip .chk { margin-left: auto; flex: none; animation: chk-pop .32s cubic-bezier(.3, 1.6, .5, 1); }
+.chip.on { animation: chip-pop .3s ease-out; }
+@keyframes chip-pop { 0% { transform: scale(.94); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+@keyframes chk-pop { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .thero .star, .chip.on, .chip .chk, .phone-sheet { animation: none; } .btn:active, .chip:active, .tile:active, .qb:active { transform: none; } }
