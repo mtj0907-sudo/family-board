@@ -780,3 +780,4 @@ button.mcard:active { transform: scale(.985); background: #fafbfa; }
 .dt-msg { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: 15px; }
 .dt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .dt-actions .btn { flex: 1; min-width: 140px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.mchip.now { background: #f6ecd2; color: #86650f; }
