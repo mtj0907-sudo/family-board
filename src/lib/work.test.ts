@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { codeOnDate, parseWork, workEndText, workKind, workLabel } from './work';
+import { codeOnDate, parseWork, workEndAt, workEndText, workKind, workLabel } from './work';
 
 // 모두 가짜 데이터
 const ok = (raw: string) => {
@@ -97,5 +97,13 @@ describe('work helpers', () => {
     expect(workEndText('D', { D: '아침' })).toBeNull();
     expect(workEndText('D', {})).toBeNull();
     expect(workEndText('D', undefined)).toBeNull();
+  });
+  it('workEndAt: 끝나는 시각(ms), 야간은 다음 날', () => {
+    const day = Date.UTC(2030, 0, 1, 15, 0) - 86400000; // 한국 2030-01-01 0시
+    expect(workEndAt('M12', { M12: '12:00~21:00' }, day)).toBe(day + 21 * 3600000);
+    expect(workEndAt('N', { N: '22:00~07:00' }, day)).toBe(day + 31 * 3600000);
+    expect(workEndAt('D', { D: '아침' }, day)).toBeNull();
+    expect(workEndAt('D', undefined, day)).toBeNull();
+    expect(workEndAt('D', { D: '08:00~25:00' }, day)).toBeNull();
   });
 });

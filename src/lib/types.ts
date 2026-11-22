@@ -22,6 +22,8 @@ export interface FamilySettings {
   workOwnerId?: string;
   /** 근무 코드별 근무 시간 글자 (예: { D: '08:00~17:00' }). 비어 있으면 코드만 표시 */
   workTimes?: Record<string, string>;
+  /** 구성원별 퇴근 후 집까지 평소 걸리는 시간(분). 예: { m2: 30 } */
+  commuteMinutes?: Record<string, number>;
 }
 
 export interface StatusDoc {
