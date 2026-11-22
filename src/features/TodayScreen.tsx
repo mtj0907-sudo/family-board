@@ -30,7 +30,7 @@ export function TodayScreen() {
 
   return (
     <div className="screen">
-      <Clock />
+      <Clock compact />
       {familyWide.length > 0 && (
         <div className="group">
           <div className="group-head">
@@ -168,19 +168,17 @@ function WorkStrip({
     { label: '모레', code: workOn(addDays(today, 2)) },
   ];
   return (
-    <>
-      <div className="workrow">
-        <span className="sub">오늘 근무</span>
+    <div className="workrow">
+      <span className="workpreview">
+        <span className="sub">오늘</span>
         {todayCode ? <WorkChip code={todayCode} times={times} /> : <span className="sub">등록 안 됨</span>}
-      </div>
-      <div className="workrow">
-        {next.map((n) => (
-          <span key={n.label} className="workpreview">
-            <span className="sub">{n.label}</span>
-            {n.code ? <WorkChip code={n.code} /> : <span className="sub">-</span>}
-          </span>
-        ))}
-      </div>
-    </>
+      </span>
+      {next.map((n) => (
+        <span key={n.label} className="workpreview">
+          <span className="sub">{n.label}</span>
+          {n.code ? <WorkChip code={n.code} /> : <span className="sub">-</span>}
+        </span>
+      ))}
+    </div>
   );
 }
