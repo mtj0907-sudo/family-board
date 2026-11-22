@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { ChristmasTree } from './ChristmasTree';
 import { Clock as ClockIcon, MessageCircleHeart } from 'lucide-react';
-import { PresenceMini } from './PresenceStrip';
 import { Glyph } from './Glyph';
 import { SpecialFx } from './SpecialFx';
 import { WeatherFx } from './WeatherFx';
@@ -38,7 +37,6 @@ export function TodayHero({
   tree,
   members,
   statuses,
-  onOpenStatus,
   onMessage,
   onWhen,
   effects,
@@ -53,7 +51,6 @@ export function TodayHero({
   tree: boolean;
   members: Member[];
   statuses: WithId<StatusDoc>[];
-  onOpenStatus?: () => void;
   onMessage: () => void;
   onWhen: () => void;
   /** 효과를 보여줄지 (끄기 설정·움직임 줄이기 반영) */
@@ -80,18 +77,25 @@ export function TodayHero({
         </>
       )}
       <div className="thero-body">
+        <div className="thero-hello">
+          {theme.greeting} <span aria-hidden>{theme.emoji}</span>
+          <span className="thero-date"> · {formatDateKo(now)}</span>
+        </div>
         <div className="thero-top">
-          <div className="thero-main">
-            <div className="thero-hello">
-              {theme.greeting} <span aria-hidden>{theme.emoji}</span>
-              <span className="thero-date"> · {formatDateKo(now)}</span>
-            </div>
-            <div className="thero-time">
-              <small>{ap}</small>
-              <b>{hm}</b>
-            </div>
+          <div className="thero-time">
+            <small>{ap}</small>
+            <b>{hm}</b>
           </div>
-          <PresenceMini members={members} statuses={statuses} onOpen={onOpenStatus} />
+          <div className="thero-qa">
+            <button className="tq" onClick={onMessage} aria-label="한마디 보내기">
+              <MessageCircleHeart size={19} strokeWidth={1.75} aria-hidden />
+              <span>한마디</span>
+            </button>
+            <button className="tq" onClick={onWhen} aria-label="언제 와요?">
+              <ClockIcon size={19} strokeWidth={1.75} aria-hidden />
+              <span>언제 와요?</span>
+            </button>
+          </div>
         </div>
 
         <div className="thero-wxrow">
@@ -112,16 +116,6 @@ export function TodayHero({
             <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={onRetryWeather} />
           )}
         </div>
-          <div className="thero-qa">
-            <button className="tq" onClick={onMessage} aria-label="한마디 보내기">
-              <MessageCircleHeart size={19} strokeWidth={1.75} aria-hidden />
-              <span>한마디</span>
-            </button>
-            <button className="tq" onClick={onWhen} aria-label="언제 와요?">
-              <ClockIcon size={19} strokeWidth={1.75} aria-hidden />
-              <span>언제 와요?</span>
-            </button>
-          </div>
         </div>
 
         <div className="thero-home">🏠 {sum.text}</div>
