@@ -221,7 +221,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
             now={now}
-            onEdit={() => (m.role === 'child' ? setSheet({ member: m, tab: 'status' }) : requirePin(() => setSheet({ member: m, tab: 'status' })))}
+            onEdit={m.role === 'child' ? () => setSheet({ member: m, tab: 'status' }) : undefined}
             bagStat={
               m.role === 'child' && bag.schoolKids.includes(m.id)
                 ? { ...bagProgress(bag.items, bag.bag?.done?.[m.id]), skip: !!bag.bag?.skip?.[m.id], onOpen: () => setSheet({ member: m, tab: 'bag' }) }
