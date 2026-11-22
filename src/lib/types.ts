@@ -19,6 +19,8 @@ export interface CustomStatus {
   emoji: string;
   /** 도착 시각을 정할 수 있는 상태인지 */
   eta: boolean;
+  /** 누가 쓰는지(구성원 id). 비어 있으면 모두 */
+  members?: string[];
 }
 
 export interface FamilySettings {
@@ -32,6 +34,8 @@ export interface FamilySettings {
   workTimes?: Record<string, string>;
   /** 직접 만든 장소/상태 (예: "피아노 학원 가는 중") */
   customStatuses?: CustomStatus[];
+  /** 사람마다 보일 상태 목록(상태 키 순서대로). 없으면 어른/아이 기본 목록 */
+  statusSets?: Record<string, string[]>;
   /** 학교 가는 아이 (가방 챙기기를 쓰는 구성원 id) */
   schoolKids?: string[];
   /** 가방 챙기기 항목. 없으면 기본 항목 */
