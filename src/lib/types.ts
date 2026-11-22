@@ -5,6 +5,8 @@ export interface Member {
   name: string;
   emoji: string;
   role: Role;
+  /** 얼굴 사진(작게 줄인 JPEG 데이터). 가족 Firebase에만 저장되고 저장소에는 올라가지 않아요 */
+  photo?: string;
 }
 
 export interface RoutineItem {

@@ -125,3 +125,7 @@ export const setBagDoneAt = (code: string, date: string, kidId: string, at: numb
 /** "내일은 학교 안 가요" */
 export const setBagSkip = (code: string, date: string, kidId: string, skip: boolean) =>
   setDoc(doc(need(), path(code, 'bag', date)), { skip: { [kidId]: skip } }, { merge: true });
+
+/** 거실 보드 왼쪽에 보여줄 사진 (설정 문서와 따로 보관해서, 보드에서만 읽어요) */
+export const saveBoardPhoto = (code: string, data: string) => setDoc(doc(need(), path(code, 'media', 'board')), { data, at: Date.now() });
+export const deleteBoardPhoto = (code: string) => deleteDoc(doc(need(), path(code, 'media', 'board')));

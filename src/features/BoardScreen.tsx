@@ -1,20 +1,18 @@
-import { Backpack, Check, Clock as ClockIcon, ListChecks, Maximize2, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { Backpack, Check, ListChecks, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, toneOf } from '../components/Avatar';
+import { Avatar } from '../components/Avatar';
 import { Clock, type ClockMark } from '../components/Clock';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
-import { ProgressBar } from '../components/ProgressBar';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useBag } from '../hooks/useBag';
-import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusInfo } from '../lib/constants';
-import { path, sendMessage, setRoutineDone } from '../lib/db';
+import { doingOf, messageOf, statusInfo } from '../lib/constants';
+import { path, setRoutineDone } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { alertText, pickAlerts } from '../lib/boardAlert';
 import { isMuted, playChime, setMuted, unlockAudio } from '../lib/chime';
@@ -23,9 +21,9 @@ import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
 import { dateKey, dayStart, formatClock, formatElapsed } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
-import { estimateEta, whenHome } from '../lib/whenHome';
+import { estimateEta } from '../lib/whenHome';
 import { bagProgress } from '../lib/bag';
-import { MemberSheet, YoutubeSheet, type SheetTab } from './BoardSheets';
+import { MemberSheet, TalkSheet, YoutubeSheet, type SheetTab } from './BoardSheets';
 
 /**
  * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
@@ -70,7 +68,8 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 30 });
   const awake = useKeepAwake();
   const box = useBoardBox();
-  const [ask, setAsk] = useState<{ parent: Member; kid: Member } | null>(null);
+  const [talk, setTalk] = useState<Member | null>(null);
+  const photo = useDocData<{ data: string }>(path(code, 'media', 'board'));
   const [sheet, setSheet] = useState<{ member: Member; tab: SheetTab } | null>(null);
   const [ytOpen, setYtOpen] = useState(false);
   const bag = useBag(now);
@@ -80,7 +79,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const mountedAt = useRef(Date.now() - 10000);
   const alerted = useRef(new Set<string>());
   const newsTimer = useRef<number | undefined>(undefined);
-  const parents = members.filter((m) => m.role === 'parent');
+  const kids = members.filter((m) => m.role === 'child');
 
   function flash(text: string) {
     setToast(text);
@@ -161,8 +160,11 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         </button>
       </div>
 
-      <aside className="board-side">
-        <Clock size={180} stacked marks={clockMarkList} />
+      <aside className={photo?.data ? 'board-side has-photo' : 'board-side'} style={photo?.data ? { backgroundImage: `url("${photo.data}")` } : undefined}>
+        <div className="clockwrap">
+          <Clock size={180} stacked marks={clockMarkList} />
+        </div>
+        <div className="side-bottom">
 
         {pendingYoutube.length > 0 && (
           <button className="board-alert" onClick={() => requirePin(() => setYtOpen(true))}>
@@ -209,6 +211,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
               })}
           </div>
         )}
+        </div>
       </aside>
 
       <section className="board-grid" aria-label="가족 상태">
@@ -227,12 +230,10 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
                 ? { ...bagProgress(bag.items, bag.bag?.done?.[m.id]), skip: !!bag.bag?.skip?.[m.id], onOpen: () => setSheet({ member: m, tab: 'bag' }) }
                 : undefined
             }
+            onTalk={m.role === 'parent' ? () => setTalk(m) : undefined}
             kid={
               m.role === 'child'
                 ? {
-                    parents,
-                    onWhen: (p) => setAsk({ parent: p, kid: m }),
-                    onSent: flash,
                     onToggle: (key, value) => void setRoutineDone(code, today, m.id, key, value),
                     onTodo: () => setSheet({ member: m, tab: 'todo' }),
                   }
@@ -254,18 +255,19 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
       {toast && <div className="board-toast">{toast}</div>}
       {sheet && <MemberSheet member={sheet.member} initial={sheet.tab} now={now} onClose={() => setSheet(null)} onFlash={flash} />}
       {ytOpen && (
-        <YoutubeSheet pending={pendingYoutube} members={members} answeredBy={parents[0]?.id ?? ''} onClose={() => setYtOpen(false)} onFlash={flash} />
+        <YoutubeSheet pending={pendingYoutube} members={members} answeredBy={members.find((m) => m.role === 'parent')?.id ?? ''} onClose={() => setYtOpen(false)} onFlash={flash} />
       )}
-      {ask && (
-        <WhenSheet
-          parent={ask.parent}
-          kid={ask.kid}
-          st={statuses.find((x) => x.id === ask.parent.id)}
-          workCode={ask.parent.id === settings.workOwnerId ? workOn(today) : undefined}
+      {talk && (
+        <TalkSheet
+          parent={talk}
+          kids={kids}
+          st={statuses.find((x) => x.id === talk.id)}
+          workCode={talk.id === settings.workOwnerId ? workOn(today) : undefined}
           workTimes={settings.workTimes}
-          commuteMin={settings.commuteMinutes?.[ask.parent.id]}
+          commuteMin={settings.commuteMinutes?.[talk.id]}
           now={now}
-          onClose={() => setAsk(null)}
+          onClose={() => setTalk(null)}
+          onFlash={flash}
         />
       )}
     </div>
@@ -279,139 +281,6 @@ function youtubeAsker(names: string[]): string {
   return `${list.join('·')}${hasFinal(last) ? '이' : '가'}`;
 }
 
-/** 아이 카드 안의 그림 버튼. 누르면 그 아이 이름으로 부모에게 한마디가 갑니다. */
-function KidActions({
-  kid,
-  parents,
-  onWhen,
-  onSent,
-}: {
-  kid: Member;
-  parents: Member[];
-  onWhen: (parent: Member) => void;
-  onSent: (text: string) => void;
-}) {
-  const { code } = useFamily();
-  const notify = useNotify();
-  const [sent, setSent] = useState<string | null>(null);
-  const keys = BOARD_MESSAGE_KEYS.map((k) => QUICK_MESSAGES.find((q) => q.key === k)).filter((q): q is NonNullable<typeof q> => !!q);
-
-  function send(key: string, label: string) {
-    if (sent) return;
-    void sendMessage(code, kid.id, 'quick', key);
-    notify('message', kid.name, label);
-    setSent(key);
-    onSent(`${label} 보냈어요`);
-    window.setTimeout(() => setSent(null), 3000); // 연달아 마구 누르는 것을 막아요
-  }
-
-  return (
-    <div className="kidact" role="group" aria-label={`${kid.name}의 한마디 버튼`}>
-      {keys.map((q) => (
-        <button
-          key={q.key}
-          className={sent === q.key ? 'kbtn done' : 'kbtn'}
-          disabled={!!sent && sent !== q.key}
-          onClick={() => send(q.key, q.label)}
-          aria-label={q.label}
-        >
-          {sent === q.key ? <Check size={28} strokeWidth={2.25} aria-hidden /> : <Glyph k={q.emoji} size={28} />}
-        </button>
-      ))}
-      {parents.map((p) => (
-        <button
-          key={p.id}
-          className="kbtn when"
-          onClick={() => onWhen(p)}
-          aria-label={`${p.name} ${ASK_WHEN_MESSAGE.label}`}
-          style={{ background: toneOf(p.id).bg, color: toneOf(p.id).fg, borderColor: toneOf(p.id).fg }}
-        >
-          <span className="when-name">{p.name}</span>
-          <ClockIcon size={18} strokeWidth={2} aria-hidden />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** "엄마 언제 와요?" 답변 창. 큰 글씨로 보여주고, 잠시 뒤 저절로 닫힙니다. */
-export function WhenSheet({
-  parent,
-  kid,
-  st,
-  workCode,
-  workTimes,
-  commuteMin,
-  now,
-  onClose,
-}: {
-  parent: Member;
-  kid: Member;
-  st?: StatusDoc;
-  workCode?: string;
-  workTimes?: Record<string, string>;
-  commuteMin?: number;
-  now: number;
-  onClose: () => void;
-}) {
-  const { code } = useFamily();
-  const notify = useNotify();
-  const [asked, setAsked] = useState(false);
-  const a = whenHome({ name: parent.name, st, now, workCode, workTimes, commuteMin });
-
-  // 화면이 갱신돼도 닫힘 시간이 처음부터 다시 세어지지 않도록, 닫는 함수는 ref로 들고 있습니다.
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  useEffect(() => {
-    const t = window.setTimeout(() => closeRef.current(), asked ? 2500 : 20000);
-    return () => window.clearTimeout(t);
-  }, [asked]);
-
-  return (
-    <div className="board-sheet-wrap" onClick={onClose}>
-      <div className="board-sheet" role="dialog" aria-label={`${parent.name} 언제 와요`} onClick={(e) => e.stopPropagation()}>
-        <Avatar member={parent} size={96} />
-        <h2>{a.headline}</h2>
-        {a.eta && (
-          <div className="sheet-eta">
-            <div className="sheet-big">{a.eta.text}</div>
-            <div className="sub">{a.eta.clockLabel}</div>
-            <ProgressBar value={a.eta.ratio} label="도착까지" />
-          </div>
-        )}
-        {a.details.map((d) => (
-          <div key={d} className={a.eta ? 'sub' : 'sheet-detail'}>
-            {d}
-          </div>
-        ))}
-        {!a.eta && a.details.length === 0 && a.canAsk && !asked && <div className="sub">몇 시에 오는지는 아직 몰라요</div>}
-        {asked ? (
-          <div className="sheet-done">
-            <Check size={28} strokeWidth={2.25} aria-hidden />
-            {parent.name}에게 물어봤어요
-          </div>
-        ) : (
-          a.canAsk && (
-            <button
-              className="btn primary"
-              onClick={() => {
-                void sendMessage(code, kid.id, 'quick', ASK_WHEN_MESSAGE.key, parent.id);
-                notify('message', kid.name, `${parent.name}에게 ${ASK_WHEN_MESSAGE.label}`);
-                setAsked(true);
-              }}
-            >
-              {parent.name}에게 물어보기
-            </button>
-          )
-        )}
-        <button className="btn" onClick={onClose}>
-          닫기
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function BoardTile({
   m,
   st,
@@ -421,12 +290,15 @@ export function BoardTile({
   now,
   kid,
   onEdit,
+  onTalk,
   bagStat,
 }: {
   m: Member;
   st?: StatusDoc;
   routine?: RoutineDoc;
-  /** 눌러서 상태를 바꾸는 창 열기 (어른은 PIN 뒤에 열림) */
+  /** 부모 카드: 눌러서 이야기하기 창 열기 */
+  onTalk?: () => void;
+  /** 눌러서 상태를 바꾸는 창 열기 (아이 카드) */
   onEdit?: () => void;
   /** 학교 가는 아이: 가방 챙기기 진행 */
   bagStat?: { done: number; total: number; complete: boolean; skip: boolean; onOpen: () => void };
@@ -435,9 +307,6 @@ export function BoardTile({
   now: number;
   /** 아이 카드에만: 그림 버튼에 필요한 정보 */
   kid?: {
-    parents: Member[];
-    onWhen: (parent: Member) => void;
-    onSent: (text: string) => void;
     onToggle: (itemKey: string, value: boolean) => void;
     onTodo: () => void;
   };
@@ -450,9 +319,9 @@ export function BoardTile({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
-    <article className="btile">
+    <article className={onTalk ? 'btile talkable' : 'btile'} onClick={onTalk}>
       <header className="btile-head">
-        <Avatar member={m} size={56} />
+        <Avatar member={m} size={kid ? 68 : 56} />
         <div className="btile-who">
           <h2>{m.name}</h2>
           {st && def ? (
@@ -544,7 +413,12 @@ export function BoardTile({
         </div>
       )}
 
-      {kid && <KidActions kid={m} parents={kid.parents} onWhen={kid.onWhen} onSent={kid.onSent} />}
+      {onTalk && (
+        <button className="talkhint" onClick={(e) => { e.stopPropagation(); onTalk(); }}>
+          <MessageCircleHeart size={22} strokeWidth={1.75} aria-hidden />
+          {m.name}에게 이야기하기
+        </button>
+      )}
     </article>
   );
 }
