@@ -8,6 +8,8 @@ import { Glyph } from '../components/Glyph';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { TomorrowBar } from '../components/TomorrowBar';
+import { tomorrowItems } from '../lib/tomorrow';
 import { BoardFeed } from '../components/BoardFeed';
 import { loadHidden, saveHidden } from '../lib/boardFeed';
 import { WeatherCard, WeatherPending } from '../components/WeatherCard';
@@ -135,6 +137,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   }, []);
 
   const todays = eventsOn(events, today);
+  const tomorrow = tomorrowItems(events, today, members);
   const familyWide = todays.filter((e) => e.who.length === 0);
   const todayMsgs = msgs.filter((m) => m.at >= dayStart(now));
   const pendingYoutube = todayMsgs.filter((m) => m.kind === 'youtube' && !m.reply);
@@ -142,6 +145,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="board" style={box.style}>
+      <div className="board-top">
       <div className="board-weather">
         {weather ? (
           <WeatherCard
@@ -153,6 +157,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           <WeatherPending status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />
         )}
       </div>
+      <TomorrowBar items={tomorrow} variant="board" />
       <div className="board-ctl">
         {awake.method === 'none' ? (
           <button className="board-btn" onClick={awake.start}>
@@ -197,6 +202,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         <button className="board-btn icon" onClick={() => requirePin(onExit)} aria-label="거실 보드 닫기 (부모 PIN)">
           <X size={20} strokeWidth={1.75} aria-hidden />
         </button>
+      </div>
       </div>
 
       <aside className={photo?.data ? 'board-side has-photo' : 'board-side'} style={photo?.data ? { backgroundImage: `url("${photo.data}")` } : undefined}>

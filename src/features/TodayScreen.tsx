@@ -1,6 +1,8 @@
 import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Clock } from '../components/Clock';
+import { TomorrowBar } from '../components/TomorrowBar';
+import { tomorrowItems } from '../lib/tomorrow';
 import { WeatherLine, WeatherPending } from '../components/WeatherCard';
 import { useWeather } from '../hooks/useWeather';
 import { EventRow } from '../components/EventRow';
@@ -52,6 +54,7 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'routine') => void }) {
     <div className="screen fill">
       <Clock compact marks={marks} />
       {weather ? <WeatherLine w={weather} /> : <WeatherPending compact status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />}
+      <TomorrowBar items={tomorrowItems(events, dateKey(now), members)} variant="phone" />
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
