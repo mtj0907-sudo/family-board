@@ -45,8 +45,18 @@ export const YOUTUBE_MESSAGE: QuickMessage = {
   label: '유튜브 봐도 돼요?',
 };
 
+/** 거실 보드에서 "엄마 언제 와요?" 버튼을 눌렀을 때 부모에게 가는 질문 (한마디 버튼 목록에는 없음) */
+export const ASK_WHEN_MESSAGE: QuickMessage = { key: 'when', emoji: '🕐', label: '언제 와요?' };
+
 export const messageOf = (key: string): QuickMessage | undefined =>
-  key === YOUTUBE_MESSAGE.key ? YOUTUBE_MESSAGE : QUICK_MESSAGES.find((m) => m.key === key);
+  key === YOUTUBE_MESSAGE.key
+    ? YOUTUBE_MESSAGE
+    : key === ASK_WHEN_MESSAGE.key
+      ? ASK_WHEN_MESSAGE
+      : QUICK_MESSAGES.find((m) => m.key === key);
+
+/** 거실 보드의 아이 카드에 놓는 그림 버튼 (한마디 버튼 중 집에서 쓰기 좋은 것) */
+export const BOARD_MESSAGE_KEYS = ['love', 'miss', 'hungry', 'homework', 'help', 'call'];
 
 export const DEFAULT_ROUTINE_ITEMS: RoutineItem[] = [
   { key: 'home', emoji: '🏠', label: '집 도착' },

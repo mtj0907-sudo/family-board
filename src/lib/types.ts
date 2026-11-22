@@ -38,6 +38,8 @@ export interface MessageDoc {
   kind: 'quick' | 'youtube';
   key: string;
   at: number;
+  /** 특정 사람에게 보낸 한마디일 때 받는 사람 id (예: "엄마 언제 와요?") */
+  to?: string;
   reply?: { answer: YoutubeAnswer; at: number; by: string };
 }
 

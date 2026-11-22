@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { codeOnDate, parseWork, workKind, workLabel } from './work';
+import { codeOnDate, parseWork, workEndText, workKind, workLabel } from './work';
 
 // 모두 가짜 데이터
 const ok = (raw: string) => {
@@ -89,5 +89,13 @@ describe('work helpers', () => {
     expect(workLabel('M12', { M12: '09:00~18:00' })).toBe('M12 09:00~18:00');
     expect(workLabel('M12', { M12: ' ' })).toBe('M12');
     expect(workLabel('N')).toBe('N');
+  });
+  it('workEndText: 끝나는 시각', () => {
+    expect(workEndText('M12', { M12: '12:00~21:00' })).toBe('오후 9:00');
+    expect(workEndText('D', { D: '08:30 - 17:30' })).toBe('오후 5:30');
+    expect(workEndText('N', { N: '22:00~07:00' })).toBe('오전 7:00');
+    expect(workEndText('D', { D: '아침' })).toBeNull();
+    expect(workEndText('D', {})).toBeNull();
+    expect(workEndText('D', undefined)).toBeNull();
   });
 });

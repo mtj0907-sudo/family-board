@@ -1,6 +1,6 @@
-import { Clock as ClockIcon, Maximize2, MonitorPlay, Sun, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Avatar } from '../components/Avatar';
+import { Check, Clock as ClockIcon, Maximize2, MonitorPlay, Sun, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Avatar, toneOf } from '../components/Avatar';
 import { Clock } from '../components/Clock';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
@@ -10,13 +10,15 @@ import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { doingOf, messageOf, statusOf } from '../lib/constants';
-import { path } from '../lib/db';
+import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusOf } from '../lib/constants';
+import { path, sendMessage } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { useKeepAwake } from '../lib/keepAwake';
+import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
 import { dateKey, dayStart, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
+import { whenHome } from '../lib/whenHome';
 
 /**
  * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
@@ -46,9 +48,12 @@ export function useBoardBox() {
   return box;
 }
 
-/** 거실 아이패드용 큰 화면. 누르는 곳이 거의 없고, 멀리서도 읽히게 글씨를 크게 합니다. */
+/**
+ * 거실 아이패드용 큰 화면. 멀리서도 읽히게 글씨를 크게 하고,
+ * 아이는 자기 카드의 그림 버튼으로 한마디를 보내거나 "엄마(아빠) 언제 와요?"를 눌러 볼 수 있습니다.
+ */
 export function BoardScreen({ onExit }: { onExit: () => void }) {
-  const { code, members, settings } = useFamily();
+  const { code, members, settings, requirePin } = useFamily();
   const now = useNow(15000);
   const today = dateKey(now);
   const workOn = useWorkWindow(code, today);
@@ -58,6 +63,14 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 30 });
   const awake = useKeepAwake();
   const box = useBoardBox();
+  const [ask, setAsk] = useState<{ parent: Member; kid: Member } | null>(null);
+  const [toast, setToast] = useState('');
+  const parents = members.filter((m) => m.role === 'parent');
+
+  function flash(text: string) {
+    setToast(text);
+    window.setTimeout(() => setToast(''), 2200);
+  }
 
   // 아이패드는 사용자가 직접 누른 뒤에만 화면 켜두기를 허용하는 경우가 있어서, 화면 아무 곳이나 한 번 누르면 시작합니다.
   useEffect(() => {
@@ -93,7 +106,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             <Maximize2 size={18} strokeWidth={1.75} aria-hidden />
           </button>
         )}
-        <button className="board-btn icon" onClick={onExit} aria-label="거실 보드 닫기">
+        <button className="board-btn icon" onClick={() => requirePin(onExit)} aria-label="거실 보드 닫기 (부모 PIN)">
           <X size={20} strokeWidth={1.75} aria-hidden />
         </button>
       </div>
@@ -105,7 +118,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           <div className="board-alert">
             <MonitorPlay size={26} strokeWidth={1.75} aria-hidden />
             <span>
-              {pendingYoutube.map((m) => nameOf(m.from)?.name).filter(Boolean).join('·')}이(가) 유튜브를 물어봤어요
+              {youtubeAsker(pendingYoutube.map((m) => nameOf(m.from)?.name ?? ''))} 유튜브를 물어봤어요
               <small>부모 폰에서 답해 주세요</small>
             </span>
           </div>
@@ -129,7 +142,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             </div>
             {todayMsgs
               .filter((m) => m.kind === 'quick')
-              .slice(0, 3)
+              .slice(0, pendingYoutube.length > 0 && familyWide.length > 0 ? 2 : 3)
               .map((m) => {
                 const who = nameOf(m.from);
                 const q = messageOf(m.key);
@@ -137,7 +150,8 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
                   <div key={m.id} className="feed">
                     {who && <Avatar member={who} size={36} />}
                     <div className="grow">
-                      <b>{who?.name}</b> {q?.label}
+                      <b>{who?.name}</b>
+                      {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} {q?.label}
                     </div>
                     <span className="sub">{formatClock(m.at)}</span>
                   </div>
@@ -157,9 +171,153 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             events={todays.filter((e) => e.who.includes(m.id) || e.pickupBy === m.id)}
             workOn={m.id === settings.workOwnerId ? workOn : undefined}
             now={now}
+            kid={m.role === 'child' ? { parents, onWhen: (p) => setAsk({ parent: p, kid: m }), onSent: flash } : undefined}
           />
         ))}
       </section>
+
+      {toast && <div className="board-toast">{toast}</div>}
+      {ask && (
+        <WhenSheet
+          parent={ask.parent}
+          kid={ask.kid}
+          st={statuses.find((x) => x.id === ask.parent.id)}
+          workCode={ask.parent.id === settings.workOwnerId ? workOn(today) : undefined}
+          workTimes={settings.workTimes}
+          now={now}
+          onClose={() => setAsk(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** "첫째가 유튜브를…" 처럼 이름 뒤에 이/가를 붙입니다. */
+function youtubeAsker(names: string[]): string {
+  const list = names.filter(Boolean);
+  const last = list[list.length - 1] ?? '';
+  return `${list.join('·')}${hasFinal(last) ? '이' : '가'}`;
+}
+
+/** 아이 카드 안의 그림 버튼. 누르면 그 아이 이름으로 부모에게 한마디가 갑니다. */
+function KidActions({
+  kid,
+  parents,
+  onWhen,
+  onSent,
+}: {
+  kid: Member;
+  parents: Member[];
+  onWhen: (parent: Member) => void;
+  onSent: (text: string) => void;
+}) {
+  const { code } = useFamily();
+  const [sent, setSent] = useState<string | null>(null);
+  const keys = BOARD_MESSAGE_KEYS.map((k) => QUICK_MESSAGES.find((q) => q.key === k)).filter((q): q is NonNullable<typeof q> => !!q);
+
+  function send(key: string, label: string) {
+    if (sent) return;
+    void sendMessage(code, kid.id, 'quick', key);
+    setSent(key);
+    onSent(`${label} 보냈어요`);
+    window.setTimeout(() => setSent(null), 3000); // 연달아 마구 누르는 것을 막아요
+  }
+
+  return (
+    <div className="kidact" role="group" aria-label={`${kid.name}의 한마디 버튼`}>
+      {keys.map((q) => (
+        <button
+          key={q.key}
+          className={sent === q.key ? 'kbtn done' : 'kbtn'}
+          disabled={!!sent && sent !== q.key}
+          onClick={() => send(q.key, q.label)}
+          aria-label={q.label}
+        >
+          {sent === q.key ? <Check size={28} strokeWidth={2.25} aria-hidden /> : <Glyph k={q.emoji} size={28} />}
+        </button>
+      ))}
+      {parents.map((p) => (
+        <button
+          key={p.id}
+          className="kbtn when"
+          onClick={() => onWhen(p)}
+          aria-label={`${p.name} ${ASK_WHEN_MESSAGE.label}`}
+          style={{ background: toneOf(p.id).bg, color: toneOf(p.id).fg, borderColor: toneOf(p.id).fg }}
+        >
+          <span className="when-name">{p.name}</span>
+          <ClockIcon size={18} strokeWidth={2} aria-hidden />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** "엄마 언제 와요?" 답변 창. 큰 글씨로 보여주고, 잠시 뒤 저절로 닫힙니다. */
+export function WhenSheet({
+  parent,
+  kid,
+  st,
+  workCode,
+  workTimes,
+  now,
+  onClose,
+}: {
+  parent: Member;
+  kid: Member;
+  st?: StatusDoc;
+  workCode?: string;
+  workTimes?: Record<string, string>;
+  now: number;
+  onClose: () => void;
+}) {
+  const { code } = useFamily();
+  const [asked, setAsked] = useState(false);
+  const a = whenHome({ name: parent.name, st, now, workCode, workTimes });
+
+  // 화면이 갱신돼도 닫힘 시간이 처음부터 다시 세어지지 않도록, 닫는 함수는 ref로 들고 있습니다.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const t = window.setTimeout(() => closeRef.current(), asked ? 2500 : 20000);
+    return () => window.clearTimeout(t);
+  }, [asked]);
+
+  return (
+    <div className="board-sheet-wrap" onClick={onClose}>
+      <div className="board-sheet" role="dialog" aria-label={`${parent.name} 언제 와요`} onClick={(e) => e.stopPropagation()}>
+        <Avatar member={parent} size={96} />
+        <h2>{a.headline}</h2>
+        {a.eta && (
+          <div className="sheet-eta">
+            <div className="sheet-big">{a.eta.text}</div>
+            <div className="sub">{a.eta.clock} 도착 예정</div>
+            <ProgressBar value={a.eta.ratio} label="도착까지" />
+          </div>
+        )}
+        {a.detail && <div className="sheet-detail">{a.detail}</div>}
+        {!a.eta && a.canAsk && !asked && <div className="sub">몇 시에 오는지는 아직 몰라요</div>}
+        {asked ? (
+          <div className="sheet-done">
+            <Check size={28} strokeWidth={2.25} aria-hidden />
+            {parent.name}에게 물어봤어요
+          </div>
+        ) : (
+          a.canAsk && (
+            <button
+              className="btn primary"
+              onClick={() => {
+                void sendMessage(code, kid.id, 'quick', ASK_WHEN_MESSAGE.key, parent.id);
+                setAsked(true);
+              }}
+            >
+              {parent.name}에게 물어보기
+            </button>
+          )
+        )}
+        <button className="btn" onClick={onClose}>
+          닫기
+        </button>
+      </div>
     </div>
   );
 }
@@ -171,6 +329,7 @@ export function BoardTile({
   events,
   workOn,
   now,
+  kid,
 }: {
   m: Member;
   st?: StatusDoc;
@@ -178,6 +337,8 @@ export function BoardTile({
   events: WithId<EventDoc>[];
   workOn?: (dateKey: string) => string | undefined;
   now: number;
+  /** 아이 카드에만: 그림 버튼에 필요한 정보 */
+  kid?: { parents: Member[]; onWhen: (parent: Member) => void; onSent: (text: string) => void };
 }) {
   const { settings } = useFamily();
   const def = st ? statusOf(st.key) : undefined;
@@ -259,6 +420,8 @@ export function BoardTile({
           {events.length > 1 && <div className="sub">외 {events.length - 1}건</div>}
         </div>
       )}
+
+      {kid && <KidActions kid={m} parents={kid.parents} onWhen={kid.onWhen} onSent={kid.onSent} />}
     </article>
   );
 }
