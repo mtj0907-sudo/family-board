@@ -18,22 +18,32 @@ import { routineProgress } from '../lib/routine';
 import { dateKey, dayStart, etaProgress, formatClock, formatElapsed, formatRemaining } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
-/** 보드는 높이 820px 기준으로 디자인하고, 화면 높이에 맞춰 통째로 확대/축소합니다. (좁은 화면은 그대로 세로 스크롤) */
+/**
+ * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
+ * (아이패드 Safari의 vh는 주소창 뒤까지 포함해서 더 커요. 그래서 vh 대신 실제로 보이는 크기를 px로 씁니다.)
+ * 좁은 화면(폰)은 그대로 세로 스크롤입니다.
+ */
 const BOARD_REF_H = 820;
 const BOARD_REF_W = 1180;
-function boardScale(): number {
-  if (typeof window === 'undefined' || window.innerWidth <= 820) return 1;
+function boardBox() {
+  const w = typeof window === 'undefined' ? BOARD_REF_W : window.innerWidth;
+  const h = typeof window === 'undefined' ? BOARD_REF_H : window.innerHeight;
   // 높이·너비 중 더 빡빡한 쪽에 맞춰서, 어느 쪽으로도 기준보다 좁아지지 않게 합니다.
-  return Math.min(1.6, Math.max(0.6, Math.min(window.innerHeight / BOARD_REF_H, window.innerWidth / BOARD_REF_W)));
+  const scale = w <= 820 ? 1 : Math.min(1.6, Math.max(0.6, Math.min(h / BOARD_REF_H, w / BOARD_REF_W)));
+  return { scale, style: { width: w / scale, height: h / scale, transform: `scale(${scale})` } as const };
 }
-export function useBoardScale(): number {
-  const [scale, setScale] = useState(boardScale);
+export function useBoardBox() {
+  const [box, setBox] = useState(boardBox);
   useEffect(() => {
-    const on = () => setScale(boardScale());
+    const on = () => setBox(boardBox());
     window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
+    window.addEventListener('orientationchange', on);
+    return () => {
+      window.removeEventListener('resize', on);
+      window.removeEventListener('orientationchange', on);
+    };
   }, []);
-  return scale;
+  return box;
 }
 
 /** 거실 아이패드용 큰 화면. 누르는 곳이 거의 없고, 멀리서도 읽히게 글씨를 크게 합니다. */
@@ -47,7 +57,16 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const events = useColData<EventDoc>(path(code, 'events'));
   const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 30 });
   const awake = useKeepAwake();
-  const scale = useBoardScale();
+  const box = useBoardBox();
+
+  // 아이패드는 사용자가 직접 누른 뒤에만 화면 켜두기를 허용하는 경우가 있어서, 화면 아무 곳이나 한 번 누르면 시작합니다.
+  useEffect(() => {
+    if (awake.method !== 'none') return;
+    const go = () => awake.start();
+    document.addEventListener('pointerdown', go, { once: true });
+    return () => document.removeEventListener('pointerdown', go);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awake.method]);
 
   const todays = eventsOn(events, today);
   const familyWide = todays.filter((e) => e.who.length === 0);
@@ -56,10 +75,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const nameOf = (id: string): Member | undefined => members.find((m) => m.id === id);
 
   return (
-    <div
-      className="board"
-      style={scale === 1 ? undefined : { width: `${100 / scale}vw`, height: `${100 / scale}vh`, transform: `scale(${scale})` }}
-    >
+    <div className="board" style={box.style}>
       <div className="board-ctl">
         {awake.method === 'none' ? (
           <button className="board-btn" onClick={awake.start}>

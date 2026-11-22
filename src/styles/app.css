@@ -284,7 +284,7 @@ button.eventrow:active { background: var(--line-2); }
 .hero.stacked { flex-direction: column; align-items: flex-start; gap: 18px; padding: 0; }
 .hero.stacked .clock-digital { font-size: clamp(56px, 7vw, 96px); }
 .board {
-  position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; transform-origin: 0 0; z-index: 40; background: var(--bg);
+  position: fixed; left: 0; top: 0; width: 100vw; height: 100dvh; transform-origin: 0 0; z-index: 40; background: var(--bg);
   display: grid; grid-template-columns: minmax(300px, 34%) 1fr; gap: 28px;
   padding: calc(env(safe-area-inset-top) + 28px) 32px calc(env(safe-area-inset-bottom) + 28px);
   overflow: hidden; font-size: 20px;
