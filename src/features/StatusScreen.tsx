@@ -3,15 +3,15 @@ import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
-import { useNotify } from '../hooks/useNotify';
+import { useStatusActions } from '../hooks/useStatusActions';
 import { useNow } from '../hooks/useNow';
-import { ARRIVAL_ROUTINE_KEY, statusInfo, type StatusDef } from '../lib/constants';
+import { statusInfo, type StatusDef } from '../lib/constants';
 import { statusesFor } from '../lib/statusSets';
-import { path, setEta, setRoutineDone, setStatus } from '../lib/db';
-import { dateKey, etaFromTime, formatClock, formatClockKo } from '../lib/time';
+import { path } from '../lib/db';
+import { etaFromTime, formatClock } from '../lib/time';
 import type { Member, StatusDoc } from '../lib/types';
 
-const QUICK_ETA = [
+export const QUICK_ETA = [
   { label: '10분 뒤', min: 10 },
   { label: '20분 뒤', min: 20 },
   { label: '30분 뒤', min: 30 },
@@ -24,20 +24,10 @@ export function StatusScreen() {
   const now = useNow(30000);
   const target = members.find((m) => m.id === targetId) ?? me;
   const st = useDocData<StatusDoc>(path(code, 'status', target.id));
-  const notify = useNotify();
+  const actions = useStatusActions();
 
   // 이 사람(어른/아이)에게 어울리는 상태만 보여줍니다.
   const list = statusesFor(target, settings);
-  const customKeys = new Set((settings.customStatuses ?? []).map((c) => c.key));
-  const pick = (def: StatusDef) => {
-    const isCustom = customKeys.has(def.key);
-    void setStatus(code, target.id, def.key, isCustom ? { label: def.label, emoji: def.emoji, eta: def.eta } : undefined);
-    notify('status', target.name, def.label);
-    // 아이가 "집에 있어요"를 누르면 루틴의 "집 도착"도 자동 체크
-    if (def.key === 'home' && target.role === 'child') {
-      void setRoutineDone(code, dateKey(Date.now()), target.id, ARRIVAL_ROUTINE_KEY, true);
-    }
-  };
 
   return (
     <StatusView
@@ -47,12 +37,9 @@ export function StatusScreen() {
       onTarget={setTargetId}
       st={st ?? undefined}
       now={now}
-      onPick={pick}
+      onPick={(def) => actions.pick(target, def)}
       statuses={list}
-      onEta={(at) => {
-        void setEta(code, target.id, at);
-        if (at) notify('status', target.name, `${formatClockKo(at)} 도착 예정`);
-      }}
+      onEta={(at) => actions.eta(target, at)}
     />
   );
 }
