@@ -434,3 +434,6 @@ main { display: flex; flex-direction: column; }
 .nudge small { display: block; font-weight: 500; opacity: .75; font-size: 13.5px; margin-top: 1px; }
 .bagbadge { display: inline-flex; align-items: center; gap: 4px; font-size: 14.5px; font-weight: 700; color: var(--ink-2); }
 .bagbadge.ok { color: var(--ok); }
+
+.place-who { margin: 6px 0 2px; align-items: center; }
+.place-who .pick { min-height: 40px; font-size: 14px; padding-right: 12px; }

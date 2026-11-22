@@ -4,6 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { Glyph, ICON_CHOICES } from '../components/Glyph';
 import { PinGuard } from '../components/PinGuard';
 import { DEFAULT_BAG_ITEMS } from '../lib/bag';
+import { defaultKeysFor, selectableFor } from '../lib/statusSets';
 import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
@@ -32,6 +33,8 @@ function SettingsBody() {
   );
   const [newPin, setNewPin] = useState('');
   const [openIcon, setOpenIcon] = useState<number | null>(null);
+  const [statusSets, setStatusSets] = useState<Record<string, string[]>>(settings.statusSets ?? {});
+  const [statusMemberId, setStatusMemberId] = useState<string>(settings.members[0]?.id ?? '');
   const [school, setSchool] = useState<string[]>(settings.schoolKids ?? []);
   const [bagItems, setBagItems] = useState<RoutineItem[]>(settings.bagItems?.length ? settings.bagItems : DEFAULT_BAG_ITEMS);
   const [openBagIcon, setOpenBagIcon] = useState<number | null>(null);
@@ -63,6 +66,9 @@ function SettingsBody() {
           .filter(([, v]) => v),
       ),
     };
+    next.statusSets = Object.fromEntries(
+      Object.entries(statusSets).filter(([id, keys]) => members.some((m) => m.id === id) && keys.length > 0),
+    );
     next.schoolKids = school.filter((id) => members.some((m) => m.id === id && m.role === 'child'));
     next.bagItems = bagItems
       .filter((i) => i.label.trim())
@@ -203,6 +209,64 @@ function SettingsBody() {
       </div>
 
       <div className="card">
+        <h2>사람마다 보일 상태</h2>
+        <div className="sub">
+          어른과 아이는 처음부터 다른 목록이 나와요. 사람을 골라서 그 사람의 상태 화면에 보일 항목을 켜고 끄세요.
+        </div>
+        <div className="picker">
+          {members.map((m) => (
+            <button key={m.id} className={m.id === statusMemberId ? 'pick on' : 'pick'} onClick={() => setStatusMemberId(m.id)}>
+              <Avatar member={m} size={38} />
+              {m.name || '이름 없음'}
+            </button>
+          ))}
+        </div>
+        {(() => {
+          const who = members.find((m) => m.id === statusMemberId);
+          if (!who) return null;
+          const options = selectableFor(who);
+          const active = new Set(statusSets[who.id]?.length ? statusSets[who.id] : defaultKeysFor(who));
+          const groups = Array.from(new Set(options.map((o) => o.group ?? '기타')));
+          const toggle = (key: string) => {
+            const next = new Set(active);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            // 목록의 순서는 항상 같은 순서(아래 표시 순서)로 저장합니다.
+            setStatusSets({ ...statusSets, [who.id]: options.map((o) => o.key).filter((k) => next.has(k)) });
+          };
+          return (
+            <>
+              {groups.map((g) => (
+                <div key={g} className="field">
+                  <span>{g}</span>
+                  <div className="chips">
+                    {options
+                      .filter((o) => (o.group ?? '기타') === g)
+                      .map((o) => (
+                        <button key={o.key} className={active.has(o.key) ? 'chip small on' : 'chip small'} aria-pressed={active.has(o.key)} onClick={() => toggle(o.key)}>
+                          <Glyph k={o.emoji} size={18} />
+                          {o.label}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ))}
+              <button
+                className="btn small"
+                onClick={() => {
+                  const { [who.id]: _removed, ...rest } = statusSets;
+                  setStatusSets(rest);
+                }}
+              >
+                {who.name} 기본 목록으로 되돌리기
+              </button>
+              <div className="sub">저장하기를 눌러야 반영돼요.</div>
+            </>
+          );
+        })()}
+      </div>
+
+      <div className="card">
         <h2>자주 가는 곳</h2>
         <div className="sub">
           학원처럼 자주 가는 곳을 만들어 두면 상태 화면에 칩으로 나와요. 예: "피아노 학원 가는 중". 도착 시각을 정하는 곳이면 "도착 시각"을 켜 두세요.
@@ -223,6 +287,28 @@ function SettingsBody() {
               <button className="btn inline" onClick={() => setPlaces(places.filter((_, j) => j !== i))} aria-label="삭제">
                 <Trash2 size={20} strokeWidth={1.75} aria-hidden />
               </button>
+            </div>
+            <div className="picker wrap place-who" aria-label="누가 쓰나요">
+              {members.map((m) => {
+                const on = !pl.members || pl.members.length === 0 || pl.members.includes(m.id);
+                const all = !pl.members || pl.members.length === 0;
+                return (
+                  <button
+                    key={m.id}
+                    className={on && !all ? 'pick on' : 'pick'}
+                    aria-pressed={on && !all}
+                    onClick={() => {
+                      const cur = pl.members ?? [];
+                      const next = cur.includes(m.id) ? cur.filter((x) => x !== m.id) : [...cur, m.id];
+                      setPlaces(places.map((x, j) => (j === i ? { ...x, members: next } : x)));
+                    }}
+                  >
+                    <Avatar member={m} size={30} />
+                    {m.name || '이름 없음'}
+                  </button>
+                );
+              })}
+              <span className="sub">누가 쓰나요? (고르지 않으면 모두)</span>
             </div>
             <label className="check">
               <input

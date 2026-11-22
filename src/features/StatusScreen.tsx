@@ -5,7 +5,8 @@ import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
 import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
-import { ARRIVAL_ROUTINE_KEY, STATUSES, statusInfo, type StatusDef } from '../lib/constants';
+import { ARRIVAL_ROUTINE_KEY, statusInfo, type StatusDef } from '../lib/constants';
+import { statusesFor } from '../lib/statusSets';
 import { path, setEta, setRoutineDone, setStatus } from '../lib/db';
 import { dateKey, etaFromTime, formatClock, formatClockKo } from '../lib/time';
 import type { Member, StatusDoc } from '../lib/types';
@@ -25,9 +26,11 @@ export function StatusScreen() {
   const st = useDocData<StatusDoc>(path(code, 'status', target.id));
   const notify = useNotify();
 
-  const customs: StatusDef[] = (settings.customStatuses ?? []).map((c) => ({ key: c.key, emoji: c.emoji, label: c.label, eta: c.eta }));
+  // 이 사람(어른/아이)에게 어울리는 상태만 보여줍니다.
+  const list = statusesFor(target, settings);
+  const customKeys = new Set((settings.customStatuses ?? []).map((c) => c.key));
   const pick = (def: StatusDef) => {
-    const isCustom = customs.some((c) => c.key === def.key);
+    const isCustom = customKeys.has(def.key);
     void setStatus(code, target.id, def.key, isCustom ? { label: def.label, emoji: def.emoji, eta: def.eta } : undefined);
     notify('status', target.name, def.label);
     // 아이가 "집에 있어요"를 누르면 루틴의 "집 도착"도 자동 체크
@@ -45,7 +48,7 @@ export function StatusScreen() {
       st={st ?? undefined}
       now={now}
       onPick={pick}
-      statuses={[...STATUSES, ...customs]}
+      statuses={list}
       onEta={(at) => {
         void setEta(code, target.id, at);
         if (at) notify('status', target.name, `${formatClockKo(at)} 도착 예정`);

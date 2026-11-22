@@ -1,26 +1,56 @@
 import type { RoutineItem } from './types';
 
+export type StatusAudience = 'parent' | 'child' | 'both';
+
 export interface StatusDef {
   key: string;
   emoji: string;
   label: string;
   /** 도착 예정 시각을 지정할 수 있는 상태 */
   eta: boolean;
+  /** 누구에게 어울리는 상태인지 (어른/아이). 설정에서 사람마다 켜고 끌 수 있어요. */
+  audience?: StatusAudience;
+  /** 설정 화면에서 묶어 보여줄 이름 */
+  group?: string;
 }
 
-export const STATUSES: StatusDef[] = [
-  { key: 'home', emoji: '🏠', label: '집에 있어요', eta: false },
-  { key: 'work', emoji: '💼', label: '회사에서 일하는 중', eta: false },
-  { key: 'going_home', emoji: '🚗', label: '집에 가는 중', eta: true },
-  { key: 'pickup', emoji: '🧒', label: '데리러 가는 중', eta: true },
-  { key: 'shopping', emoji: '🛒', label: '장 보는 중', eta: true },
-  { key: 'academy', emoji: '🎒', label: '학원 가는 중', eta: true },
-  { key: 'school', emoji: '🏫', label: '학교에 있어요', eta: false },
-  { key: 'sleep', emoji: '😴', label: '자는 중', eta: false },
+/**
+ * 고를 수 있는 상태 전체. 기존 기록과 호환되도록 예전 키(home, work, going_home, pickup, shopping, academy, school, sleep)는 그대로입니다.
+ * 어떤 사람에게 보일지는 lib/statusSets.ts 에서 정합니다.
+ */
+export const STATUS_CATALOG: StatusDef[] = [
+  // 공통
+  { key: 'home', emoji: '🏠', label: '집에 있어요', eta: false, audience: 'both', group: '장소' },
+  { key: 'sleep', emoji: '😴', label: '자는 중', eta: false, audience: 'both', group: '쉬기' },
+  // 어른
+  { key: 'work', emoji: '💼', label: '회사에서 일하는 중', eta: false, audience: 'parent', group: '장소' },
+  { key: 'going_home', emoji: '🚗', label: '집에 가는 중', eta: true, audience: 'parent', group: '이동' },
+  { key: 'pickup', emoji: '🧒', label: '데리러 가는 중', eta: true, audience: 'parent', group: '이동' },
+  { key: 'shopping', emoji: '🛒', label: '장 보는 중', eta: true, audience: 'parent', group: '이동' },
+  { key: 'errand', emoji: '🚶', label: '볼일 보는 중', eta: true, audience: 'parent', group: '이동' },
+  { key: 'hospital', emoji: '🏥', label: '병원에 있어요', eta: false, audience: 'parent', group: '장소' },
+  { key: 'cleaning', emoji: '🧹', label: '청소 중', eta: false, audience: 'parent', group: '집안일' },
+  { key: 'organizing', emoji: '🗂', label: '정리하는 중', eta: false, audience: 'parent', group: '집안일' },
+  { key: 'laundry', emoji: '🧺', label: '빨래 중', eta: false, audience: 'parent', group: '집안일' },
+  { key: 'cooking', emoji: '🍳', label: '요리하는 중', eta: false, audience: 'parent', group: '집안일' },
+  { key: 'caring', emoji: '👪', label: '아이 돌보는 중', eta: false, audience: 'parent', group: '쉬기' },
+  { key: 'resting', emoji: '🛋', label: '쉬는 중', eta: false, audience: 'parent', group: '쉬기' },
+  { key: 'exercise', emoji: '🏋️', label: '운동 중', eta: false, audience: 'parent', group: '쉬기' },
+  // 아이
+  { key: 'school', emoji: '🏫', label: '학교에 있어요', eta: false, audience: 'child', group: '장소' },
+  { key: 'kid_going_home', emoji: '🚶', label: '집에 오는 중', eta: true, audience: 'child', group: '이동' },
+  { key: 'academy', emoji: '🎒', label: '학원 가는 중', eta: true, audience: 'child', group: '이동' },
+  { key: 'at_academy', emoji: '🎒', label: '학원에 있어요', eta: false, audience: 'child', group: '장소' },
+  { key: 'playground', emoji: '🌳', label: '놀이터에서 놀아요', eta: false, audience: 'child', group: '장소' },
+  { key: 'friend', emoji: '👫', label: '친구 집에 있어요', eta: false, audience: 'child', group: '장소' },
+  { key: 'study', emoji: '📝', label: '공부·숙제 중', eta: false, audience: 'child', group: '집에서' },
+  { key: 'gaming', emoji: '🎮', label: '게임·놀이 중', eta: false, audience: 'child', group: '집에서' },
 ];
 
-export const statusOf = (key: string): StatusDef | undefined =>
-  STATUSES.find((s) => s.key === key);
+/** 예전 이름 (전체 목록) */
+export const STATUSES = STATUS_CATALOG;
+
+export const statusOf = (key: string): StatusDef | undefined => STATUS_CATALOG.find((s) => s.key === key);
 
 export interface StatusLike {
   key: string;
