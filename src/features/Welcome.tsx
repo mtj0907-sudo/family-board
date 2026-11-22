@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { Copy, Share2 } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
 import { QrCode } from '../components/QrCode';
 import { DEFAULT_ROUTINE_ITEMS } from '../lib/constants';
 import { familyExists, saveSettings } from '../lib/db';
@@ -73,8 +75,7 @@ export function Welcome({ initialCode, onDone }: Props) {
   return (
     <div className="screen center">
       <div className="card welcome">
-        <div className="logo">🏡</div>
-        <h1>우리집 보드</h1>
+        <div className="wordmark">우리집<i>보드</i></div>
         <p className="sub">우리 가족만 보는 상태 공유 보드예요</p>
 
         {mode === 'join' ? (
@@ -99,10 +100,10 @@ export function Welcome({ initialCode, onDone }: Props) {
         ) : (
           <>
             <button className="btn primary" onClick={() => setMode('create')}>
-              ✨ 새 가족 만들기
+              새 가족 만들기
             </button>
             <button className="btn" onClick={() => setMode('join')}>
-              🔗 이미 만든 가족에 들어가기
+              이미 만든 가족에 들어가기
             </button>
           </>
         )}
@@ -156,7 +157,7 @@ function CreateForm({ onBack, onCreated }: { onBack: () => void; onCreated: (cod
         <p className="sub">이름은 이 기기와 우리 가족 데이터에만 저장돼요.</p>
         {rows.map((r, i) => (
           <div className="row" key={i}>
-            <span className="avatar sm">{r.emoji}</span>
+            <Avatar member={{ id: `m${i + 1}`, name: r.name || r.hint }} size={44} />
             <input
               className="grow"
               placeholder={r.hint}
@@ -176,7 +177,7 @@ function CreateForm({ onBack, onCreated }: { onBack: () => void; onCreated: (cod
           </div>
         ))}
         <label className="field">
-          <span>🔒 부모 PIN (숫자 4자리)</span>
+          <span>부모 PIN (숫자 4자리)</span>
           <input inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
         </label>
         <label className="field">
@@ -218,24 +219,25 @@ function CreatedScreen({ code, onNext }: { code: string; onNext: () => void }) {
   return (
     <div className="screen center">
       <div className="card welcome">
-        <div className="logo">🎉</div>
-        <h2>가족이 만들어졌어요!</h2>
+        <h2>가족이 만들어졌어요</h2>
         <p className="sub">
           아래 링크를 가족에게 보내세요. 링크를 열면 바로 같은 가족으로 연결돼요.
-          <br />이 링크는 우리 가족만 알아야 해요 (공개 게시판에 올리지 마세요).
+          <br />이 링크는 우리 가족만 알아야 해요. 공개 게시판에 올리지 마세요.
         </p>
         <QrCode link={link} />
         <div className="linkbox">{link}</div>
         {'share' in navigator && (
           <button className="btn primary" onClick={share}>
-            📤 카톡 등으로 보내기
+            <Share2 size={20} strokeWidth={1.75} aria-hidden />
+            링크 보내기
           </button>
         )}
         <button className="btn" onClick={copy}>
-          {copied ? '✅ 복사했어요' : '📋 링크 복사'}
+          <Copy size={20} strokeWidth={1.75} aria-hidden />
+          {copied ? '복사했어요' : '링크 복사'}
         </button>
         <button className="btn primary" onClick={onNext}>
-          다음 (나는 누구?)
+          다음: 나는 누구?
         </button>
       </div>
     </div>

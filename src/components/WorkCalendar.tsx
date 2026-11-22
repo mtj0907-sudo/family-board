@@ -1,4 +1,4 @@
-import { monthCells } from '../lib/events';
+import { visibleCells } from '../lib/events';
 import { workKind } from '../lib/work';
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토'];
@@ -13,7 +13,7 @@ interface Props {
 
 export function WorkCalendar({ ym, days, todayKey, onPick }: Props) {
   const [y, m] = ym.split('-').map(Number);
-  const cells = monthCells(y, m);
+  const cells = visibleCells(y, m);
   return (
     <div className="calgrid wkcal">
       {DOW.map((d, i) => (

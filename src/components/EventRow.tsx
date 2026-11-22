@@ -1,6 +1,9 @@
+import { Car } from 'lucide-react';
 import { useFamily } from '../FamilyContext';
 import { repeatLabel, type EventDoc } from '../lib/events';
 import type { Member, WithId } from '../lib/types';
+import { Avatar } from './Avatar';
+import { Glyph } from './Glyph';
 
 interface Props {
   ev: WithId<EventDoc>;
@@ -20,30 +23,45 @@ export function EventRow({ ev, onClick, forMember }: Props) {
   if (pickup) {
     if (forMember && forMember.id === pickup.id) {
       const kids = who.filter((w) => w.id !== pickup.id).map((w) => w.name);
-      pickupText = `🚗 ${kids.length ? kids.join('·') + ' ' : ''}데리러 가기`;
+      pickupText = `${kids.length ? kids.join('·') + ' ' : ''}데리러 가기`;
     } else {
-      pickupText = `🚗 ${pickup.emoji} ${pickup.name}가 데리러 가요`;
+      pickupText = `${pickup.name}가 데리러 가요`;
     }
   }
 
+  const compact = !!forMember;
   const body = (
     <>
-      <span className="ev-time">{ev.time || '하루 종일'}</span>
-      <span className="big-emoji">{ev.emoji}</span>
+      <span className="ev-time">{ev.time || '종일'}</span>
+      <span className="ev-ico">
+        <Glyph k={ev.emoji} size={20} />
+      </span>
       <span className="grow left">
         <b>{ev.title}</b>
-        {!forMember && who.length > 0 && <span className="sub"> {who.map((w) => w.emoji).join(' ')}</span>}
-        {pickupText && <div className="pickup">{pickupText}</div>}
-        {ev.repeat !== 'none' && <div className="sub">🔁 {repeatLabel(ev.repeat)}</div>}
+        {!forMember && who.length > 0 && (
+          <span className="inline-avatars">
+            {who.map((w) => (
+              <Avatar key={w.id} member={w} size={20} />
+            ))}
+          </span>
+        )}
+        {pickupText && (
+          <div className="pickup">
+            <Car size={16} strokeWidth={1.75} aria-hidden />
+            {pickupText}
+          </div>
+        )}
+        {ev.repeat !== 'none' && <div className="sub">{repeatLabel(ev.repeat)}</div>}
       </span>
     </>
   );
 
+  const cls = compact ? 'eventrow compact' : 'eventrow';
   return onClick ? (
-    <button className="eventrow" onClick={onClick}>
+    <button className={cls} onClick={onClick}>
       {body}
     </button>
   ) : (
-    <div className="eventrow">{body}</div>
+    <div className={cls}>{body}</div>
   );
 }

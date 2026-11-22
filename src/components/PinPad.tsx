@@ -1,3 +1,4 @@
+import { Delete, Lock, X } from 'lucide-react';
 import { useState } from 'react';
 import { hashPin, unlock } from '../lib/pin';
 
@@ -43,10 +44,13 @@ export function PinPad({ pinHash, salt, title = '부모 PIN을 눌러 주세요'
 
   return (
     <div className="card pinpad">
-      <div className="pin-title">🔒 {title}</div>
+      <div className="pin-title">
+        <Lock size={18} strokeWidth={1.75} aria-hidden />
+        {title}
+      </div>
       <div className="pin-dots" aria-label="입력한 자릿수">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={i < digits.length ? 'dot on' : 'dot'} />
+          <span key={i} className={i < digits.length ? 'dot-pin on' : 'dot-pin'} />
         ))}
       </div>
       <div className="pin-msg">{wrong ? 'PIN이 달라요. 다시 눌러 주세요' : ' '}</div>
@@ -55,8 +59,8 @@ export function PinPad({ pinHash, salt, title = '부모 PIN을 눌러 주세요'
           k === 'cancel' && !onCancel ? (
             <span key={k} />
           ) : (
-            <button key={k} type="button" className="pin-key" onClick={() => press(k)}>
-              {k === 'back' ? '⌫' : k === 'cancel' ? '✕' : k}
+            <button key={k} type="button" className="pin-key" onClick={() => press(k)} aria-label={k === 'back' ? '지우기' : k === 'cancel' ? '닫기' : k}>
+              {k === 'back' ? <Delete size={22} strokeWidth={1.75} /> : k === 'cancel' ? <X size={22} strokeWidth={1.75} /> : k}
             </button>
           ),
         )}

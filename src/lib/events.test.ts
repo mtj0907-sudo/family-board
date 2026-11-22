@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, eventsOn, monthCells, occursOn, shiftMonth, weekdayOf, type EventDoc } from './events';
+import { addDays, eventsOn, monthCells, occursOn, shiftMonth, visibleCells, weekdayOf, type EventDoc } from './events';
 
 // 모두 가짜 데이터
 const mk = (over: Partial<EventDoc> & { id?: string }) => ({
@@ -81,5 +81,10 @@ describe('eventsOn / monthCells', () => {
     expect(cells[2].key).toBe('2030-01-01');
     expect(cells[2].inMonth).toBe(true);
     expect(cells.filter((c) => c.inMonth)).toHaveLength(31);
+  });
+  it('visibleCells: 마지막 주가 비면 줄을 뺀다 (4주/5주/6주)', () => {
+    expect(visibleCells(2026, 2)).toHaveLength(28); // 2026년 2월은 일요일 시작, 28일
+    expect(visibleCells(2030, 1)).toHaveLength(35); // 2030-01은 화요일 시작, 31일 → 5주
+    expect(visibleCells(2026, 8)).toHaveLength(42); // 2026-08은 토요일 시작, 31일 → 6주
   });
 });

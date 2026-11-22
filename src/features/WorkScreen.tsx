@@ -1,4 +1,6 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { Avatar } from '../components/Avatar';
 import { PinGuard } from '../components/PinGuard';
 import { WorkCalendar } from '../components/WorkCalendar';
 import { useFamily } from '../FamilyContext';
@@ -49,7 +51,7 @@ function WorkBody() {
     setYm(p.ym);
     setText('');
     setPreview(null);
-    setMsg(`${p.ym} 근무를 저장했어요 ✅`);
+    setMsg(`${p.ym} 근무를 저장했어요`);
     setTimeout(() => setMsg(''), 2500);
   }
 
@@ -57,15 +59,15 @@ function WorkBody() {
     return (
       <div className="screen">
         <div className="card">
-          <h2>👩‍💼 근무표를 쓰는 사람</h2>
+          <h2>근무표를 쓰는 사람</h2>
           <p className="sub">근무표를 가져올 가족을 한 명 골라 주세요. (나중에 설정에서 바꿀 수 있어요)</p>
           <div className="picker wrap">
             {members
               .filter((mm) => mm.role === 'parent')
               .map((mm) => (
                 <button key={mm.id} className="pick" onClick={() => chooseOwner(mm.id)}>
-                  <span className="avatar sm">{mm.emoji}</span>
-                  <span>{mm.name}</span>
+                  <Avatar member={mm} size={38} />
+                  {mm.name}
                 </button>
               ))}
           </div>
@@ -78,18 +80,18 @@ function WorkBody() {
     <div className="screen">
       <div className="card">
         <div className="calhead">
-          <button className="btn inline" onClick={() => move(-1)} aria-label="이전 달">
-            ‹
+          <button className="btn" onClick={() => move(-1)} aria-label="이전 달">
+            <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
           </button>
           <div className="calmonth">
             {y}년 {m}월
           </div>
-          <button className="btn inline" onClick={() => move(1)} aria-label="다음 달">
-            ›
+          <button className="btn" onClick={() => move(1)} aria-label="다음 달">
+            <ChevronRight size={22} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
         <div className="sub center-text">
-          {owner.emoji} {owner.name} 근무 · 날짜를 누르면 고칠 수 있어요
+          {owner.name} 근무 · 날짜를 누르면 고칠 수 있어요
         </div>
         {saved === undefined ? (
           <div className="sub">불러오는 중…</div>
@@ -101,7 +103,7 @@ function WorkBody() {
       </div>
 
       <div className="card">
-        <h2>📋 근무 가져오기</h2>
+        <h2>근무 가져오기</h2>
         <ol className="steps">
           <li>이번 달 근무표 사진을 <b>Claude 채팅</b>에 보내요.</li>
           <li>아래 문장을 같이 보내면 우리 줄만 한 줄로 알려줘요.</li>
@@ -113,14 +115,14 @@ function WorkBody() {
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(PROMPT);
-              setMsg('문장을 복사했어요 ✅');
+              setMsg('문장을 복사했어요');
               setTimeout(() => setMsg(''), 2000);
             } catch {
               window.prompt('이 문장을 복사하세요', PROMPT);
             }
           }}
         >
-          📋 Claude에게 보낼 문장 복사
+          Claude에게 보낼 문장 복사
         </button>
         <label className="field">
           <span>받은 한 줄 붙여넣기</span>
@@ -135,11 +137,11 @@ function WorkBody() {
           />
         </label>
         <button className="btn primary" disabled={!text.trim()} onClick={() => setPreview(parseWork(text))}>
-          👀 미리보기
+          미리보기
         </button>
       </div>
 
-      {preview && !preview.ok && <div className="card error">⚠️ {preview.error}</div>}
+      {preview && !preview.ok && <div className="card error">{preview.error}</div>}
 
       {preview?.ok && (
         <div className="card ask">
@@ -148,11 +150,11 @@ function WorkBody() {
           <Legend />
           {preview.value.warnings.map((w) => (
             <div key={w} className="sub">
-              ⚠️ {w}
+              {w}
             </div>
           ))}
           <button className="btn primary" onClick={() => save(preview.value)}>
-            ✅ 이 달에 저장
+            이 달에 저장
           </button>
           <button className="btn" onClick={() => setPreview(null)}>
             취소
@@ -224,7 +226,7 @@ function DayEditor({ ym, day, current, onClose }: { ym: string; day: number; cur
               onClose();
             }}
           >
-            🗑 이 날 지우기
+            이 날 지우기
           </button>
         )}
         <button className="btn" onClick={onClose}>

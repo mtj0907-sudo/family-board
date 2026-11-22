@@ -1,3 +1,4 @@
+import { Avatar } from '../components/Avatar';
 import type { Member } from '../lib/types';
 
 export function WhoAmI({ members, onPick, onCancel }: { members: Member[]; onPick: (id: string) => void; onCancel?: () => void }) {
@@ -5,12 +6,12 @@ export function WhoAmI({ members, onPick, onCancel }: { members: Member[]; onPic
     <div className="screen center">
       <div className="card welcome">
         <h2>이 기기는 누구 거예요?</h2>
-        <p className="sub">내 얼굴을 눌러 주세요</p>
-        <div className="grid2">
+        <p className="sub">내 이름을 눌러 주세요</p>
+        <div className="tiles">
           {members.map((m) => (
-            <button key={m.id} className="who" onClick={() => onPick(m.id)}>
-              <span className="avatar">{m.emoji}</span>
-              <span className="name">{m.name}</span>
+            <button key={m.id} className="tile" onClick={() => onPick(m.id)}>
+              <Avatar member={m} size={56} />
+              <span>{m.name}</span>
             </button>
           ))}
         </div>

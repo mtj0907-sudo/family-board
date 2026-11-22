@@ -53,7 +53,6 @@ export default function App() {
     return (
       <div className="screen center">
         <div className="card welcome">
-          <div className="logo">🤔</div>
           <h2>가족 정보를 찾을 수 없어요</h2>
           <p className="sub">인터넷 연결이 안 되었거나 Firebase 규칙이 아직 게시되지 않았을 수 있어요.</p>
           <button className="btn primary" onClick={() => location.reload()}>
@@ -91,7 +90,7 @@ export default function App() {
 function Loading() {
   return (
     <div className="screen center">
-      <div className="logo spin">🏡</div>
+      <div className="wordmark spin">우리집<i>보드</i></div>
     </div>
   );
 }
@@ -100,7 +99,6 @@ function ConfigMissing() {
   return (
     <div className="screen center">
       <div className="card welcome">
-        <div className="logo">🔧</div>
         <h2>Firebase 설정이 아직 없어요</h2>
         <p className="sub">
           배포할 때 <b>VITE_FIREBASE_CONFIG</b> 값이 들어가야 해요.

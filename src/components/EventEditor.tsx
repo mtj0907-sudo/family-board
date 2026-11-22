@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useFamily } from '../FamilyContext';
 import { deleteEvent, saveEvent } from '../lib/db';
-import { EVENT_EMOJIS, REPEAT_OPTIONS, type EventDoc, type Repeat } from '../lib/events';
+import { REPEAT_OPTIONS, type EventDoc, type Repeat } from '../lib/events';
 import type { WithId } from '../lib/types';
+import { Avatar } from './Avatar';
+import { Glyph, ICON_CHOICES } from './Glyph';
 
 interface Props {
   initial?: WithId<EventDoc>;
@@ -56,10 +58,10 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
       <div className="card sheet">
         <h2>{initial ? '일정 고치기' : '일정 추가'}</h2>
 
-        <div className="emoji-grid ev">
-          {EVENT_EMOJIS.map((e) => (
-            <button key={e} className={e === emoji ? 'btnreset sel' : 'btnreset'} onClick={() => setEmoji(e)}>
-              {e}
+        <div className="icon-grid" role="group" aria-label="아이콘 고르기">
+          {ICON_CHOICES.map((e) => (
+            <button key={e} className={e === emoji ? 'sel' : ''} onClick={() => setEmoji(e)} aria-pressed={e === emoji}>
+              <Glyph k={e} size={22} />
             </button>
           ))}
         </div>
@@ -75,7 +77,7 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
           <label className="field grow">
-            <span>시간 (비우면 하루 종일)</span>
+            <span>시간 (비우면 종일)</span>
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
         </div>
@@ -84,30 +86,30 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
           <span>누구 일정이에요? (고르지 않으면 가족 전체)</span>
           <div className="picker wrap">
             {members.map((m) => (
-              <button key={m.id} className={who.includes(m.id) ? 'pick on' : 'pick'} onClick={() => toggleWho(m.id)}>
-                <span className="avatar sm">{m.emoji}</span>
-                <span>{m.name}</span>
+              <button key={m.id} className={who.includes(m.id) ? 'pick on' : 'pick'} onClick={() => toggleWho(m.id)} aria-pressed={who.includes(m.id)}>
+                <Avatar member={m} size={38} />
+                {m.name}
               </button>
             ))}
           </div>
         </div>
 
         <label className="field">
-          <span>🚗 데리러 갈 사람</span>
+          <span>데리러 갈 사람</span>
           <select value={pickupBy} onChange={(e) => setPickupBy(e.target.value)}>
             <option value="">없음</option>
             {members
               .filter((m) => m.role === 'parent')
               .map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.emoji} {m.name}
+                  {m.name}
                 </option>
               ))}
           </select>
         </label>
 
         <label className="field">
-          <span>🔁 반복</span>
+          <span>반복</span>
           <select value={repeat} onChange={(e) => setRepeat(e.target.value as Repeat)}>
             {REPEAT_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
@@ -126,7 +128,7 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
         </button>
         {initial && (
           <button className="btn no" onClick={remove}>
-            🗑 지우기
+            지우기
           </button>
         )}
       </div>

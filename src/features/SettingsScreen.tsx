@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { Copy, Plus, Trash2 } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
+import { Glyph, ICON_CHOICES } from '../components/Glyph';
 import { PinGuard } from '../components/PinGuard';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
-import { EMOJI_CHOICES } from '../lib/constants';
 import { saveSettings } from '../lib/db';
 import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
@@ -24,7 +26,7 @@ function SettingsBody() {
   const [owner, setOwner] = useState(settings.workOwnerId ?? '');
   const [times, setTimes] = useState<Record<string, string>>(settings.workTimes ?? {});
   const [newPin, setNewPin] = useState('');
-  const [openEmoji, setOpenEmoji] = useState<string | null>(null);
+  const [openIcon, setOpenIcon] = useState<number | null>(null);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState(false);
   const link = buildJoinLink(location.href, code);
@@ -56,65 +58,66 @@ function SettingsBody() {
     else delete next.workOwnerId;
     void saveSettings(code, next);
     setNewPin('');
-    setMsg('저장했어요 ✅');
+    setMsg('저장했어요');
   }
 
   return (
     <div className="screen">
       <div className="card">
-        <h2>👪 가족 구성원</h2>
+        <h2>가족 구성원</h2>
         {members.map((m) => (
-          <div key={m.id}>
+          <div className="row" key={m.id}>
+            <Avatar member={m} size={44} />
+            <input className="grow" value={m.name} maxLength={10} onChange={(e) => setMember(m.id, { name: e.target.value })} aria-label="이름" />
+            <select value={m.role} onChange={(e) => setMember(m.id, { role: e.target.value as Member['role'] })} aria-label="역할">
+              <option value="parent">어른</option>
+              <option value="child">아이</option>
+            </select>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h2>루틴 항목 (아이 공통)</h2>
+        {items.map((it, i) => (
+          <div key={i}>
             <div className="row">
-              <button className="avatar sm btnreset" onClick={() => setOpenEmoji(openEmoji === m.id ? null : m.id)}>
-                {m.emoji}
+              <button className="icon-pick" onClick={() => setOpenIcon(openIcon === i ? null : i)} aria-label="아이콘 바꾸기">
+                <Glyph k={it.emoji} size={22} />
               </button>
-              <input className="grow" value={m.name} maxLength={10} onChange={(e) => setMember(m.id, { name: e.target.value })} />
-              <select value={m.role} onChange={(e) => setMember(m.id, { role: e.target.value as Member['role'] })}>
-                <option value="parent">어른</option>
-                <option value="child">아이</option>
-              </select>
+              <input className="grow" value={it.label} maxLength={8} placeholder="항목 이름" onChange={(e) => setItem(i, { label: e.target.value })} />
+              <button className="btn inline" onClick={() => setItems(items.filter((_, j) => j !== i))} aria-label="삭제">
+                <Trash2 size={20} strokeWidth={1.75} aria-hidden />
+              </button>
             </div>
-            {openEmoji === m.id && (
-              <div className="emoji-grid">
-                {EMOJI_CHOICES.map((e) => (
+            {openIcon === i && (
+              <div className="icon-grid" style={{ marginTop: 8 }}>
+                {ICON_CHOICES.map((e) => (
                   <button
                     key={e}
-                    className="btnreset"
+                    className={e === it.emoji ? 'sel' : ''}
                     onClick={() => {
-                      setMember(m.id, { emoji: e });
-                      setOpenEmoji(null);
+                      setItem(i, { emoji: e });
+                      setOpenIcon(null);
                     }}
                   >
-                    {e}
+                    <Glyph k={e} size={22} />
                   </button>
                 ))}
               </div>
             )}
           </div>
         ))}
-      </div>
-
-      <div className="card">
-        <h2>✅ 루틴 항목 (아이 공통)</h2>
-        {items.map((it, i) => (
-          <div className="row" key={i}>
-            <input className="emoji-in" value={it.emoji} maxLength={4} onChange={(e) => setItem(i, { emoji: e.target.value })} />
-            <input className="grow" value={it.label} maxLength={8} onChange={(e) => setItem(i, { label: e.target.value })} />
-            <button className="btn inline" onClick={() => setItems(items.filter((_, j) => j !== i))} aria-label="삭제">
-              🗑
-            </button>
-          </div>
-        ))}
         {items.length < 8 && (
-          <button className="btn" onClick={() => setItems([...items, { key: '', emoji: '⭐', label: '' }])}>
-            ➕ 항목 추가
+          <button className="btn" onClick={() => setItems([...items, { key: '', emoji: '📌', label: '' }])}>
+            <Plus size={20} strokeWidth={2} aria-hidden />
+            항목 추가
           </button>
         )}
       </div>
 
       <div className="card">
-        <h2>👩‍💼 근무표</h2>
+        <h2>근무표</h2>
         <label className="field">
           <span>근무표를 쓰는 사람</span>
           <select value={owner} onChange={(e) => setOwner(e.target.value)}>
@@ -123,7 +126,7 @@ function SettingsBody() {
               .filter((m) => m.role === 'parent')
               .map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.emoji} {m.name}
+                  {m.name}
                 </option>
               ))}
           </select>
@@ -144,7 +147,7 @@ function SettingsBody() {
       </div>
 
       <div className="card">
-        <h2>🔒 부모 PIN 바꾸기</h2>
+        <h2>부모 PIN 바꾸기</h2>
         <input inputMode="numeric" maxLength={4} placeholder="새 PIN 4자리 (안 바꾸면 비워 두세요)" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} />
       </div>
 
@@ -154,7 +157,7 @@ function SettingsBody() {
       {msg && <div className="toast">{msg}</div>}
 
       <div className="card">
-        <h2>🔗 가족 링크</h2>
+        <h2>가족 링크</h2>
         <p className="sub">다른 기기에서 이 링크를 열면 같은 가족으로 연결돼요. 가족 밖에는 공유하지 마세요.</p>
         <QrCode link={link} />
         <div className="linkbox">{link}</div>
@@ -169,7 +172,8 @@ function SettingsBody() {
             }
           }}
         >
-          {copied ? '✅ 복사했어요' : '📋 링크 복사'}
+          <Copy size={20} strokeWidth={1.75} aria-hidden />
+          {copied ? '복사했어요' : '링크 복사'}
         </button>
         <button
           className="btn no"
