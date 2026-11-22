@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFamily } from '../FamilyContext';
+import { useNotify } from '../hooks/useNotify';
 import { deleteEvent, saveEvent } from '../lib/db';
 import { REPEAT_OPTIONS, type EventDoc, type Repeat } from '../lib/events';
 import type { WithId } from '../lib/types';
@@ -15,6 +16,7 @@ interface Props {
 /** 일정 추가/수정 시트 (부모용) */
 export function EventEditor({ initial, defaultDate, onClose }: Props) {
   const { code, members } = useFamily();
+  const notify = useNotify();
   const [emoji, setEmoji] = useState(initial?.emoji ?? '📌');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [date, setDate] = useState(initial?.date ?? defaultDate);
@@ -43,6 +45,11 @@ export function EventEditor({ initial, defaultDate, onClose }: Props) {
       pickupBy,
       repeat,
     });
+    // 데리러 갈 사람이 새로 정해지거나 바뀌면 알림
+    if (pickupBy && pickupBy !== (initial?.pickupBy ?? '')) {
+      const who = members.find((m) => m.id === pickupBy)?.name ?? '';
+      notify('pickup', '데리러 갈 사람', `${title.trim()} · ${who}`);
+    }
     onClose();
   }
 

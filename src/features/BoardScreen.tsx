@@ -9,6 +9,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusInfo } from '../lib/constants';
@@ -274,12 +275,14 @@ function KidActions({
   onSent: (text: string) => void;
 }) {
   const { code } = useFamily();
+  const notify = useNotify();
   const [sent, setSent] = useState<string | null>(null);
   const keys = BOARD_MESSAGE_KEYS.map((k) => QUICK_MESSAGES.find((q) => q.key === k)).filter((q): q is NonNullable<typeof q> => !!q);
 
   function send(key: string, label: string) {
     if (sent) return;
     void sendMessage(code, kid.id, 'quick', key);
+    notify('message', kid.name, label);
     setSent(key);
     onSent(`${label} 보냈어요`);
     window.setTimeout(() => setSent(null), 3000); // 연달아 마구 누르는 것을 막아요
@@ -335,6 +338,7 @@ export function WhenSheet({
   onClose: () => void;
 }) {
   const { code } = useFamily();
+  const notify = useNotify();
   const [asked, setAsked] = useState(false);
   const a = whenHome({ name: parent.name, st, now, workCode, workTimes, commuteMin });
 
@@ -375,6 +379,7 @@ export function WhenSheet({
               className="btn primary"
               onClick={() => {
                 void sendMessage(code, kid.id, 'quick', ASK_WHEN_MESSAGE.key, parent.id);
+                notify('message', kid.name, `${parent.name}에게 ${ASK_WHEN_MESSAGE.label}`);
                 setAsked(true);
               }}
             >

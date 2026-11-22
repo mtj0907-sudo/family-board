@@ -96,3 +96,20 @@ export const setWorkDay = (code: string, ym: string, day: number, value: string 
     { days: { [String(day)]: value ?? deleteField() }, updatedAt: Date.now() },
     { merge: true },
   );
+
+/** 알림을 받는 기기 한 대 등록/수정 (가족 코드 아래 push 컬렉션) */
+export const savePushDevice = (
+  code: string,
+  deviceId: string,
+  data: {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    memberId: string;
+    prefStatus: boolean;
+    prefMessage: boolean;
+    prefPickup: boolean;
+  },
+) => setDoc(doc(need(), path(code, 'push', deviceId)), { ...data, updatedAt: Date.now() });
+
+export const deletePushDevice = (code: string, deviceId: string) => deleteDoc(doc(need(), path(code, 'push', deviceId)));

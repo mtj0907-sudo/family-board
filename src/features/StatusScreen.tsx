@@ -3,10 +3,11 @@ import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
+import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { ARRIVAL_ROUTINE_KEY, STATUSES, statusInfo, type StatusDef } from '../lib/constants';
 import { path, setEta, setRoutineDone, setStatus } from '../lib/db';
-import { dateKey, etaFromTime, formatClock } from '../lib/time';
+import { dateKey, etaFromTime, formatClock, formatClockKo } from '../lib/time';
 import type { Member, StatusDoc } from '../lib/types';
 
 const QUICK_ETA = [
@@ -22,11 +23,13 @@ export function StatusScreen() {
   const now = useNow(30000);
   const target = members.find((m) => m.id === targetId) ?? me;
   const st = useDocData<StatusDoc>(path(code, 'status', target.id));
+  const notify = useNotify();
 
   const customs: StatusDef[] = (settings.customStatuses ?? []).map((c) => ({ key: c.key, emoji: c.emoji, label: c.label, eta: c.eta }));
   const pick = (def: StatusDef) => {
     const isCustom = customs.some((c) => c.key === def.key);
     void setStatus(code, target.id, def.key, isCustom ? { label: def.label, emoji: def.emoji, eta: def.eta } : undefined);
+    notify('status', target.name, def.label);
     // 아이가 "집에 있어요"를 누르면 루틴의 "집 도착"도 자동 체크
     if (def.key === 'home' && target.role === 'child') {
       void setRoutineDone(code, dateKey(Date.now()), target.id, ARRIVAL_ROUTINE_KEY, true);
@@ -43,7 +46,10 @@ export function StatusScreen() {
       now={now}
       onPick={pick}
       statuses={[...STATUSES, ...customs]}
-      onEta={(at) => void setEta(code, target.id, at)}
+      onEta={(at) => {
+        void setEta(code, target.id, at);
+        if (at) notify('status', target.name, `${formatClockKo(at)} 도착 예정`);
+      }}
     />
   );
 }

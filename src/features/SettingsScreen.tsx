@@ -3,6 +3,7 @@ import { Copy, Plus, Trash2 } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Glyph, ICON_CHOICES } from '../components/Glyph';
 import { PinGuard } from '../components/PinGuard';
+import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
 import { saveSettings } from '../lib/db';
@@ -240,6 +241,8 @@ function SettingsBody() {
             </div>
           ))}
       </div>
+
+      <PushSettings />
 
       <div className="card">
         <h2>부모 PIN 바꾸기</h2>

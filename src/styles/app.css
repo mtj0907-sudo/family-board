@@ -423,3 +423,5 @@ main { display: flex; flex-direction: column; }
 .news-text small { font-size: .75em; opacity: .7; font-weight: 600; }
 .news-text span { font-size: 1.7em; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
 @keyframes news-in { from { opacity: 0; transform: translate(-50%, -16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.check.flat { margin: 0; padding: 4px 0; color: var(--ink); }

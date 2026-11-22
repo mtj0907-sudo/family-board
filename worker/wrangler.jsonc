@@ -1,0 +1,6 @@
+{
+  // 가족 알림 서버. Cloudflare 무료 플랜(Workers)에서 돌아갑니다.
+  "name": "family-board-push",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01"
+}

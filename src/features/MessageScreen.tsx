@@ -4,6 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
 import { useFamily } from '../FamilyContext';
 import { useColData } from '../hooks/useFirestore';
+import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import {
   ARRIVAL_ROUTINE_KEY,
@@ -25,7 +26,8 @@ export function MessageScreen() {
 }
 
 export function ChildView({ msgs, now, meId }: { msgs: WithId<MessageDoc>[]; now: number; meId: string }) {
-  const { code } = useFamily();
+  const { code, me } = useFamily();
+  const notify = useNotify();
   const [toast, setToast] = useState('');
   const mine = msgs.filter((m) => m.from === meId);
   const lastYoutube = mine.find((m) => m.kind === 'youtube');
@@ -38,6 +40,7 @@ export function ChildView({ msgs, now, meId }: { msgs: WithId<MessageDoc>[]; now
 
   function send(key: string) {
     void sendMessage(code, meId, 'quick', key);
+    notify('message', me.name, messageOf(key)?.label ?? '한마디');
     // "집에 왔어요"는 상태와 루틴(집 도착)에도 자동 반영
     if (key === 'arrived') {
       void setStatus(code, meId, 'home');
@@ -61,6 +64,7 @@ export function ChildView({ msgs, now, meId }: { msgs: WithId<MessageDoc>[]; now
           disabled={waiting}
           onClick={() => {
             void sendMessage(code, meId, 'youtube', YOUTUBE_MESSAGE.key);
+            notify('message', me.name, YOUTUBE_MESSAGE.label);
             flash('엄마·아빠에게 물어봤어요');
           }}
         >
@@ -77,13 +81,15 @@ export function ChildView({ msgs, now, meId }: { msgs: WithId<MessageDoc>[]; now
 
 /** 짧은 메모 보내기 (글씨를 쓸 수 있는 아이와 부모용) */
 function NoteBox({ from }: { from: string }) {
-  const { code } = useFamily();
+  const { code, members } = useFamily();
+  const notify = useNotify();
   const [text, setText] = useState('');
   const [sent, setSent] = useState(false);
   const clean = text.trim();
   function send() {
     if (!clean) return;
     void sendNote(code, from, clean);
+    notify('message', members.find((m) => m.id === from)?.name ?? '가족', clean);
     setText('');
     setSent(true);
     window.setTimeout(() => setSent(false), 2000);
@@ -139,11 +145,15 @@ function YoutubeResult({ reply, now }: { reply: NonNullable<MessageDoc['reply']>
 
 export function ParentView({ msgs, now }: { msgs: WithId<MessageDoc>[]; now: number }) {
   const { code, members, me, requirePin } = useFamily();
+  const notify = useNotify();
   const pending = msgs.filter((m) => m.kind === 'youtube' && !m.reply);
   const nameOf = (id: string): Member | undefined => members.find((m) => m.id === id);
 
   function answer(id: string, a: YoutubeAnswer) {
-    requirePin(() => void answerYoutube(code, id, a, me.id));
+    requirePin(() => {
+      void answerYoutube(code, id, a, me.id);
+      notify('message', '유튜브 답이 왔어요', a === 'yes' ? '봐도 돼요' : a === 'no' ? '오늘은 안 돼요' : '30분만 봐요');
+    });
   }
 
   return (

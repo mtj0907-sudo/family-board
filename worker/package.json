@@ -1,0 +1,14 @@
+{
+  "name": "family-board-push",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "가족 알림을 보내는 아주 작은 서버 (Cloudflare Workers 무료 플랜). 저장하는 데이터도 따로 넣는 비밀값도 없고, Firestore의 가족 코드 아래 문서만 읽습니다.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
+  }
+}

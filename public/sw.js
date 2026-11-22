@@ -48,3 +48,36 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// ── 푸시 알림 받기: 알림 서버가 보낸 내용을 화면에 보여줍니다.
+// (iOS는 푸시를 받으면 반드시 알림을 보여줘야 해서, 내용을 못 읽어도 기본 문구로 보여줍니다.)
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || '우리집 보드', {
+      body: data.body || '새 소식이 있어요',
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      tag: data.tag || 'fb',
+      renotify: true,
+    }),
+  );
+});
+
+// 알림을 누르면 앱을 열거나, 이미 열려 있으면 앞으로 가져옵니다.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const open = all.find((c) => c.url.startsWith(self.registration.scope));
+      if (open) return open.focus();
+      return self.clients.openWindow(self.registration.scope);
+    })(),
+  );
+});
