@@ -1,7 +1,6 @@
 import { Backpack, ChevronRight, MapPinned } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
-import { PresenceStrip } from '../components/PresenceStrip';
 import { TodayHero } from '../components/TodayHero';
 import { toneOf } from '../components/Avatar';
 import { presenceOf } from '../lib/presence';
@@ -26,7 +25,6 @@ import { path } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
 import { estimateEta } from '../lib/whenHome';
-import type { ClockMark } from '../components/Clock';
 import { dateKey, formatElapsed } from '../lib/time';
 import type { Member, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 
@@ -55,10 +53,6 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
   const cheer = weekStartCheer(now, settings);
   const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
   const effects = store.get('fb.fx') !== '0' && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
-  const marks: ClockMark[] = members.flatMap((m) => {
-    const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
-    return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
-  });
 
   return (
     <div className="screen today">
@@ -71,10 +65,11 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
         tomorrow={tomorrowItems(events, dateKey(now), members)}
         special={special?.kind ?? null}
         tree={treeSeason(now) || special?.kind === 'christmas'}
-        marks={marks}
+        members={members}
+        statuses={statuses}
+        onOpenStatus={() => onGo?.('status')}
         effects={effects}
       />
-      <PresenceStrip members={members} statuses={statuses} onOpen={() => onGo?.('status')} />
       {showNudge && myBag && <BagNudge done={myBag.done} total={myBag.total} onClick={() => onGo?.('routine')} />}
       {familyWide.length > 0 && (
         <div className="group">
@@ -132,30 +127,29 @@ export function MemberRow({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
-    <div className={`mcard pres-${presenceOf(st)}`} style={{ ['--c' as string]: toneOf(m.id).fg }}>
+    <div className={`mcard pres-${presenceOf(st)}${isParent && m.role === 'child' ? ' has-loc' : ''}`} style={{ ['--c' as string]: toneOf(m.id).fg }}>
       <div className="mrow-in">
-      <Avatar member={m} size={56} />
+      <Avatar member={m} size={46} />
       <div className="m-body">
-        <div className="m-head">
+        <div className="m-line">
           <div className="m-name">{m.name}</div>
+          {st && def ? (
+            <>
+              <span className="m-status">
+                <Glyph k={def.emoji} size={17} />
+                <span>{def.label}</span>
+              </span>
+              <span className="sub m-since">{formatElapsed(now - st.since)}</span>
+            </>
+          ) : (
+            <span className="sub">아직 상태가 없어요</span>
+          )}
           {isParent && m.role === 'child' && (
             <button className="locate" onClick={openFindMy} aria-label={`${m.name} 위치 확인 (나의 찾기 열기)`}>
               <MapPinned size={18} strokeWidth={1.75} aria-hidden />
-              위치
             </button>
           )}
         </div>
-        {st && def ? (
-          <div className="m-status-row">
-            <span className="m-status">
-              <Glyph k={def.emoji} size={18} />
-              <span>{def.label}</span>
-            </span>
-            <span className="sub">{formatElapsed(now - st.since)}</span>
-          </div>
-        ) : (
-          <div className="sub">아직 상태가 없어요</div>
-        )}
 
         {eta ? (
           <EtaTrack member={m} eta={eta} now={now} />
