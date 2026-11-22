@@ -19,7 +19,7 @@ import { useBag } from '../hooks/useBag';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { bagNudgeActive, bagProgress } from '../lib/bag';
-import { statusInfo } from '../lib/constants';
+import { doingOf, statusInfo } from '../lib/constants';
 import { path } from '../lib/db';
 import { eventsOn, type EventDoc } from '../lib/events';
 import { routineProgress } from '../lib/routine';
@@ -142,6 +142,7 @@ export function MemberRow({
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
   const workCode = workOn?.(dateKey(now));
+  const doing = m.role === 'child' ? doingOf(routine?.doing?.[m.id]) : undefined;
 
   return (
     <button className={`mcard pres-${presenceOf(st)}`} style={{ ['--c' as string]: toneOf(m.id).fg }} onClick={onOpen} aria-label={`${m.name} 자세히 보기`}>
@@ -169,8 +170,14 @@ export function MemberRow({
         ) : (
           def?.eta && <div className="sub et-none">도착 시각은 아직 안 정했어요</div>
         )}
-        {(m.role === 'child' || workCode || events.length > 0) && (
+        {(m.role === 'child' || workCode || events.length > 0 || doing) && (
           <div className="mchips">
+            {doing && (
+              <span className="mchip now">
+                <Glyph k={doing.emoji} size={13} />
+                지금 {doing.label}
+              </span>
+            )}
             {m.role === 'child' && (
               <span className={prog.done === prog.total ? 'mchip ok' : 'mchip'}>
                 할 일 {prog.done}/{prog.total}
