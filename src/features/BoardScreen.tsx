@@ -1,4 +1,4 @@
-import { Backpack, Check, ListChecks, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { Backpack, Check, CloudSun, ListChecks, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { Clock, type ClockMark } from '../components/Clock';
@@ -8,7 +8,12 @@ import { Glyph } from '../components/Glyph';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { WeatherCard } from '../components/WeatherCard';
+import { WeatherFx } from '../components/WeatherFx';
 import { useBag } from '../hooks/useBag';
+import { useWeather } from '../hooks/useWeather';
+import { fxOf, previewWeather, type Preview } from '../lib/weather';
+import { store } from '../lib/storage';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
 import { doingOf, messageOf, statusInfo } from '../lib/constants';
@@ -73,6 +78,13 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const [sheet, setSheet] = useState<{ member: Member; tab: SheetTab } | null>(null);
   const [ytOpen, setYtOpen] = useState(false);
   const bag = useBag(now);
+  const realWeather = useWeather();
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [fxOn, setFxOn] = useState(() => store.get('fb.fx') !== '0');
+  const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const weather = preview ? previewWeather(preview, realWeather) : realWeather;
+  const PREVIEWS: (Preview | null)[] = [null, 'rain', 'snow', 'wind'];
+  const PREVIEW_NAME: Record<Preview, string> = { rain: '비', snow: '눈', wind: '바람' };
   const [toast, setToast] = useState('');
   const [news, setNews] = useState<WithId<MessageDoc> | null>(null);
   const [muted, setMutedState] = useState(isMuted);
@@ -150,6 +162,18 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         >
           {muted ? <VolumeX size={18} strokeWidth={1.75} aria-hidden /> : <Volume2 size={18} strokeWidth={1.75} aria-hidden />}
         </button>
+        <button
+          className="board-btn icon"
+          onClick={() => {
+            store.set('fb.fx', fxOn ? '0' : '1');
+            setFxOn(!fxOn);
+          }}
+          aria-label={fxOn ? '날씨 효과 끄기' : '날씨 효과 켜기'}
+          aria-pressed={!fxOn}
+          style={fxOn ? undefined : { opacity: 0.55 }}
+        >
+          <CloudSun size={18} strokeWidth={1.75} aria-hidden />
+        </button>
         {'requestFullscreen' in document.documentElement && (
           <button className="board-btn icon" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => {})} aria-label="전체 화면">
             <Maximize2 size={18} strokeWidth={1.75} aria-hidden />
@@ -165,6 +189,13 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           <Clock size={180} stacked marks={clockMarkList} />
         </div>
         <div className="side-bottom">
+          {weather && (
+            <WeatherCard
+              w={weather}
+              preview={preview ? PREVIEW_NAME[preview] : undefined}
+              onTap={() => setPreview(PREVIEWS[(PREVIEWS.indexOf(preview) + 1) % PREVIEWS.length])}
+            />
+          )}
 
         {pendingYoutube.length > 0 && (
           <button className="board-alert" onClick={() => requirePin(() => setYtOpen(true))}>
@@ -242,6 +273,8 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           />
         ))}
       </section>
+
+      {weather && fxOn && !reduceMotion && <WeatherFx fx={fxOf(weather)} scale={box.scale} />}
 
       {news && (
         <div className="board-news" role="status" onClick={() => setNews(null)}>
