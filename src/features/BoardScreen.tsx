@@ -1,7 +1,7 @@
-import { Check, Clock as ClockIcon, Maximize2, MonitorPlay, Sun, X } from 'lucide-react';
+import { Check, Clock as ClockIcon, Maximize2, MonitorPlay, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
-import { Clock } from '../components/Clock';
+import { Clock, type ClockMark } from '../components/Clock';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
@@ -11,9 +11,11 @@ import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusOf } from '../lib/constants';
+import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, doingOf, messageOf, statusInfo } from '../lib/constants';
 import { path, sendMessage, setRoutineDone } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
+import { alertText, pickAlerts } from '../lib/boardAlert';
+import { isMuted, playChime, setMuted, unlockAudio } from '../lib/chime';
 import { useKeepAwake } from '../lib/keepAwake';
 import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
@@ -66,6 +68,11 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const box = useBoardBox();
   const [ask, setAsk] = useState<{ parent: Member; kid: Member } | null>(null);
   const [toast, setToast] = useState('');
+  const [news, setNews] = useState<WithId<MessageDoc> | null>(null);
+  const [muted, setMutedState] = useState(isMuted);
+  const mountedAt = useRef(Date.now() - 10000);
+  const alerted = useRef(new Set<string>());
+  const newsTimer = useRef<number | undefined>(undefined);
   const parents = members.filter((m) => m.role === 'parent');
 
   function flash(text: string) {
@@ -81,6 +88,29 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
     return () => document.removeEventListener('pointerdown', go);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [awake.method]);
+
+  const clockMarkList: ClockMark[] = members.flatMap((m) => {
+    const eta = estimateEta(statuses.find((s) => s.id === m.id), settings.commuteMinutes?.[m.id]);
+    return eta ? [{ id: m.id, name: m.name, at: eta.at }] : [];
+  });
+  // 새 한마디가 오면 화면에 크게 보여주고 소리를 냅니다 (보드를 연 뒤에 온 것만)
+  useEffect(() => {
+    const fresh = pickAlerts(msgs, { since: mountedAt.current, alerted: alerted.current });
+    if (fresh.length === 0) return;
+    fresh.forEach((m) => alerted.current.add(m.id));
+    setNews(fresh[fresh.length - 1]);
+    playChime();
+    // 타이머는 화면이 갱신돼도 지워지지 않게 ref로 따로 들고 있습니다.
+    window.clearTimeout(newsTimer.current);
+    newsTimer.current = window.setTimeout(() => setNews(null), 9000);
+  }, [msgs]);
+  useEffect(() => () => window.clearTimeout(newsTimer.current), []);
+
+  // 소리는 화면을 한 번 눌러야 낼 수 있어서, 누를 때마다 준비해 둡니다.
+  useEffect(() => {
+    document.addEventListener('pointerdown', unlockAudio);
+    return () => document.removeEventListener('pointerdown', unlockAudio);
+  }, []);
 
   const todays = eventsOn(events, today);
   const familyWide = todays.filter((e) => e.who.length === 0);
@@ -102,6 +132,18 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
             화면 켜짐 유지 중
           </span>
         )}
+        <button
+          className="board-btn icon"
+          onClick={() => {
+            setMuted(!muted);
+            setMutedState(!muted);
+            unlockAudio();
+          }}
+          aria-label={muted ? '알림 소리 켜기' : '알림 소리 끄기'}
+          aria-pressed={muted}
+        >
+          {muted ? <VolumeX size={18} strokeWidth={1.75} aria-hidden /> : <Volume2 size={18} strokeWidth={1.75} aria-hidden />}
+        </button>
         {'requestFullscreen' in document.documentElement && (
           <button className="board-btn icon" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => {})} aria-label="전체 화면">
             <Maximize2 size={18} strokeWidth={1.75} aria-hidden />
@@ -113,7 +155,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
       </div>
 
       <aside className="board-side">
-        <Clock size={180} stacked />
+        <Clock size={180} stacked marks={clockMarkList} />
 
         {pendingYoutube.length > 0 && (
           <div className="board-alert">
@@ -186,6 +228,15 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
         ))}
       </section>
 
+      {news && (
+        <div className="board-news" role="status" onClick={() => setNews(null)}>
+          {nameOf(news.from) && <Avatar member={nameOf(news.from)!} size={64} />}
+          <div className="news-text">
+            <small>{nameOf(news.from)?.name}</small>
+            <span>{alertText(news, members)}</span>
+          </div>
+        </div>
+      )}
       {toast && <div className="board-toast">{toast}</div>}
       {ask && (
         <WhenSheet
@@ -363,7 +414,7 @@ export function BoardTile({
   };
 }) {
   const { settings } = useFamily();
-  const def = st ? statusOf(st.key) : undefined;
+  const def = st ? statusInfo(st) : undefined;
   const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const today = dateKey(now);

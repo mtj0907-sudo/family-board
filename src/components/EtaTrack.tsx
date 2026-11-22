@@ -23,10 +23,10 @@ export function EtaTrack({ member, eta, now, big = false }: { member: Member; et
         <div className="et-line">
           <div className="et-fill" style={{ width: `${ratio * 100}%` }} />
           <span className="et-me" style={{ left: `${ratio * 100}%` }}>
-            <Avatar member={member} size={big ? 34 : 26} />
+            <Avatar member={member} size={big ? 28 : 26} />
           </span>
         </div>
-        <House size={big ? 28 : 22} strokeWidth={1.75} className="et-home" aria-hidden />
+        <House size={big ? 24 : 22} strokeWidth={1.75} className="et-home" aria-hidden />
       </div>
     </div>
   );

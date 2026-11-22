@@ -1,4 +1,4 @@
-import { statusOf } from './constants';
+import { statusInfo } from './constants';
 import { topic } from './korean';
 import { dayStart, etaProgress, formatClock, formatRemaining } from './time';
 import type { StatusDoc } from './types';
@@ -49,7 +49,7 @@ export function whenHome(opts: {
   const { name, st, now, workCode, workTimes, commuteMin } = opts;
   if (!st) return { headline: `${topic(name)} 아직 소식이 없어요`, details: [], canAsk: true };
 
-  const def = statusOf(st.key);
+  const def = statusInfo(st);
   const headline = `${topic(name)} ${def?.label ?? '밖에 있어요'}`;
 
   const eta = estimateEta(st, commuteMin);

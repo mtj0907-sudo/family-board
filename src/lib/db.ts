@@ -29,12 +29,19 @@ export const saveSettings = (code: string, s: FamilySettings) =>
   setDoc(doc(need(), path(code, 'settings', 'main')), s);
 
 /** 상태 변경: 도착 예정 시각은 초기화됩니다 (따로 지정) */
-export const setStatus = (code: string, memberId: string, key: string) =>
+export const setStatus = (
+  code: string,
+  memberId: string,
+  key: string,
+  /** 직접 만든 장소/상태일 때만 */
+  custom?: { label: string; emoji: string; eta: boolean },
+) =>
   setDoc(doc(need(), path(code, 'status', memberId)), {
     key,
     since: Date.now(),
     etaAt: null,
     etaFrom: null,
+    ...(custom ?? {}),
   });
 
 export const setEta = (code: string, memberId: string, etaAt: number | null) =>

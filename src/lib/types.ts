@@ -13,6 +13,14 @@ export interface RoutineItem {
   label: string;
 }
 
+export interface CustomStatus {
+  key: string;
+  label: string;
+  emoji: string;
+  /** 도착 시각을 정할 수 있는 상태인지 */
+  eta: boolean;
+}
+
 export interface FamilySettings {
   members: Member[];
   routineItems: RoutineItem[];
@@ -22,12 +30,18 @@ export interface FamilySettings {
   workOwnerId?: string;
   /** 근무 코드별 근무 시간 글자 (예: { D: '08:00~17:00' }). 비어 있으면 코드만 표시 */
   workTimes?: Record<string, string>;
+  /** 직접 만든 장소/상태 (예: "피아노 학원 가는 중") */
+  customStatuses?: CustomStatus[];
   /** 구성원별 퇴근 후 집까지 평소 걸리는 시간(분). 예: { m2: 30 } */
   commuteMinutes?: Record<string, number>;
 }
 
 export interface StatusDoc {
   key: string;
+  /** 직접 만든 장소/상태일 때만: 화면에 그대로 보이도록 같이 저장 */
+  label?: string;
+  emoji?: string;
+  eta?: boolean;
   since: number;
   etaAt: number | null;
   etaFrom: number | null;
