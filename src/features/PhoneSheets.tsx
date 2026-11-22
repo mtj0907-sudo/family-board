@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
+import { Portal } from '../components/Portal';
 import { ProgressBar } from '../components/ProgressBar';
 import { useFamily } from '../FamilyContext';
 import { useColData } from '../hooks/useFirestore';
@@ -24,6 +25,7 @@ export function PhoneWhenSheet({ onClose }: { onClose: () => void }) {
   const others = members.filter((m) => m.role === 'parent' && m.id !== me.id);
 
   return (
+    <Portal>
     <div className="modal sheet-bottom" onClick={onClose}>
       <div className="phone-sheet" role="dialog" aria-label="언제 와요" onClick={(e) => e.stopPropagation()}>
         <h2>언제 와요?</h2>
@@ -81,5 +83,6 @@ export function PhoneWhenSheet({ onClose }: { onClose: () => void }) {
         </button>
       </div>
     </div>
+    </Portal>
   );
 }
