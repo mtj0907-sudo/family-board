@@ -66,8 +66,6 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
         tomorrow={tomorrowItems(events, dateKey(now), members)}
         special={special?.kind ?? null}
         tree={treeSeason(now) || special?.kind === 'christmas'}
-        members={members}
-        statuses={statuses}
         onMessage={() => onGo?.('message')}
         onWhen={() => setWhenOpen(true)}
         effects={effects}
