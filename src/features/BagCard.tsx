@@ -2,7 +2,7 @@ import { Backpack, Check } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 import { Glyph } from '../components/Glyph';
 import { ProgressBar } from '../components/ProgressBar';
-import { bagProgress, type BagDoc } from '../lib/bag';
+import { bagCheer, bagProgress, type BagDoc } from '../lib/bag';
 import { formatClock } from '../lib/time';
 import type { Member, RoutineItem } from '../lib/types';
 
@@ -48,7 +48,10 @@ export function BagCard({
           {prog.complete && (
             <div className="result ok">
               <Check size={26} strokeWidth={2} aria-hidden />
-              다 챙겼어요{doneAt ? ` · ${formatClock(doneAt)}` : ''}
+              <span className="grow">
+                다 챙겼어요{doneAt ? ` · ${formatClock(doneAt)}` : ''}
+                <small className="bag-cheer">{bagCheer(doneAt ? Math.floor(doneAt / 86400000) : 0)}</small>
+              </span>
             </div>
           )}
           <div className="tiles">

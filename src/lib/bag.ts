@@ -17,10 +17,28 @@ export function bagProgress(items: RoutineItem[], done?: Record<string, boolean>
   return { done: count, total, complete: total > 0 && count === total };
 }
 
-/** 가방 챙길 시간(저녁 5시~다음 날 아침 9시 전)이면 알려줍니다. */
+/**
+ * 가방 챙길 시간 안내: 학교 가기 전날 저녁 5시부터 그날 아침 9시 전까지.
+ * 일요일~목요일 저녁, 그리고 월요일~금요일 아침에만 알려요. (금요일 밤, 토요일, 일요일 아침은 다음 날이 학교 안 가는 날이라 안내하지 않습니다)
+ */
 export function bagNudgeActive(now: number): boolean {
-  const h = kst(now).hh;
-  return h >= 17 || h < 9;
+  const { hh, dow } = kst(now);
+  if (hh >= 17) return dow >= 0 && dow <= 4; // 일(0)~목(4) 저녁
+  if (hh < 9) return dow >= 1 && dow <= 5; // 월(1)~금(5) 아침 (전날 밤 안내의 이어짐)
+  return false;
+}
+
+const CHEERS = [
+  '잘했어요! 내일도 파이팅 💪',
+  '가방 준비 끝! 내일도 신나게 다녀와요 🎒',
+  '혼자서 척척 해냈네요. 멋져요 ⭐',
+  '가방도 마음도 준비 완료! 😊',
+  '꼼꼼하게 챙겼네요. 최고예요 👍',
+];
+
+/** 가방을 다 챙겼을 때 보여줄 응원 한마디. 같은 날에는 같은 말, 날마다 다른 말이 나오게 seed(날짜 등)로 고릅니다. */
+export function bagCheer(seed: number): string {
+  return CHEERS[Math.abs(Math.floor(seed)) % CHEERS.length];
 }
 
 export const DEFAULT_BAG_ITEMS: RoutineItem[] = [
