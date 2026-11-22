@@ -154,7 +154,8 @@ export function ParentView({ msgs, now }: { msgs: WithId<MessageDoc>[]; now: num
             <div key={m.id} className="feed">
               {who && <Avatar member={who} size={36} />}
               <div className="grow">
-                <b>{who?.name}</b> <span className="feed-text">{q?.label}</span>
+                <b>{who?.name}</b>
+                {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} <span className="feed-text">{q?.label}</span>
                 {m.reply && <div className="sub">→ {replyText(m.reply, now)}</div>}
               </div>
               <span className="sub">{formatClock(m.at)}</span>

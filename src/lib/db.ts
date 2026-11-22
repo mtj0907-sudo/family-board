@@ -44,8 +44,8 @@ export const setEta = (code: string, memberId: string, etaAt: number | null) =>
     { merge: true },
   );
 
-export const sendMessage = (code: string, from: string, kind: 'quick' | 'youtube', key: string) =>
-  addDoc(collection(need(), path(code, 'messages')), { from, kind, key, at: Date.now() });
+export const sendMessage = (code: string, from: string, kind: 'quick' | 'youtube', key: string, to?: string) =>
+  addDoc(collection(need(), path(code, 'messages')), { from, kind, key, at: Date.now(), ...(to ? { to } : {}) });
 
 export const answerYoutube = (code: string, id: string, answer: YoutubeAnswer, by: string) =>
   updateDoc(doc(need(), path(code, 'messages', id)), { reply: { answer, at: Date.now(), by } });

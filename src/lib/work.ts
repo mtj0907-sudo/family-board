@@ -113,3 +113,14 @@ export function workLabel(code: string, times?: Record<string, string>): string 
   const t = times?.[code]?.trim();
   return t ? `${code} ${t}` : code;
 }
+
+/** 'HH:MM~HH:MM' 같은 근무 시간 글자에서 끝나는 시각을 '오후 9:00' 형태로 꺼냅니다. 못 읽으면 null */
+export function workEndText(code: string, times?: Record<string, string>): string | null {
+  const m = times?.[code]?.match(/(\d{1,2}):(\d{2})\s*[~\-–]\s*(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const hh = Number(m[3]);
+  const mm = m[4];
+  if (hh > 23 || Number(mm) > 59) return null;
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${hh < 12 ? '오전' : '오후'} ${h12}:${mm}`;
+}

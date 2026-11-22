@@ -7,6 +7,7 @@ import {
   Briefcase,
   Bus,
   Cake,
+  Clock,
   Car,
   Dumbbell,
   Drama,
@@ -81,6 +82,7 @@ export const ICONS: Record<string, LucideIcon> = {
   '🏊': Waves,
   '🚌': Bus,
   '📌': Pin,
+  '🕐': Clock,
 };
 
 /** 일정·루틴 항목에서 고를 수 있는 아이콘(대표 이모지 키) */
