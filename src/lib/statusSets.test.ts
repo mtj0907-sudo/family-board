@@ -59,3 +59,20 @@ describe('사람마다 다른 상태 목록', () => {
     expect(statusInfo({ key: 'errand' })?.eta).toBe(true);
   });
 });
+
+describe('지금 하는 일을 상태로 합침', () => {
+  it('아이 기본 상태에 밥·씻기·영상·책이 들어 있고 어른에게는 안 나온다', () => {
+    const kid = statusesFor({ id: 'x', role: 'child' }, {}).map((s) => s.key);
+    expect(kid).toEqual(expect.arrayContaining(['study', 'gaming', 'eating', 'washing', 'tv', 'reading']));
+    const parent = statusesFor({ id: 'y', role: 'parent' }, {}).map((s) => s.key);
+    for (const k of ['eating', 'washing', 'tv', 'reading']) expect(parent).not.toContain(k);
+  });
+  it('상태 이름표와 아이콘이 있다', () => {
+    expect(statusInfo({ key: 'eating' })?.label).toBe('밥 먹는 중');
+    expect(statusInfo({ key: 'reading' })?.emoji).toBe('📖');
+  });
+  it('상태 키가 겹치지 않는다', () => {
+    const keys = STATUS_CATALOG.map((s) => s.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});

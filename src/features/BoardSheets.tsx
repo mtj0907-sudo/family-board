@@ -8,8 +8,8 @@ import { useBag } from '../hooks/useBag';
 import { useDocData } from '../hooks/useFirestore';
 import { useNotify } from '../hooks/useNotify';
 import { useStatusActions } from '../hooks/useStatusActions';
-import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, DOING_OPTIONS, QUICK_MESSAGES, statusInfo } from '../lib/constants';
-import { answerYoutube, path, sendMessage, setDoing, setRoutineDone } from '../lib/db';
+import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, QUICK_MESSAGES, statusInfo } from '../lib/constants';
+import { answerYoutube, path, sendMessage, setRoutineDone } from '../lib/db';
 import { whenHome } from '../lib/whenHome';
 import { routineProgress } from '../lib/routine';
 import { statusesFor } from '../lib/statusSets';
@@ -68,7 +68,6 @@ export function MemberSheet({
   const def = statusInfo(st);
   const list = statusesFor(member, settings);
   const done = routine?.done?.[member.id];
-  const doing = routine?.doing?.[member.id];
   const prog = routineProgress(settings.routineItems, done);
 
   const tabs: { key: SheetTab; label: string; Icon: typeof MapPin }[] = [
@@ -165,15 +164,6 @@ export function MemberSheet({
                     </button>
                   );
                 })}
-              </div>
-              <div className="sub">지금 하는 일</div>
-              <div className="chips">
-                {DOING_OPTIONS.map((d) => (
-                  <button key={d.key} className={doing === d.key ? 'chip small on' : 'chip small'} onClick={() => void setDoing(code, today, member.id, doing === d.key ? '' : d.key)}>
-                    <Glyph k={d.emoji} size={20} />
-                    {d.label}
-                  </button>
-                ))}
               </div>
             </>
           )}

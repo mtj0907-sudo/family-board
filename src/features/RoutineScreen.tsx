@@ -6,8 +6,7 @@ import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
 import { useBag } from '../hooks/useBag';
 import { useNow } from '../hooks/useNow';
-import { DOING_OPTIONS } from '../lib/constants';
-import { path, setDoing, setRoutineDone } from '../lib/db';
+import { path, setRoutineDone } from '../lib/db';
 import { routineProgress } from '../lib/routine';
 import { dateKey } from '../lib/time';
 import type { Member, RoutineDoc, RoutineItem } from '../lib/types';
@@ -33,7 +32,6 @@ export function RoutineScreen() {
       items={settings.routineItems}
       routine={routine ?? undefined}
       onToggle={(kid, key, value) => void setRoutineDone(code, date, kid, key, value)}
-      onDoing={(kid, value) => void setDoing(code, date, kid, value)}
     />
   );
 }
@@ -44,7 +42,6 @@ export function RoutineView({
   items,
   routine,
   onToggle,
-  onDoing,
 }: {
   /** 맨 위에 놓을 카드들 (가방 챙기기) */
   before?: React.ReactNode;
@@ -52,7 +49,6 @@ export function RoutineView({
   items: RoutineItem[];
   routine?: RoutineDoc;
   onToggle: (kidId: string, key: string, value: boolean) => void;
-  onDoing: (kidId: string, value: string) => void;
 }) {
   return (
     <div className="screen">
@@ -60,7 +56,6 @@ export function RoutineView({
       {kids.length === 0 && <div className="card sub">루틴을 볼 아이가 없어요</div>}
       {kids.map((k) => {
         const done = routine?.done?.[k.id];
-        const doing = routine?.doing?.[k.id];
         const prog = routineProgress(items, done);
         return (
           <div key={k.id} className="card">
@@ -93,20 +88,6 @@ export function RoutineView({
                   </button>
                 );
               })}
-            </div>
-
-            <div className="sub">지금 하는 일</div>
-            <div className="chips">
-              {DOING_OPTIONS.map((d) => (
-                <button
-                  key={d.key}
-                  className={doing === d.key ? 'chip small on' : 'chip small'}
-                  onClick={() => onDoing(k.id, doing === d.key ? '' : d.key)}
-                >
-                  <Glyph k={d.emoji} size={18} />
-                  {d.label}
-                </button>
-              ))}
             </div>
           </div>
         );

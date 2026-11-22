@@ -45,6 +45,10 @@ export const STATUS_CATALOG: StatusDef[] = [
   { key: 'friend', emoji: '👫', label: '친구 집에 있어요', eta: false, audience: 'child', group: '장소' },
   { key: 'study', emoji: '📝', label: '공부·숙제 중', eta: false, audience: 'child', group: '집에서' },
   { key: 'gaming', emoji: '🎮', label: '게임·놀이 중', eta: false, audience: 'child', group: '집에서' },
+  { key: 'eating', emoji: '🍚', label: '밥 먹는 중', eta: false, audience: 'child', group: '집에서' },
+  { key: 'washing', emoji: '🛁', label: '씻는 중', eta: false, audience: 'child', group: '집에서' },
+  { key: 'tv', emoji: '📺', label: '영상 보는 중', eta: false, audience: 'child', group: '집에서' },
+  { key: 'reading', emoji: '📖', label: '책 읽는 중', eta: false, audience: 'child', group: '집에서' },
 ];
 
 /** 예전 이름 (전체 목록) */
@@ -111,18 +115,6 @@ export const DEFAULT_ROUTINE_ITEMS: RoutineItem[] = [
 
 /** 루틴 항목 중 "집 도착"에 해당하는 키 (집 도착 메시지/상태와 연동) */
 export const ARRIVAL_ROUTINE_KEY = 'home';
-
-export const DOING_OPTIONS = [
-  { key: 'play', emoji: '🧸', label: '놀이 중' },
-  { key: 'homework', emoji: '✏️', label: '숙제 중' },
-  { key: 'eating', emoji: '🍚', label: '밥 먹는 중' },
-  { key: 'wash', emoji: '🛁', label: '씻는 중' },
-  { key: 'tv', emoji: '📺', label: '영상 보는 중' },
-  { key: 'book', emoji: '📖', label: '책 읽는 중' },
-  { key: 'sleep', emoji: '😴', label: '자는 중' },
-];
-
-export const doingOf = (key?: string) => DOING_OPTIONS.find((d) => d.key === key);
 
 export const EMOJI_CHOICES = [
   '👨', '👩', '👦', '👧', '🧑', '👴', '👵', '🐻', '🐰', '🐱', '🐶', '🦊', '🐼', '🦁', '🐯', '🐸',

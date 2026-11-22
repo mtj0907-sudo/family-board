@@ -80,7 +80,6 @@ export interface MessageDoc {
 
 export interface RoutineDoc {
   done?: Record<string, Record<string, boolean>>;
-  doing?: Record<string, string>;
 }
 
 export type WithId<T> = T & { id: string };

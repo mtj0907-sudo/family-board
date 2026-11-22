@@ -7,7 +7,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { WorkStrip } from '../components/WorkStrip';
 import { useFamily } from '../FamilyContext';
 import { useColData } from '../hooks/useFirestore';
-import { doingOf, messageOf, statusInfo } from '../lib/constants';
+import { messageOf, statusInfo } from '../lib/constants';
 import { path } from '../lib/db';
 import type { EventDoc } from '../lib/events';
 import { openFindMy } from '../lib/findmy';
@@ -49,7 +49,6 @@ export function MemberDetail({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
   const done = routine?.done?.[m.id];
   const prog = routineProgress(settings.routineItems, done);
-  const doing = doingOf(routine?.doing?.[m.id]);
   const mine = msgs.filter((x) => x.from === m.id && x.kind !== 'youtube' && x.at >= dayStart(now)).slice(0, 4);
   const nameOf = (id: string) => members.find((x) => x.id === id)?.name;
 
@@ -93,11 +92,6 @@ export function MemberDetail({
                 );
               })}
             </div>
-            {doing && (
-              <div className="sub">
-                지금은 <b>{doing.label}</b>
-              </div>
-            )}
             {bag && (
               <div className={bag.complete ? 'dt-bag ok' : 'dt-bag'}>
                 {bag.skip ? '내일은 학교 안 가요' : bag.complete ? '가방을 다 챙겼어요' : `가방 챙기기 ${bag.done}/${bag.total}`}
