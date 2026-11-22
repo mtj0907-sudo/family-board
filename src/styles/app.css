@@ -557,7 +557,7 @@ main { display: flex; flex-direction: column; }
 .board-weather .weather-card.pending { background: rgba(255, 255, 255, .8); border: 1px solid var(--line); padding: 0 16px 0 12px; min-height: 44px; white-space: normal; }
 
 /* 사진 위의 한마디 상자: 사진이 살짝 비치게 */
-.board-side.has-photo .board-feed { background: rgba(255, 255, 255, .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-color: rgba(255, 255, 255, .5); }
+.board-side.has-photo .board-feed { background: rgba(255, 255, 255, .38); -webkit-backdrop-filter: blur(10px) saturate(1.15); backdrop-filter: blur(10px) saturate(1.15); border-color: rgba(255, 255, 255, .45); text-shadow: 0 0 6px rgba(255, 255, 255, .85), 0 0 2px rgba(255, 255, 255, .9); }
 .board-side.has-photo .feed-day { position: static; background: none; }
 .board-side.has-photo .feed-restore { border-top-color: rgba(23, 32, 29, .08); }
 
