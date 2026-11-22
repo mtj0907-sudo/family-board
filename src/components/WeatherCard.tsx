@@ -44,3 +44,19 @@ export function WeatherCard({ w, preview, onTap }: { w: Weather; preview?: strin
     </button>
   );
 }
+
+/** 날씨를 아직 못 받았을 때의 알림. 이유를 보여주고, 누르면 다시 시도합니다. */
+export function WeatherPending({ status, error, onRetry, compact }: { status: 'loading' | 'error'; error: string; onRetry: () => void; compact?: boolean }) {
+  const text = status === 'loading' ? '날씨 불러오는 중…' : `날씨를 못 불러왔어요 (${error}) · 눌러서 다시`;
+  return compact ? (
+    <button className="weather-line pending" onClick={onRetry}>
+      <Cloud size={20} strokeWidth={1.6} aria-hidden />
+      <span>{text}</span>
+    </button>
+  ) : (
+    <button className="weather-card pending" onClick={onRetry}>
+      <Cloud size={22} strokeWidth={1.6} aria-hidden />
+      <span className="wc-label">{text}</span>
+    </button>
+  );
+}

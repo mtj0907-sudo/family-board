@@ -551,3 +551,11 @@ main { display: flex; flex-direction: column; }
 .btile { position: relative; }
 .btile .btile-edit { position: absolute; top: 8px; right: 12px; min-height: 32px; padding: 0 12px; font-size: 13.5px; gap: 5px; z-index: 1; }
 .btile-who { min-width: 0; }
+
+.weather-card.pending, .weather-line.pending { color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 600; text-align: left; background: none; border: 0; padding: 0 4px; min-height: 0; }
+.board-weather .weather-card.pending { background: rgba(255, 255, 255, .8); border: 1px solid var(--line); padding: 0 16px 0 12px; min-height: 44px; white-space: normal; }
+
+/* 사진 위의 한마디 상자: 사진이 살짝 비치게 */
+.board-side.has-photo .board-feed { background: rgba(255, 255, 255, .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-color: rgba(255, 255, 255, .5); }
+.board-side.has-photo .feed-day { position: static; background: none; }
+.board-side.has-photo .feed-restore { border-top-color: rgba(23, 32, 29, .08); }

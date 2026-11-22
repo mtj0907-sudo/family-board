@@ -10,7 +10,7 @@ import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
 import { BoardFeed } from '../components/BoardFeed';
 import { loadHidden, saveHidden } from '../lib/boardFeed';
-import { WeatherCard } from '../components/WeatherCard';
+import { WeatherCard, WeatherPending } from '../components/WeatherCard';
 import { WeatherFx } from '../components/WeatherFx';
 import { useBag } from '../hooks/useBag';
 import { useWeather } from '../hooks/useWeather';
@@ -82,7 +82,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const bag = useBag(now);
   const [hiddenIds, setHiddenIds] = useState(loadHidden);
   const hiddenSet = new Set(hiddenIds);
-  const realWeather = useWeather();
+  const { weather: realWeather, status: wStatus, error: wError, retry: wRetry } = useWeather();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [fxOn, setFxOn] = useState(() => store.get('fb.fx') !== '0');
   const reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -142,15 +142,17 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="board" style={box.style}>
-      {weather && (
-        <div className="board-weather">
+      <div className="board-weather">
+        {weather ? (
           <WeatherCard
             w={weather}
             preview={preview ? PREVIEW_NAME[preview] : undefined}
             onTap={() => setPreview(PREVIEWS[(PREVIEWS.indexOf(preview) + 1) % PREVIEWS.length])}
           />
-        </div>
-      )}
+        ) : (
+          <WeatherPending status={wStatus === 'ok' ? 'loading' : wStatus} error={wError} onRetry={wRetry} />
+        )}
+      </div>
       <div className="board-ctl">
         {awake.method === 'none' ? (
           <button className="board-btn" onClick={awake.start}>
