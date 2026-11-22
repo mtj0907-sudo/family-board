@@ -8,6 +8,8 @@ import { Glyph } from '../components/Glyph';
 import { WorkChip } from '../components/WorkChip';
 import { useFamily } from '../FamilyContext';
 import { useColData, useDocData } from '../hooks/useFirestore';
+import { BoardFeed } from '../components/BoardFeed';
+import { loadHidden, saveHidden } from '../lib/boardFeed';
 import { WeatherCard } from '../components/WeatherCard';
 import { WeatherFx } from '../components/WeatherFx';
 import { useBag } from '../hooks/useBag';
@@ -16,7 +18,7 @@ import { fxOf, previewWeather, type Preview } from '../lib/weather';
 import { store } from '../lib/storage';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { doingOf, messageOf, statusInfo } from '../lib/constants';
+import { doingOf, statusInfo } from '../lib/constants';
 import { path, setRoutineDone } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { alertText, pickAlerts } from '../lib/boardAlert';
@@ -24,7 +26,7 @@ import { isMuted, playChime, setMuted, unlockAudio } from '../lib/chime';
 import { useKeepAwake } from '../lib/keepAwake';
 import { hasFinal } from '../lib/korean';
 import { routineProgress } from '../lib/routine';
-import { dateKey, dayStart, formatClock, formatElapsed } from '../lib/time';
+import { dateKey, dayStart, formatElapsed } from '../lib/time';
 import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/types';
 import { estimateEta } from '../lib/whenHome';
 import { bagProgress } from '../lib/bag';
@@ -70,7 +72,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const statuses = useColData<StatusDoc>(path(code, 'status'));
   const routine = useDocData<RoutineDoc>(path(code, 'routines', today));
   const events = useColData<EventDoc>(path(code, 'events'));
-  const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 30 });
+  const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 60 });
   const awake = useKeepAwake();
   const box = useBoardBox();
   const [talk, setTalk] = useState<Member | null>(null);
@@ -78,6 +80,8 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const [sheet, setSheet] = useState<{ member: Member; tab: SheetTab } | null>(null);
   const [ytOpen, setYtOpen] = useState(false);
   const bag = useBag(now);
+  const [hiddenIds, setHiddenIds] = useState(loadHidden);
+  const hiddenSet = new Set(hiddenIds);
   const realWeather = useWeather();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [fxOn, setFxOn] = useState(() => store.get('fb.fx') !== '0');
@@ -220,30 +224,21 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
           </div>
         )}
 
-        {todayMsgs.filter((m) => m.kind !== 'youtube').length > 0 && (
-          <div className="group">
-            <div className="group-head">
-              <h3>오늘 온 한마디</h3>
-            </div>
-            {todayMsgs
-              .filter((m) => m.kind !== 'youtube')
-              .slice(0, pendingYoutube.length > 0 && familyWide.length > 0 ? 2 : 3)
-              .map((m) => {
-                const who = nameOf(m.from);
-                const q = messageOf(m.key);
-                return (
-                  <div key={m.id} className="feed">
-                    {who && <Avatar member={who} size={36} />}
-                    <div className="grow">
-                      <b>{who?.name}</b>
-                      {m.to && nameOf(m.to) ? <span className="sub"> → {nameOf(m.to)?.name}</span> : null} {m.kind === 'note' ? m.text : q?.label}
-                    </div>
-                    <span className="sub">{formatClock(m.at)}</span>
-                  </div>
-                );
-              })}
-          </div>
-        )}
+        <BoardFeed
+          msgs={msgs}
+          members={members}
+          now={now}
+          hidden={hiddenSet}
+          onHide={(id) => {
+            const next = [...hiddenIds, id];
+            setHiddenIds(next);
+            saveHidden(next);
+          }}
+          onShowHidden={() => {
+            setHiddenIds([]);
+            saveHidden([]);
+          }}
+        />
         </div>
       </aside>
 
