@@ -37,7 +37,6 @@ export function Welcome({ initialCode, onDone }: Props) {
     setError('');
     try {
       if (await withTimeout(familyExists(code), 10000)) {
-        history.replaceState(null, '', location.pathname + location.search);
         onDone(code);
       } else setError('이 코드의 가족을 찾을 수 없어요.');
     } catch {
