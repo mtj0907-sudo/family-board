@@ -8,7 +8,7 @@ export const PARENT_DEFAULT = [
 ];
 
 /** 아이의 기본 상태 목록 (어른 항목은 아예 나오지 않습니다) */
-export const CHILD_DEFAULT = ['home', 'school', 'kid_going_home', 'academy', 'at_academy', 'playground', 'friend', 'study', 'gaming', 'sleep'];
+export const CHILD_DEFAULT = ['home', 'school', 'kid_going_home', 'academy', 'at_academy', 'playground', 'friend', 'study', 'gaming', 'eating', 'washing', 'tv', 'reading', 'sleep'];
 
 export const defaultKeysFor = (m: Pick<Member, 'role'>): string[] => (m.role === 'parent' ? PARENT_DEFAULT : CHILD_DEFAULT);
 

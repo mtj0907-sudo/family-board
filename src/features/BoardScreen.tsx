@@ -23,7 +23,7 @@ import { fxOf, previewWeather, type Preview } from '../lib/weather';
 import { store } from '../lib/storage';
 import { useNow } from '../hooks/useNow';
 import { useWorkWindow } from '../hooks/useWork';
-import { doingOf, statusInfo } from '../lib/constants';
+import { statusInfo } from '../lib/constants';
 import { path, setRoutineDone } from '../lib/db';
 import { addDays, eventsOn, type EventDoc } from '../lib/events';
 import { alertText, pickAlerts } from '../lib/boardAlert';
@@ -377,7 +377,6 @@ export function BoardTile({
 }) {
   const { settings } = useFamily();
   const def = st ? statusInfo(st) : undefined;
-  const doing = doingOf(routine?.doing?.[m.id]);
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const today = dateKey(now);
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
@@ -442,12 +441,6 @@ export function BoardTile({
               <ListChecks size={18} strokeWidth={1.75} aria-hidden />
               할 일
             </button>
-          )}
-          {doing && (
-            <span className="badge">
-              <Glyph k={doing.emoji} size={20} />
-              {doing.label}
-            </span>
           )}
         </div>
       )}
