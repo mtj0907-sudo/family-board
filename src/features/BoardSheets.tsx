@@ -8,8 +8,9 @@ import { useBag } from '../hooks/useBag';
 import { useDocData } from '../hooks/useFirestore';
 import { useNotify } from '../hooks/useNotify';
 import { useStatusActions } from '../hooks/useStatusActions';
-import { DOING_OPTIONS, statusInfo } from '../lib/constants';
-import { answerYoutube, path, setDoing, setRoutineDone } from '../lib/db';
+import { ASK_WHEN_MESSAGE, BOARD_MESSAGE_KEYS, DOING_OPTIONS, QUICK_MESSAGES, statusInfo } from '../lib/constants';
+import { answerYoutube, path, sendMessage, setDoing, setRoutineDone } from '../lib/db';
+import { whenHome } from '../lib/whenHome';
 import { routineProgress } from '../lib/routine';
 import { statusesFor } from '../lib/statusSets';
 import { dateKey, formatClock } from '../lib/time';
@@ -240,6 +241,104 @@ export function YoutubeSheet({
             </div>
           );
         })}
+        <button className="btn" onClick={onClose}>
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 부모를 눌렀을 때 열리는 "이야기하기" 창.
+ * 위쪽에 그 부모의 지금 상태와 도착 시각을 보여주고, 누가 말하는지 얼굴로 고른 뒤 그림 버튼으로 한마디를 보냅니다.
+ */
+export function TalkSheet({
+  parent,
+  kids,
+  st,
+  workCode,
+  workTimes,
+  commuteMin,
+  now,
+  onClose,
+  onFlash,
+}: {
+  parent: Member;
+  kids: Member[];
+  st?: StatusDoc;
+  workCode?: string;
+  workTimes?: Record<string, string>;
+  commuteMin?: number;
+  now: number;
+  onClose: () => void;
+  onFlash: (text: string) => void;
+}) {
+  const { code } = useFamily();
+  const notify = useNotify();
+  const touch = useIdleClose(onClose, 45000);
+  const [who, setWho] = useState<string | null>(kids.length === 1 ? kids[0].id : null);
+  const kid = kids.find((k) => k.id === who);
+  const a = whenHome({ name: parent.name, st, now, workCode, workTimes, commuteMin });
+  const msgs = BOARD_MESSAGE_KEYS.map((k) => QUICK_MESSAGES.find((q) => q.key === k)).filter((q): q is NonNullable<typeof q> => !!q);
+
+  function send(key: string, label: string) {
+    if (!kid) return;
+    void sendMessage(code, kid.id, 'quick', key, parent.id);
+    notify('message', kid.name, `${parent.name}에게 ${label}`);
+    onFlash(`${parent.name}에게 "${label}" 보냈어요`);
+    onClose();
+  }
+
+  return (
+    <div className="board-sheet-wrap" onClick={onClose}>
+      <div className="board-sheet wide" role="dialog" aria-label={`${parent.name}에게 이야기하기`} onClick={(e) => e.stopPropagation()} onPointerDown={touch}>
+        <div className="sheet-head">
+          <Avatar member={parent} size={72} />
+          <div className="talk-title">
+            <h2>{parent.name}에게 이야기해요</h2>
+            <div className="sub">
+              {a.headline}
+              {a.eta ? ` · ${a.eta.clockLabel}` : ''}
+            </div>
+            {a.eta && <ProgressBar value={a.eta.ratio} label="도착까지" />}
+            {a.details.map((d) => (
+              <div key={d} className="sub">
+                {d}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {kids.length > 1 && (
+          <>
+            <div className="sub">누가 말해요?</div>
+            <div className="who-say">
+              {kids.map((k) => (
+                <button key={k.id} className={who === k.id ? 'whobtn on' : 'whobtn'} aria-pressed={who === k.id} onClick={() => setWho(k.id)}>
+                  <Avatar member={k} size={72} />
+                  <span>{k.name}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="sub">{kid ? '하고 싶은 말을 눌러요' : '먼저 누가 말하는지 눌러요'}</div>
+        <div className="say-grid">
+          {msgs.map((q) => (
+            <button key={q.key} className="saybtn" disabled={!kid} onClick={() => send(q.key, q.label)}>
+              <Glyph k={q.emoji} size={30} />
+              <span>{q.label}</span>
+            </button>
+          ))}
+          {a.canAsk && (
+            <button className="saybtn when" disabled={!kid} onClick={() => send(ASK_WHEN_MESSAGE.key, ASK_WHEN_MESSAGE.label)}>
+              <Glyph k={ASK_WHEN_MESSAGE.emoji} size={30} />
+              <span>{ASK_WHEN_MESSAGE.label}</span>
+            </button>
+          )}
+        </div>
         <button className="btn" onClick={onClose}>
           닫기
         </button>

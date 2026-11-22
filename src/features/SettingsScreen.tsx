@@ -8,10 +8,13 @@ import { defaultKeysFor, selectableFor } from '../lib/statusSets';
 import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
-import { saveSettings } from '../lib/db';
+import { useDocData } from '../hooks/useFirestore';
+import { deleteBoardPhoto, path, saveBoardPhoto, saveSettings } from '../lib/db';
 import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
 import type { CustomStatus, FamilySettings, Member, RoutineItem } from '../lib/types';
+import { PhotoCropper } from '../components/PhotoCropper';
+import { loadPhoto, renderFit } from '../lib/photo';
 import { TIMED_CODES } from '../lib/work';
 
 export function SettingsScreen() {
@@ -40,6 +43,7 @@ function SettingsBody() {
   const [openBagIcon, setOpenBagIcon] = useState<number | null>(null);
   const [places, setPlaces] = useState<CustomStatus[]>(settings.customStatuses ?? []);
   const [openPlaceIcon, setOpenPlaceIcon] = useState<number | null>(null);
+  const [cropFor, setCropFor] = useState<{ id: string; file: File } | null>(null);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState(false);
   const link = buildJoinLink(location.href, code);
@@ -55,7 +59,7 @@ function SettingsBody() {
     if (newPin && !isValidPin(newPin)) return setMsg('새 PIN은 숫자 4자리예요');
     const next: FamilySettings = {
       ...settings,
-      members: members.map((m) => ({ ...m, name: m.name.trim() })),
+      members: members.map(({ photo, ...m }) => ({ ...m, name: m.name.trim(), ...(photo ? { photo } : {}) })),
       routineItems: items
         .filter((i) => i.label.trim())
         .map((i, n) => ({ ...i, label: i.label.trim(), key: i.key || `c${Date.now()}${n}` })),
@@ -97,15 +101,45 @@ function SettingsBody() {
         <h2>가족 구성원</h2>
         {members.map((m) => (
           <div className="row" key={m.id}>
-            <Avatar member={m} size={44} />
+            <label className="photo-pick" aria-label={`${m.name || '구성원'} 사진 고르기`}>
+              <Avatar member={m} size={44} />
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (f) setCropFor({ id: m.id, file: f });
+                }}
+              />
+            </label>
             <input className="grow" value={m.name} maxLength={10} onChange={(e) => setMember(m.id, { name: e.target.value })} aria-label="이름" />
             <select value={m.role} onChange={(e) => setMember(m.id, { role: e.target.value as Member['role'] })} aria-label="역할">
               <option value="parent">어른</option>
               <option value="child">아이</option>
             </select>
+            {m.photo && (
+              <button className="btn inline" onClick={() => setMember(m.id, { photo: undefined })} aria-label={`${m.name} 사진 지우기`}>
+                <Trash2 size={20} strokeWidth={1.75} aria-hidden />
+              </button>
+            )}
           </div>
         ))}
+        <div className="sub">동그라미를 누르면 얼굴 사진을 고를 수 있어요. 사진은 우리 가족 Firebase에만 저장되고, 아래 저장하기를 눌러야 반영돼요.</div>
       </div>
+      <BoardPhotoCard code={code} />
+      {cropFor && (
+        <PhotoCropper
+          file={cropFor.file}
+          onCancel={() => setCropFor(null)}
+          onDone={(data) => {
+            // photo 값은 members 상태에 담기고, 저장하기를 누르면 설정과 함께 저장됩니다.
+            setMembers((cur) => cur.map((m) => (m.id === cropFor.id ? { ...m, photo: data } : m)));
+            setCropFor(null);
+          }}
+        />
+      )}
 
       <div className="card">
         <h2>루틴 항목 (아이 공통)</h2>
@@ -439,6 +473,52 @@ function SettingsBody() {
           이 기기 연결 끊기
         </button>
       </div>
+    </div>
+  );
+}
+
+/** 거실 보드 왼쪽에 넣을 사진. 고르는 즉시 저장돼요. */
+function BoardPhotoCard({ code }: { code: string }) {
+  const photo = useDocData<{ data: string }>(path(code, 'media', 'board'));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  async function pick(f: File) {
+    setBusy(true);
+    setErr('');
+    try {
+      await saveBoardPhoto(code, renderFit(await loadPhoto(f)));
+    } catch {
+      setErr('사진을 저장하지 못했어요. 다시 해 주세요');
+    }
+    setBusy(false);
+  }
+  return (
+    <div className="card">
+      <h2>거실 보드 사진</h2>
+      <div className="sub">보드 왼쪽 시계 아래에 크게 보여요. 세로 사진이 잘 어울려요. 우리 가족 Firebase에만 저장돼요.</div>
+      {photo?.data && <img className="board-photo-prev" src={photo.data} alt="거실 보드 사진 미리보기" />}
+      <div className="row">
+        <label className="btn primary inline" aria-disabled={busy}>
+          {busy ? '저장하는 중…' : photo?.data ? '다른 사진 고르기' : '사진 고르기'}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) void pick(f);
+            }}
+          />
+        </label>
+        {photo?.data && (
+          <button className="btn inline" onClick={() => void deleteBoardPhoto(code)}>
+            사진 지우기
+          </button>
+        )}
+      </div>
+      {err && <div className="sub" role="alert">{err}</div>}
     </div>
   );
 }

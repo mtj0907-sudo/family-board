@@ -13,9 +13,12 @@ export function toneOf(id: string) {
   return TONES[(n - 1) % TONES.length];
 }
 
-/** 이름 첫 글자를 담은 동그란 아바타 */
-export function Avatar({ member, size = 44 }: { member: Pick<Member, 'id' | 'name'>; size?: number }) {
+/** 얼굴 사진이 있으면 사진, 없으면 이름 첫 글자를 담은 동그란 아바타 */
+export function Avatar({ member, size = 44 }: { member: Pick<Member, 'id' | 'name' | 'photo'>; size?: number }) {
   const t = toneOf(member.id);
+  if (member.photo) {
+    return <img className="avatar photo" src={member.photo} alt="" style={{ width: size, height: size }} aria-hidden />;
+  }
   const ch = Array.from(member.name.trim())[0] ?? '·';
   return (
     <span
