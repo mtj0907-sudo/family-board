@@ -19,9 +19,11 @@ export const QUICK_ETA = [
   { label: '1시간 뒤', min: 60 },
 ];
 
-export function StatusScreen() {
+export function StatusScreen({ initialTarget }: { initialTarget?: string | null }) {
   const { code, members, me, isParent, settings } = useFamily();
-  const [targetId, setTargetId] = useState(me.id);
+  const [targetId, setTargetId] = useState(initialTarget && members.some((m) => m.id === initialTarget) ? initialTarget : me.id);
+  // 평소에는 내 상태만 보여주고, "아이 대신 바꾸기"를 눌렀을 때만 사람 고르는 줄을 보여줍니다.
+  const [others, setOthers] = useState(!!initialTarget && initialTarget !== me.id);
   const now = useNow(30000);
   const target = members.find((m) => m.id === targetId) ?? me;
   const st = useDocData<StatusDoc>(path(code, 'status', target.id));
@@ -34,6 +36,11 @@ export function StatusScreen() {
     <StatusView
       members={members}
       isParent={isParent}
+      others={others}
+      onOthers={(v) => {
+        setOthers(v);
+        if (!v) setTargetId(me.id);
+      }}
       target={target}
       onTarget={setTargetId}
       st={st ?? undefined}
@@ -48,6 +55,8 @@ export function StatusScreen() {
 export function StatusView({
   members,
   isParent,
+  others = true,
+  onOthers,
   target,
   onTarget,
   st,
@@ -58,6 +67,9 @@ export function StatusView({
 }: {
   members: Member[];
   isParent: boolean;
+  /** 부모가 다른 사람(아이) 상태를 고르는 줄을 보여줄지 */
+  others?: boolean;
+  onOthers?: (v: boolean) => void;
   target: Member;
   onTarget: (id: string) => void;
   st?: StatusDoc;
@@ -71,7 +83,7 @@ export function StatusView({
 
   return (
     <div className="screen">
-      {isParent && (
+      {isParent && others && (
         <div className="picker" role="tablist" aria-label="누구의 상태인가요">
           {members.map((m) => (
             <button key={m.id} className={m.id === target.id ? 'pick on' : 'pick'} onClick={() => onTarget(m.id)}>
@@ -126,6 +138,12 @@ export function StatusView({
             </button>
           )}
         </div>
+      )}
+
+      {isParent && onOthers && (
+        <button className="linkbtn" onClick={() => onOthers(!others)}>
+          {others ? '내 상태만 보기' : '아이 대신 바꾸기'}
+        </button>
       )}
     </div>
   );
