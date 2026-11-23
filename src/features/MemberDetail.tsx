@@ -1,7 +1,7 @@
 import { Check, MapPinned, Pencil } from 'lucide-react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { PetImage } from './PetPanel';
-import { careCount, moodOf, stageLabel, stageProgress, type PetDoc } from '../lib/pet';
+import { careCount, growthOf, moodOf, stageLabel, stageProgress, type PetDoc } from '../lib/pet';
 import { useDocData } from '../hooks/useFirestore';
 import { dateKey } from '../lib/time';
 import { StatusScene } from '../components/StatusScene';
@@ -122,9 +122,9 @@ export function MemberDetail({
               <div className="dt-pet">
                 <PetImage pet={pet} className="dt-pet-img" />
                 <div>
-                  <b>{pet.name}</b> <span className="sub">{stageLabel(pet.species, stageProgress(pet.xp).stage)}</span>
+                  <b>{pet.name}</b> <span className="sub">{stageLabel(pet.species, stageProgress(growthOf(pet)).stage)}</span>
                   <div className="sub">
-                    기분 {stageProgress(pet.xp).stage === 'egg' ? '알 속에서 자는 중' : { happy: '좋음 😊', ok: '보통 🙂', sad: '시무룩 🥺' }[moodOf(pet, dateKey(now))]} · 오늘 돌봄 {careCount(pet.days?.[dateKey(now)])}번
+                    기분 {stageProgress(growthOf(pet)).stage === 'egg' ? '알 속에서 자는 중' : { happy: '좋음 😊', ok: '보통 🙂', sad: '시무룩 🥺' }[moodOf(pet, dateKey(now))]} · 오늘 돌봄 {careCount(pet.days?.[dateKey(now)])}번
                   </div>
                 </div>
               </div>
