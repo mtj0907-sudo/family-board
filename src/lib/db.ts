@@ -5,11 +5,13 @@ import {
   deleteField,
   doc,
   getDoc,
+  increment,
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { EventDoc } from './events';
+import { CARE, type CareKey, type PetSpecies } from './pet';
 import type { FamilySettings, YoutubeAnswer } from './types';
 
 function need() {
@@ -126,3 +128,22 @@ export const setBagSkip = (code: string, date: string, kidId: string, skip: bool
 /** 거실 보드 왼쪽에 보여줄 사진 (설정 문서와 따로 보관해서, 보드에서만 읽어요) */
 export const saveBoardPhoto = (code: string, data: string) => setDoc(doc(need(), path(code, 'media', 'board')), { data, at: Date.now() });
 export const deleteBoardPhoto = (code: string) => deleteDoc(doc(need(), path(code, 'media', 'board')));
+
+/** 펫 데려오기: 알로 시작해요 */
+export const adoptPet = (code: string, kidId: string, species: PetSpecies, name: string) =>
+  setDoc(doc(need(), path(code, 'pets', kidId)), { species, name, xp: 0, adoptedAt: Date.now(), days: {} });
+
+/** 돌보기: 경험치를 더하고 오늘 한 일로 기록 */
+export const carePet = (code: string, kidId: string, date: string, key: CareKey) =>
+  setDoc(
+    doc(need(), path(code, 'pets', kidId)),
+    { xp: increment(CARE[key].xp), lastCareDate: date, days: { [date]: { [key]: true } } },
+    { merge: true },
+  );
+
+/** 쓰다듬기: 경험치 1, 하루에 정해진 횟수까지 (횟수 제한은 화면에서 확인) */
+export const lovePet = (code: string, kidId: string, date: string) =>
+  setDoc(doc(need(), path(code, 'pets', kidId)), { xp: increment(1), days: { [date]: { love: increment(1) } } }, { merge: true });
+
+export const renamePet = (code: string, kidId: string, name: string) =>
+  setDoc(doc(need(), path(code, 'pets', kidId)), { name }, { merge: true });

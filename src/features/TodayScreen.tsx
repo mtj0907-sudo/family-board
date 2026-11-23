@@ -12,6 +12,7 @@ import { MemberDetail } from './MemberDetail';
 import { StatusScene } from '../components/StatusScene';
 import { hasClayScene, sceneLookOf } from '../lib/characters';
 import { PhoneWhenSheet } from './PhoneSheets';
+import { careCount, speciesOf, type PetDoc } from '../lib/pet';
 import { useFitZoom } from '../hooks/useFitZoom';
 import { EventRow } from '../components/EventRow';
 import { Glyph } from '../components/Glyph';
@@ -54,7 +55,9 @@ export function TodayScreen({ onGo }: { onGo?: (tab: 'status' | 'message' | 'rou
   const fit = useFitZoom();
   const special = specialDayOf(now, events);
   const cheer = weekStartCheer(now, settings);
-  const banner = special ? { emoji: special.emoji, text: special.text } : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
+  const myPet = useDocData<PetDoc>(!isParent ? path(code, 'pets', me.id) : null);
+  const petNudge = !isParent && myPet !== undefined ? (myPet === null ? { emoji: '🥚', text: '펫을 골라 보세요', detail: '펫 탭에서 알을 데려와요' } : careCount(myPet.days?.[dateKey(now)]) === 0 ? { emoji: speciesOf(myPet.species)?.emoji ?? '🐾', text: `${myPet.name}가 기다려요`, detail: '펫 탭에서 돌봐 주세요' } : null) : null;
+  const banner = special ? { emoji: special.emoji, text: special.text } : petNudge ? petNudge : cheer ? { emoji: '🌟', text: cheer.text, detail: cheer.detail } : null;
   const effects = store.get('fb.fx') !== '0' && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
   return (
