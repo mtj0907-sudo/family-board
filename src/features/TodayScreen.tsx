@@ -9,6 +9,8 @@ import { store } from '../lib/storage';
 import { tomorrowItems } from '../lib/tomorrow';
 import { useWeather } from '../hooks/useWeather';
 import { MemberDetail } from './MemberDetail';
+import { StatusScene } from '../components/StatusScene';
+import { hasClayScene, sceneLookOf } from '../lib/characters';
 import { PhoneWhenSheet } from './PhoneSheets';
 import { useFitZoom } from '../hooks/useFitZoom';
 import { EventRow } from '../components/EventRow';
@@ -140,9 +142,16 @@ export function MemberRow({
   const prog = routineProgress(settings.routineItems, routine?.done?.[m.id]);
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
   const workCode = workOn?.(dateKey(now));
+  const look = sceneLookOf(m);
+  const scene = !!st && hasClayScene(st.key, look);
 
   return (
-    <button className={`mcard pres-${presenceOf(st)}`} style={{ ['--c' as string]: toneOf(m.id).fg }} onClick={onOpen} aria-label={`${m.name} 자세히 보기`}>
+    <button className={`mcard pres-${presenceOf(st)}${scene ? ' has-scene' : ''}`} style={{ ['--c' as string]: toneOf(m.id).fg }} onClick={onOpen} aria-label={`${m.name} 자세히 보기`}>
+      {scene && st && (
+        <span className="mcard-bg" aria-hidden>
+          <StatusScene statusKey={st.key} look={look} accent={toneOf(m.id).fg} />
+        </span>
+      )}
       <Avatar member={m} size={46} />
       <div className="m-body">
         <div className="m-line">
