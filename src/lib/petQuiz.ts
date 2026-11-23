@@ -213,7 +213,7 @@ export function makeQuiz(level: QuizLevel, r: Rand = Math.random, count = level 
 /** 퀴즈에서 맞힌 개수만큼 간식을 받아요. 다 맞히면 한 개 더! */
 export const quizSnacks = (correct: number, total: number): number => Math.max(0, correct - 1) + (correct === total && total > 0 ? 1 : 0);
 /** 문제마다 생각할 수 있는 시간(초) */
-export const quizSeconds = (level: QuizLevel): number => (level === 'school' ? 15 : 22);
+export const quizSeconds = (level: QuizLevel): number => (level === 'school' ? 15 : 35);
 /** 짝 맞추기: 적게 뒤집을수록 많이 받아요 (pairs = 카드 짝 수) */
 export const memorySnacks = (moves: number, pairs = 4): number => (moves <= pairs * 2 ? 3 : moves <= pairs * 3 ? 2 : 1);
 /** 간식 잡기: per개 잡을 때마다 한 개 */
