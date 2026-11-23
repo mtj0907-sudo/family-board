@@ -985,3 +985,13 @@ button.mcard.has-scene { position: relative; overflow: hidden; background: linea
 .pg-cards .card.up { background: #fff; border-color: #7aa6e8; }
 .pg-cards .card.ok { background: #e3f6ea; border-color: #2e9d62; }
 @media (prefers-reduced-motion: reduce) { .pet-body, .pet-cloud, .pet-party, .pet-fx, .rw.ready { animation: none !important; } .pet-actor { transition: none !important; } }
+
+/* 설정: 접었다 펴는 묶음 */
+.card.fold { padding: 0; }
+.fold > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 18px; font-family: var(--font-display); font-size: 19px; cursor: pointer; min-height: 56px; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: '⌄'; font-size: 22px; color: var(--ink-3); transition: transform .2s; margin-left: auto; }
+.fold[open] > summary::after { transform: rotate(180deg); }
+.fold > summary small { font-family: inherit; font-size: 13px; color: var(--ink-3); }
+.fold-body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
