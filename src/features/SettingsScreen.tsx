@@ -22,6 +22,19 @@ import { ShortcutHelper } from './ShortcutHelper';
 import { PetSheet } from './PetSheet';
 import type { Member as PetMember } from '../lib/types';
 
+/** 접었다 펼 수 있는 설정 묶음 */
+function Fold({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <details className="card fold">
+      <summary>
+        <span>{title}</span>
+        {hint && <small>{hint}</small>}
+      </summary>
+      <div className="fold-body">{children}</div>
+    </details>
+  );
+}
+
 const DEMO_PET: PetMember = { id: 'demo-pet', name: '체험', emoji: '🐾', role: 'child' };
 
 export function SettingsScreen() {
@@ -108,8 +121,7 @@ function SettingsBody() {
 
   return (
     <div className="screen">
-      <div className="card">
-        <h2>가족 구성원</h2>
+      <Fold title="가족 구성원" hint={members.length+"명"}>
         {members.map((m) => (
           <div className="row" key={m.id}>
             <label className="photo-pick" aria-label={`${m.name || '구성원'} 사진 고르기`}>
@@ -157,11 +169,10 @@ function SettingsBody() {
           </div>
         ))}
         <div className="sub">동그라미를 누르면 얼굴 사진을 고를 수 있어요. 사진은 우리 가족 Firebase에만 저장되고, 아래 저장하기를 눌러야 반영돼요.</div>
-      </div>
+      </Fold>
       <BoardPhotoCard code={code} />
       <ShortcutHelper />
-      <div className="card">
-        <h2>평일에 가는 곳</h2>
+      <Fold title="평일에 가는 곳">
         <div className="sub">일요일 오후에 "새로운 한 주, 힘차게 시작해요! 내일은 승우 학교 · 아림 유치원"처럼 응원 메시지를 보여줘요.</div>
         {members
           .filter((m) => m.role === 'child')
@@ -184,7 +195,7 @@ function SettingsBody() {
               </select>
             </div>
           ))}
-      </div>
+      </Fold>
       {cropFor && (
         <PhotoCropper
           file={cropFor.file}
@@ -197,8 +208,7 @@ function SettingsBody() {
         />
       )}
 
-      <div className="card">
-        <h2>루틴 항목 (아이 공통)</h2>
+      <Fold title="루틴 항목 (아이 공통)" hint={items.length+"개"}>
         {items.map((it, i) => (
           <div key={i}>
             <div className="row">
@@ -234,10 +244,9 @@ function SettingsBody() {
             항목 추가
           </button>
         )}
-      </div>
+      </Fold>
 
-      <div className="card">
-        <h2>가방 챙기기</h2>
+      <Fold title="가방 챙기기">
         <div className="sub">
           위의 <b>평일에 가는 곳</b>이 <b>학교</b>인 아이에게, 밤에 스스로 가방을 챙기는 체크리스트가 루틴 탭에 생겨요. 부모는 오늘 화면과 루틴 탭에서 결과를 볼 수 있어요.
         </div>
@@ -286,10 +295,9 @@ function SettingsBody() {
             항목 추가
           </button>
         )}
-      </div>
+      </Fold>
 
-      <div className="card">
-        <h2>사람마다 보일 상태</h2>
+      <Fold title="사람마다 보일 상태">
         <div className="sub">
           어른과 아이는 처음부터 다른 목록이 나와요. 사람을 골라서 그 사람의 상태 화면에 보일 항목을 켜고 끄세요.
         </div>
@@ -344,10 +352,9 @@ function SettingsBody() {
             </>
           );
         })()}
-      </div>
+      </Fold>
 
-      <div className="card">
-        <h2>자주 가는 곳</h2>
+      <Fold title="자주 가는 곳">
         <div className="sub">
           학원처럼 자주 가는 곳을 만들어 두면 상태 화면에 칩으로 나와요. 예: "피아노 학원 가는 중". 도착 시각을 정하는 곳이면 "도착 시각"을 켜 두세요.
         </div>
@@ -422,10 +429,9 @@ function SettingsBody() {
             장소 추가
           </button>
         )}
-      </div>
+      </Fold>
 
-      <div className="card">
-        <h2>근무표</h2>
+      <Fold title="근무표">
         <label className="field">
           <span>근무표를 쓰는 사람</span>
           <select value={owner} onChange={(e) => setOwner(e.target.value)}>
@@ -452,10 +458,9 @@ function SettingsBody() {
             />
           </div>
         ))}
-      </div>
+      </Fold>
 
-      <div className="card">
-        <h2>퇴근 후 집까지 걸리는 시간</h2>
+      <Fold title="퇴근 후 집까지 걸리는 시간">
         <div className="sub">
           "집에 가는 중"을 누르면 이 시간을 더해 도착 시각을 짐작해서 보여줘요. 위치를 읽는 것이 아니라 평소 시간 기준이에요. 비워 두면 짐작하지 않아요.
         </div>
@@ -477,22 +482,20 @@ function SettingsBody() {
               <span className="sub">분</span>
             </div>
           ))}
-      </div>
+      </Fold>
 
       <PushSettings />
 
-      <div className="card">
-        <h2>부모 PIN 바꾸기</h2>
+      <Fold title="부모 PIN 바꾸기">
         <input inputMode="numeric" maxLength={4} placeholder="새 PIN 4자리 (안 바꾸면 비워 두세요)" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} />
-      </div>
+      </Fold>
 
       <button className="btn primary sticky" onClick={save}>
         저장하기
       </button>
       {msg && <div className="toast">{msg}</div>}
 
-      <div className="card">
-        <h2>펫 체험해 보기</h2>
+      <Fold title="펫 체험해 보기">
         <p className="sub">승우·아림이 펫과 따로 있는 체험용 펫이에요. 마음껏 해 보고, 지우면 처음부터 다시 할 수 있어요.</p>
         <div className="row">
           <button className="btn primary" onClick={() => setPetDemo(true)}>
@@ -507,11 +510,10 @@ function SettingsBody() {
             체험 펫 지우기
           </button>
         </div>
-      </div>
+      </Fold>
       {petDemo && <PetSheet kid={DEMO_PET} onClose={() => setPetDemo(false)} />}
 
-      <div className="card">
-        <h2>가족 링크</h2>
+      <Fold title="가족 링크">
         <p className="sub">다른 기기에서 이 링크를 열면 같은 가족으로 연결돼요. 가족 밖에는 공유하지 마세요.</p>
         <QrCode link={link} />
         <div className="linkbox">{link}</div>
@@ -537,7 +539,7 @@ function SettingsBody() {
         >
           이 기기 연결 끊기
         </button>
-      </div>
+      </Fold>
     </div>
   );
 }
@@ -558,8 +560,7 @@ function BoardPhotoCard({ code }: { code: string }) {
     setBusy(false);
   }
   return (
-    <div className="card">
-      <h2>거실 보드 사진</h2>
+    <Fold title="거실 보드 사진">
       <div className="sub">보드 왼쪽 시계 아래에 크게 보여요. 세로 사진이 잘 어울려요. 우리 가족 Firebase에만 저장돼요.</div>
       {photo?.data && <img className="board-photo-prev" src={photo.data} alt="거실 보드 사진 미리보기" />}
       <div className="row">
@@ -584,6 +585,6 @@ function BoardPhotoCard({ code }: { code: string }) {
         )}
       </div>
       {err && <div className="sub" role="alert">{err}</div>}
-    </div>
+    </Fold>
   );
 }
