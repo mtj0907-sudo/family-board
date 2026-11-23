@@ -1,7 +1,7 @@
 import { Check, MapPinned, Pencil } from 'lucide-react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { StatusScene } from '../components/StatusScene';
-import { lookOf } from '../lib/characters';
+import { hasClayScene, sceneLookOf } from '../lib/characters';
 import { Portal } from '../components/Portal';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
@@ -77,9 +77,9 @@ export function MemberDetail({
           </div>
         </div>
 
-        {m.role === 'parent' && st && (
+        {st && (m.role === 'parent' || hasClayScene(st.key, sceneLookOf(m))) && (
           <div className="dt-scene">
-            <StatusScene statusKey={st.key} look={lookOf(m)} accent={toneOf(m.id).fg} />
+            <StatusScene statusKey={st.key} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
           </div>
         )}
 

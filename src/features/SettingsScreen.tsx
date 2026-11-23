@@ -14,6 +14,7 @@ import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
 import type { CustomStatus, FamilySettings, Member, RoutineItem } from '../lib/types';
 import { PhotoCropper } from '../components/PhotoCropper';
+import { LOOK_LABEL, sceneLookOf, type SceneLook } from '../lib/characters';
 import { loadPhoto, renderFit } from '../lib/photo';
 import { TIMED_CODES } from '../lib/work';
 import { PLACE_CHOICES } from '../lib/specialDay';
@@ -61,7 +62,7 @@ function SettingsBody() {
     if (newPin && !isValidPin(newPin)) return setMsg('새 PIN은 숫자 4자리예요');
     const next: FamilySettings = {
       ...settings,
-      members: members.map(({ photo, ...m }) => ({ ...m, name: m.name.trim(), ...(photo ? { photo } : {}) })),
+      members: members.map(({ photo, look, ...m }) => ({ ...m, name: m.name.trim(), ...(photo ? { photo } : {}), ...(look ? { look } : {}) })),
       routineItems: items
         .filter((i) => i.label.trim())
         .map((i, n) => ({ ...i, label: i.label.trim(), key: i.key || `c${Date.now()}${n}` })),
@@ -129,6 +130,25 @@ function SettingsBody() {
                 <Trash2 size={20} strokeWidth={1.75} aria-hidden />
               </button>
             )}
+          </div>
+        ))}
+        <div className="sub">상태 그림 속 모습 (아빠·엄마·아이 상태마다 3D 그림이 나와요)</div>
+        {members.map((m) => (
+          <div className="row" key={m.id + 'look'}>
+            <Avatar member={m} size={32} />
+            <span className="wk-code">{m.name || '구성원'}</span>
+            <select
+              className="grow"
+              value={sceneLookOf(m)}
+              onChange={(e) => setMember(m.id, { look: e.target.value as SceneLook })}
+              aria-label={`${m.name} 그림 속 모습`}
+            >
+              {(m.role === 'child' ? (['boy', 'girl'] as SceneLook[]) : (['short', 'long'] as SceneLook[])).map((l) => (
+                <option key={l} value={l}>
+                  {LOOK_LABEL[l]}
+                </option>
+              ))}
+            </select>
           </div>
         ))}
         <div className="sub">동그라미를 누르면 얼굴 사진을 고를 수 있어요. 사진은 우리 가족 Firebase에만 저장되고, 아래 저장하기를 눌러야 반영돼요.</div>

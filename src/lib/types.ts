@@ -7,6 +7,8 @@ export interface Member {
   role: Role;
   /** 얼굴 사진(작게 줄인 JPEG 데이터). 가족 Firebase에만 저장되고 저장소에는 올라가지 않아요 */
   photo?: string;
+  /** 상태 그림 속 모습 (정하지 않으면 어른은 이름으로, 아이는 남자아이로) */
+  look?: 'short' | 'long' | 'boy' | 'girl';
 }
 
 export interface RoutineItem {
