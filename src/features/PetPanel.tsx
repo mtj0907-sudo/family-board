@@ -5,7 +5,8 @@ import { useDocData } from '../hooks/useFirestore';
 import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { bagProgress } from '../lib/bag';
-import { adoptPet, claimReward, earnSnacks, path, petDo } from '../lib/db';
+import { increment } from 'firebase/firestore';
+import { adoptPet, claimReward, devPatch, earnSnacks, path, petDo } from '../lib/db';
 import {
   ACTIONS,
   DAY_GROWTH,
@@ -250,7 +251,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
   }
 
   function act(key: ActionKey) {
-    if (!isMe || stage === 'egg') return;
+    if (!isMe) return;
     if (key === 'snack' && snacks <= 0) {
       show('간식이 없어요! 퀴즈나 게임으로 얻어 올까요?', ['🍪'], 1800);
       return;
@@ -336,13 +337,9 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
         <div className="hud-sub">{stageLabel(pet.species, stage)} · 오늘 자란 만큼 {todayGrowth(day)}/{DAY_GROWTH}</div>
 
         <div className="pet-rings">
-          {stage !== 'egg' && (
-            <>
-              {ring('🍚', stats.belly, 'belly', '배부름')}
-              {ring('⚡', stats.energy, 'energy', '기운')}
-              {ring('🫧', stats.clean, 'clean', '깨끗함')}
-            </>
-          )}
+          {ring('🍚', stats.belly, 'belly', '배부름')}
+          {ring('⚡', stats.energy, 'energy', '기운')}
+          {ring('🫧', stats.clean, 'clean', '깨끗함')}
         </div>
         {isMe && (
           <div className="pet-side">
@@ -376,7 +373,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
           </div>
         </div>
 
-        {isMe && stage !== 'egg' && (
+        {isMe && (
           <div className="pet-toys">
             <button className="rbtn mini" onClick={() => act('hug')} aria-label="안아주기">
               <span>{emojiOf('hug')}</span>
@@ -389,7 +386,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
         {isMe && (
           <div className="pet-dock">
             {main.map((m) => (
-              <button key={m.key} className="rbtn" disabled={stage === 'egg'} onClick={() => act(m.key)} aria-label={ACTIONS.find((x) => x.key === m.key)!.label}>
+              <button key={m.key} className="rbtn" onClick={() => act(m.key)} aria-label={ACTIONS.find((x) => x.key === m.key)!.label}>
                 <span>{emojiOf(m.key)}</span>
                 <em>{m.key === 'snack' ? `${m.label} ${snacks}` : m.label}</em>
               </button>
@@ -397,7 +394,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
           </div>
         )}
         {!isMe && <div className="pet-viewing">{kid.name}의 펫을 구경하는 중이에요</div>}
-        {stage === 'egg' && isMe && <div className="pet-viewing">알을 톡톡 눌러 보세요. 오늘 하루 돌봐 주면 깨어나요</div>}
+        {stage === 'egg' && isMe && <div className="pet-viewing">밥도 주고 놀아주면 알이 따뜻해져요. 오늘 하루 돌봐 주면 깨어나요</div>}
 
         {box && isMe && (
           <div className="pet-box" role="dialog" aria-label="보상 상자">
@@ -420,6 +417,25 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
           </div>
         )}
       </div>
+
+      {kid.id === 'demo-pet' && (
+        <div className="pet-dev">
+          <b>🧪 체험용 테스트 도구 (아이 펫에는 안 보여요)</b>
+          <div>
+            <button onClick={() => void devPatch(code, kid.id, { days: { [`dev-${Date.now()}`]: { xp: 10, n: 1 } } })}>하루 성장 +1일</button>
+            <button onClick={() => void devPatch(code, kid.id, { days: { [`dev-${Date.now()}`]: { xp: 10000, n: 1 } } })}>다 자라게</button>
+            <button onClick={() => void devPatch(code, kid.id, { snacks: increment(5) })}>간식 +5</button>
+          </div>
+          <div>
+            <button onClick={() => void devPatch(code, kid.id, { belly: { v: 100, at: Date.now() } })}>배 가득</button>
+            <button onClick={() => void devPatch(code, kid.id, { belly: { v: 0, at: Date.now() } })}>배 비움</button>
+            <button onClick={() => void devPatch(code, kid.id, { energy: { v: 0, at: Date.now() } })}>기운 0</button>
+            <button onClick={() => void devPatch(code, kid.id, { energy: { v: 100, at: Date.now() } })}>기운 가득</button>
+            <button onClick={() => void devPatch(code, kid.id, { clean: { v: 0, at: Date.now() } })}>더럽게</button>
+            <button onClick={() => void devPatch(code, kid.id, { clean: { v: 100, at: Date.now() } })}>깨끗하게</button>
+          </div>
+        </div>
+      )}
 
       {games && (
         <PetGames
