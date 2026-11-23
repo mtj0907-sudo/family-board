@@ -156,5 +156,8 @@ export const claimReward = (code: string, kidId: string, date: string, key: Rewa
 
 export const deletePet = (code: string, kidId: string) => deleteDoc(doc(need(), path(code, 'pets', kidId)));
 
+/** 체험 펫 전용 테스트 도구: 값을 바로 바꿔요 */
+export const devPatch = (code: string, kidId: string, patch: Record<string, unknown>) => setDoc(doc(need(), path(code, 'pets', kidId)), patch, { merge: true });
+
 export const renamePet = (code: string, kidId: string, name: string) =>
   setDoc(doc(need(), path(code, 'pets', kidId)), { name }, { merge: true });

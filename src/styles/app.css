@@ -995,3 +995,6 @@ button.mcard.has-scene { position: relative; overflow: hidden; background: linea
 .fold > summary small { font-family: inherit; font-size: 13px; color: var(--ink-3); }
 .fold-body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 12px; }
 .fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.pet-dev { margin-top: 12px; padding: 12px; border-radius: 16px; background: #fff8e1; border: 1px dashed #d9a400; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.pet-dev > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.pet-dev button { padding: 8px 12px; border-radius: 10px; border: 1px solid #d9a400; background: #fff; font-weight: 700; font-size: 13px; }
