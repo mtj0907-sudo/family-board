@@ -813,3 +813,16 @@ img.status-scene { display: block; user-select: none; -webkit-user-drag: none; }
 .btile.has-kidscene .btile-pips, .btile.has-kidscene .btile-events, .btile.has-kidscene .btile-work { max-width: 58%; }
 .btile > .btile-kidscene { position: absolute; right: 10px; bottom: 8px; width: 40%; height: 56%; display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
 .btile-kidscene .status-scene { max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(70, 50, 30, .14)); }
+
+/* 폰 사람 카드: 상태 그림을 오른쪽에 깔고, 글씨는 왼쪽 위로 흐려지게 */
+button.mcard.has-scene { position: relative; overflow: hidden; background: linear-gradient(90deg, #fff 0%, #fff 45%, var(--scene-tint, #f3f6f4) 100%); }
+.mcard.has-scene.pres-home { --scene-tint: #e1f2e8; }
+.mcard.has-scene.pres-away { --scene-tint: #f8eccb; }
+.mcard.has-scene.pres-sleep { --scene-tint: #e3e9f6; }
+.mcard-bg { position: absolute; right: -4px; top: 0; bottom: 0; width: 41%; z-index: 0; pointer-events: none; display: flex; align-items: center; justify-content: flex-end; }
+.mcard-bg .status-scene { height: 118%; width: auto; max-width: none; margin-right: -6px; margin-bottom: -6px; filter: drop-shadow(0 4px 6px rgba(70, 50, 30, .12)); }
+.mcard-bg::before { content: ''; position: absolute; inset: 0 0 0 -30%; z-index: 1; background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, .85) 25%, rgba(255, 255, 255, 0) 70%); }
+.mcard.has-scene > *:not(.mcard-bg) { position: relative; z-index: 1; }
+.mcard.has-scene .m-body { max-width: 60%; }
+.mcard.has-scene .chev { display: none; }
+.mcard.has-scene .m-since { flex-basis: 100%; margin-top: -2px; }
