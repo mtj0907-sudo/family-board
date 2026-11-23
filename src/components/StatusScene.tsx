@@ -3,7 +3,7 @@ import { hasClayScene, sceneFile, type Look, type SceneLook } from '../lib/chara
 
 /**
  * 상태마다 달라지는 작은 장면 그림 (어른용). 우리 앱을 위해 새로 그린 그림이에요.
- * 받침대 위에 인물이 서 있고, 회사에서는 책상, 집에 가는 중이나 데리러 가는 중에는 자동차가 나와요.
+ * 받침대 위에 인물이 서 있고, 일하는 중에는 책상, 집에 가는 중이나 데리러 가는 중에는 자동차가 나와요.
  */
 const SKIN = '#f7d2b4';
 const HAIR = '#3a2a22';
