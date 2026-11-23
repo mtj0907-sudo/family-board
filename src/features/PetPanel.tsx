@@ -264,7 +264,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
     const set: Partial<Record<StatKey, Stat>> = {};
     for (const k of ['belly', 'energy', 'clean'] as const) if (r.set[k] !== undefined) set[k] = { v: r.set[k]!, at: t };
     void petDo(code, kid.id, today, set, r.xp, r.snack);
-    if (doneToday === 0) notify('message', kid.name, `${pet?.name}를 돌봐 줬어요`);
+    if (doneToday === 0 && kid.id !== 'demo-pet') notify('message', kid.name, `${pet?.name}를 돌봐 줬어요`);
   }
   function poke() {
     if (!isMe) return;
