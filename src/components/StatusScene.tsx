@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { SCENE_KEYS, type Look } from '../lib/characters';
+import { hasClayScene, sceneFile, type Look, type SceneLook } from '../lib/characters';
 
 /**
  * 상태마다 달라지는 작은 장면 그림 (어른용). 우리 앱을 위해 새로 그린 그림이에요.
@@ -353,30 +353,29 @@ function scene(key: string, o: { look: Look; accent: string }): ReactNode {
   }
 }
 
-/** 3D 지점토 그림이 있는 상태들 (public/scenes/<상태>-<short|long>.webp) */
-const CLAY = new Set<string>(SCENE_KEYS as readonly string[]);
-
 /**
- * 어른 상태 그림. 3D 지점토 느낌의 그림이 있으면 그것을, 없으면(직접 만든 장소 등) 그려 둔 간단한 그림을 보여줘요.
- * 그림이 안 불러와지면(인터넷 문제 등) 간단한 그림으로 바뀝니다.
+ * 상태 그림. 3D 지점토 느낌의 그림이 있으면 그것을, 어른의 그림 없는 상태(직접 만든 장소 등)나 그림이 안 불러와질 때는 간단한 그림을 보여줘요.
+ * 아이는 간단한 그림이 없어서, 그림이 없으면 아무것도 보이지 않아요.
  */
-export function StatusScene({ statusKey, look, accent, className }: { statusKey: string; look: Look; accent: string; className?: string }) {
+export function StatusScene({ statusKey, look, accent, className }: { statusKey: string; look: SceneLook; accent: string; className?: string }) {
   const [failed, setFailed] = useState(false);
-  if (CLAY.has(statusKey) && !failed) {
+  const kid = look === 'boy' || look === 'girl';
+  if (hasClayScene(statusKey, look) && !failed) {
     return (
       <img
         className={className ?? 'status-scene clay'}
-        src={`${import.meta.env.BASE_URL}scenes/${statusKey}-${look}.webp`}
+        src={`${import.meta.env.BASE_URL}scenes/${sceneFile(statusKey, look)}.webp`}
         alt=""
         draggable={false}
         onError={() => setFailed(true)}
       />
     );
   }
+  if (kid) return null;
   return (
     <svg className={className ?? 'status-scene'} viewBox="0 0 320 250" role="img" aria-hidden preserveAspectRatio="xMidYMid meet">
       <Tile />
-      {scene(statusKey, { look, accent })}
+      {scene(statusKey, { look: look as Look, accent })}
     </svg>
   );
 }
