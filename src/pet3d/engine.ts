@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Anim, PetMood, PetSpecies, PetStage } from '../lib/pet';
-import { buildPet, disposeModels, type Rig } from './models';
-import { applyPose, type PoseOpts } from './poses';
+import { petArt } from '../lib/pet';
+import { loadSprite, poseSprite, type Sprite } from './sprite';
 
 export type FoodKind = 'cookie' | 'rice';
 export type ServeMode = 'eat' | 'refuse' | 'flee';
@@ -27,12 +27,6 @@ interface Bubble {
 
 const FLY = 0.8;
 const BITE = 0.42;
-const norm = (a: number) => {
-  while (a > Math.PI) a -= Math.PI * 2;
-  while (a < -Math.PI) a += Math.PI * 2;
-  return a;
-};
-const lerpAngle = (a: number, b: number, k: number) => a + norm(b - a) * k;
 
 function makeFood(kind: FoodKind): THREE.Group {
   const g = new THREE.Group();
@@ -64,7 +58,8 @@ export class PetEngine {
   private actor = new THREE.Group();
   private face = new THREE.Group();
   private shadow: THREE.Mesh;
-  private rig: Rig | null = null;
+  private sprite: Sprite | null = null;
+  private loadId = 0;
   private key = '';
   private raf = 0;
   private clock = new THREE.Clock();
@@ -81,7 +76,6 @@ export class PetEngine {
   private x0 = 0;
   private dur = 0;
   private dir = 1;
-  private yaw = -0.8;
   private camYaw = 0;
   private lastDrag = -99;
   private R = 6.4;
@@ -155,7 +149,7 @@ export class PetEngine {
     const dx = e.clientX - this.down.x;
     if (Math.abs(dx) > 8) this.moved = true;
     if (this.moved) {
-      this.camYaw = Math.max(-1.35, Math.min(1.35, this.down.yaw - dx * 0.008));
+      this.camYaw = Math.max(-0.6, Math.min(0.6, this.down.yaw - dx * 0.006));
       this.lastDrag = this.time;
     }
   };
@@ -171,20 +165,32 @@ export class PetEngine {
     const aspect = w / h;
     this.camera.aspect = aspect;
     const tan = Math.tan((this.camera.fov * Math.PI) / 360);
-    this.R = Math.min(8.8, Math.max(3.6, 3.4 / (2 * tan * aspect)));
+    this.R = Math.min(8.8, Math.max(3.6, 3.0 / (2 * tan * aspect)));
     this.halfW = this.R * tan * aspect;
     this.camera.updateProjectionMatrix();
   }
 
-  /** 종류·단계가 바뀌면 새로 만들어요 */
-  setPet(species: PetSpecies, stage: PetStage, grow: number) {
+  /** 종류·단계가 바뀌면 그림을 새로 불러와요 */
+  setPet(species: PetSpecies, stage: PetStage, grow: number, baseUrl = '/') {
     this.grow = grow;
     const key = `${species}-${stage}`;
     if (key === this.key) return;
     this.key = key;
-    if (this.rig) this.face.remove(this.rig.root);
-    this.rig = buildPet(species, stage);
-    this.face.add(this.rig.root);
+    const art = petArt(species, stage);
+    const height = { egg: 1.3, baby: 1.45, kid: 1.7, adult: 1.95 }[stage];
+    const id = ++this.loadId;
+    loadSprite(`${baseUrl}${art.src}`, key, stage, height, art.scale).then((sp) => {
+      if (this.disposed || id !== this.loadId) {
+        sp.dispose();
+        return;
+      }
+      if (this.sprite) {
+        this.face.remove(this.sprite.mesh);
+        this.sprite.dispose();
+      }
+      this.sprite = sp;
+      this.face.add(sp.mesh);
+    });
   }
 
   setState(mood: PetMood, belly: number, energy: number) {
@@ -250,20 +256,14 @@ export class PetEngine {
   };
 
   private step(dt: number) {
-    const rig = this.rig;
-    if (!rig) return;
+    const sp = this.sprite;
+    if (!sp) return;
     const t = this.time - this.animT0;
     const x = this.curX();
     this.actor.position.x = x;
     const running = this.anim === 'flee' || this.anim === 'walk' || this.moving();
 
-    // 방향: 걸을 땐 가는 쪽(옆모습), 멈추면 카메라 쪽으로 돌아봐요
-    let target: number;
-    if (running && this.anim !== 'eat') target = this.dir > 0 ? 0 : Math.PI;
-    else if (this.anim === 'eat' || this.anim === 'hug' || this.anim === 'refuse' || this.anim === 'tickle') target = this.dir > 0 ? -1.25 : -1.9;
-    else target = this.dir > 0 ? -0.75 : -2.4;
-    this.yaw = lerpAngle(this.yaw, target, 1 - Math.exp(-dt * (this.anim === 'flee' ? 14 : 6)));
-    this.face.rotation.y = this.yaw;
+    this.face.rotation.y = 0;
 
     // 배부름 부드럽게
     this.belly += (this.bellyTarget - this.belly) * (1 - Math.exp(-dt * 2));
@@ -274,9 +274,11 @@ export class PetEngine {
     let away = 0;
     const f = this.food;
     if (f) {
-      const mouth = new THREE.Vector3();
-      rig.mouthPoint.getWorldPosition(mouth);
-      if (rig.isEgg) mouth.set(this.actor.position.x, 0.7, 0.2);
+      const mouth = new THREE.Vector3((sp.mouth[0] - 0.5) * sp.w, sp.mouth[1] * sp.h, 0.05);
+      sp.mesh.updateMatrix();
+      mouth.applyMatrix4(sp.mesh.matrix);
+      mouth.x += this.actor.position.x;
+      if (sp.isEgg) mouth.set(this.actor.position.x, 0.6, 0.1);
       if (f.phase === 'fly') {
         const u = Math.min(1, (this.time - f.t0) / FLY);
         const stopAt = f.mode === 'eat' ? 1 : 0.55;
@@ -327,7 +329,7 @@ export class PetEngine {
     }
 
     /* 몸짓 */
-    const opts: PoseOpts = {
+    poseSprite(sp, this.anim, {
       time: this.time,
       t,
       mood: this.mood,
@@ -336,20 +338,17 @@ export class PetEngine {
       chew,
       wide,
       away,
-      shut: this.anim === 'refuse' ? 0.3 : 0,
-    };
-    // 먹이가 날아오는 동안·씹는 동안에는 먹는 몸짓으로
-    const effective: Anim = f && f.mode === 'eat' && this.anim === 'eat' ? 'eat' : this.anim;
-    applyPose(rig, effective, opts);
-
+      dir: this.dir,
+      moving: running,
+    });
     // 아기→어른 사이에서도 매일 조금씩 커져요
     const k = 0.9 + 0.1 * this.grow;
-    rig.root.scale.multiplyScalar(k);
+    this.face.scale.setScalar(k);
 
     /* 그림자 */
-    const lift = Math.max(0, rig.root.position.y + (rig.parts[0]?.position.y ?? 0) * 0);
-    this.shadow.scale.setScalar(1.15 * rig.root.scale.x * (rig.isEgg ? 0.8 : 1.3) * (1 - Math.min(0.4, lift * 0.4)));
-    (this.shadow.material as THREE.MeshBasicMaterial).opacity = 0.9 - Math.min(0.4, lift);
+    const lift = Math.max(0, sp.mesh.position.y);
+    this.shadow.scale.setScalar(sp.w * k * 0.95 * (1 - Math.min(0.4, lift * 0.4)));
+    (this.shadow.material as THREE.MeshBasicMaterial).opacity = 0.9 - Math.min(0.5, lift);
 
     /* 비눗방울·별 */
     if (this.anim === 'wash' && this.time - this.lastBubble > 0.07) {
@@ -373,20 +372,19 @@ export class PetEngine {
     if (this.stars.visible) {
       this.stars.children.forEach((s, i) => {
         const a = this.time * 6 + (i * Math.PI * 2) / 3;
-        s.position.set(Math.cos(a) * 0.35, 1.25 * rig.root.scale.y + Math.sin(a * 2) * 0.03, Math.sin(a) * 0.35);
+        s.position.set(Math.cos(a) * 0.35, sp.h * k * 0.95 + Math.sin(a * 2) * 0.03, Math.sin(a) * 0.35);
         s.rotation.y = a * 2;
       });
     }
 
-    /* 카메라: 손으로 돌려 보면 옆·뒤모습도 볼 수 있어요 */
+    /* 카메라: 손으로 끌면 살짝 시점이 돌아가요 */
     if (this.time - this.lastDrag > 3.5) this.camYaw *= 1 - Math.min(1, dt * 1.8);
     const zoomT = this.anim === 'hug' ? 0.78 : 1;
     this.zoom += (zoomT - this.zoom) * (1 - Math.exp(-dt * 4));
     const R = this.R * this.zoom;
-    const cy = 0.55 + this.camYaw * 0;
-    const px = this.actor.position.x * (this.anim === 'hug' ? 0.9 : 0.35);
-    this.camera.position.set(px + Math.sin(this.camYaw) * R, 2.05, Math.cos(this.camYaw) * R);
-    this.camera.lookAt(px, cy, 0);
+    const px = this.anim === 'hug' ? this.actor.position.x * 0.9 : 0;
+    this.camera.position.set(px + Math.sin(this.camYaw) * R, 1.15, Math.cos(this.camYaw) * R);
+    this.camera.lookAt(px, 0.62, 0);
   }
 
   dispose() {
@@ -397,7 +395,7 @@ export class PetEngine {
     this.canvas.removeEventListener('pointermove', this.pm);
     this.canvas.removeEventListener('pointerup', this.pu);
     this.canvas.removeEventListener('pointercancel', this.pu);
+    this.sprite?.dispose();
     this.renderer.dispose();
-    disposeModels();
   }
 }

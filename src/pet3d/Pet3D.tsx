@@ -22,7 +22,7 @@ interface Props {
   onPoke: () => void;
 }
 
-/** 3D 펫이 그려지는 캔버스. 손가락으로 좌우로 끌면 옆모습·뒷모습도 볼 수 있어요. */
+/** 펫 그림이 그려지고 움직이는 캔버스 (그림을 3D 공간에서 구부려 움직여요) */
 export const Pet3D = forwardRef<Pet3DHandle, Props>(function Pet3D(p, ref) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const eng = useRef<PetEngine | null>(null);
@@ -42,7 +42,7 @@ export const Pet3D = forwardRef<Pet3DHandle, Props>(function Pet3D(p, ref) {
     };
   }, []);
   useEffect(() => {
-    if (ready) eng.current?.setPet(p.species, p.stage, p.grow);
+    if (ready) eng.current?.setPet(p.species, p.stage, p.grow, import.meta.env.BASE_URL);
   }, [ready, p.species, p.stage, p.grow]);
   useEffect(() => {
     if (ready) eng.current?.setState(p.mood, p.belly, p.energy);

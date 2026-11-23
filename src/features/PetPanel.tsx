@@ -384,7 +384,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
             />
             </Suspense>
           )}
-          <div className={WEBGL ? 'pet-actor over' : 'pet-actor'} style={{ left: `${WEBGL ? 50 + 0.85 * (actor.x - 50) : actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size, ...(WEBGL ? { bottom: `${{ egg: 54, baby: 52, kid: 58, adult: 63 }[stage]}%` } : {}) }}>
+          <div className={WEBGL ? 'pet-actor over' : 'pet-actor'} style={{ left: `${WEBGL ? 50 + 0.85 * (actor.x - 50) : actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size, ...(WEBGL ? { bottom: `${{ egg: 66, baby: 69, kid: 75, adult: 80 }[stage]}%` } : {}) }}>
             <div className={`pet-think ${say ? 'talk' : ''}`} aria-live="polite" title={idleText}>
               {say ? <span>{say}</span> : <b>{need}</b>}
             </div>
