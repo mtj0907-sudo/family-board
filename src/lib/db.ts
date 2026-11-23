@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { EventDoc } from './events';
-import { CARE, type CareKey, type PetSpecies } from './pet';
+import type { PetSpecies, RewardKey, Stat, StatKey } from './pet';
 import type { FamilySettings, YoutubeAnswer } from './types';
 
 function need() {
@@ -129,21 +129,30 @@ export const setBagSkip = (code: string, date: string, kidId: string, skip: bool
 export const saveBoardPhoto = (code: string, data: string) => setDoc(doc(need(), path(code, 'media', 'board')), { data, at: Date.now() });
 export const deleteBoardPhoto = (code: string) => deleteDoc(doc(need(), path(code, 'media', 'board')));
 
-/** 펫 데려오기: 알로 시작해요 */
+/** 펫 데려오기: 알로 시작하고, 시작 간식을 두 개 줘요 */
 export const adoptPet = (code: string, kidId: string, species: PetSpecies, name: string) =>
-  setDoc(doc(need(), path(code, 'pets', kidId)), { species, name, xp: 0, adoptedAt: Date.now(), days: {} });
+  setDoc(doc(need(), path(code, 'pets', kidId)), { species, name, adoptedAt: Date.now(), days: {}, snacks: 2 });
 
-/** 돌보기: 경험치를 더하고 오늘 한 일로 기록 */
-export const carePet = (code: string, kidId: string, date: string, key: CareKey) =>
+/** 돌보기: 바뀐 수치와 경험치, 간식 개수를 저장해요 (횟수 제한은 없어요) */
+export const petDo = (code: string, kidId: string, date: string, set: Partial<Record<StatKey, Stat>>, xp: number, snack: number) =>
   setDoc(
     doc(need(), path(code, 'pets', kidId)),
-    { xp: increment(CARE[key].xp), lastCareDate: date, days: { [date]: { [key]: true } } },
+    {
+      ...set,
+      lastCareDate: date,
+      ...(snack ? { snacks: increment(snack) } : {}),
+      days: { [date]: { n: increment(1), xp: increment(xp) } },
+    },
     { merge: true },
   );
 
-/** 쓰다듬기: 경험치 1, 하루에 정해진 횟수까지 (횟수 제한은 화면에서 확인) */
-export const lovePet = (code: string, kidId: string, date: string) =>
-  setDoc(doc(need(), path(code, 'pets', kidId)), { xp: increment(1), days: { [date]: { love: increment(1) } } }, { merge: true });
+/** 퀴즈·미니게임으로 간식 얻기 */
+export const earnSnacks = (code: string, kidId: string, n: number) =>
+  setDoc(doc(need(), path(code, 'pets', kidId)), { snacks: increment(n) }, { merge: true });
+
+/** 오늘 할 일 보상 상자 받기 (하루에 상자마다 한 번) */
+export const claimReward = (code: string, kidId: string, date: string, key: RewardKey, snacks: number) =>
+  setDoc(doc(need(), path(code, 'pets', kidId)), { snacks: increment(snacks), days: { [date]: { claimed: { [key]: true } } } }, { merge: true });
 
 export const renamePet = (code: string, kidId: string, name: string) =>
   setDoc(doc(need(), path(code, 'pets', kidId)), { name }, { merge: true });

@@ -829,42 +829,84 @@ button.mcard.has-scene { position: relative; overflow: hidden; background: linea
 
 /* ───────── 펫 키우기 ───────── */
 .pet-panel { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
-.pet-head { display: flex; align-items: baseline; gap: 8px; font-size: 24px; }
+.pet-head { display: flex; align-items: baseline; gap: 8px; font-size: 24px; flex-wrap: wrap; justify-content: center; }
 .pet-head b { font-family: var(--font-display); font-weight: 400; font-size: 1.1em; }
-.pet-party { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); z-index: 3; background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 700; white-space: nowrap; animation: banner-pop .5s ease-out; box-shadow: 0 8px 24px rgba(23, 32, 29, .3); }
-.pet-stage { position: relative; display: grid; place-items: center; width: min(78vw, 300px); height: min(78vw, 300px); max-height: 38dvh; aspect-ratio: 1; border: 0; border-radius: 32px; background: radial-gradient(circle at 50% 70%, #fff7e2 0%, #fdeed0 60%, #f8e3bd 100%); overflow: hidden; }
-.pet-stage:disabled { opacity: 1; }
-.pet-img { height: 78%; width: auto; max-width: 92%; object-fit: contain; transform-origin: 50% 100%; filter: drop-shadow(0 8px 10px rgba(90, 60, 30, .18)); user-select: none; -webkit-user-drag: none; }
-.pet-img.stage-egg { height: 66%; }
-.pet-img.stage-baby { height: 62%; }
-.pet-img.stage-kid { height: 76%; }
-.pet-img.stage-adult { height: 88%; }
-.pet-stage .pet-img { transform: scale(var(--ps, 1)); }
-.pet-img.mood-happy { animation: pet-bounce 1.1s ease-in-out infinite; }
-.pet-img.mood-ok { animation: pet-sway 3.2s ease-in-out infinite; }
-.pet-img.mood-sad { filter: saturate(.5) brightness(.96) drop-shadow(0 8px 10px rgba(60, 60, 90, .2)); animation: pet-droop 4s ease-in-out infinite; }
-@keyframes pet-bounce { 0%, 100% { transform: scale(var(--ps, 1)) translateY(0); } 50% { transform: scale(var(--ps, 1)) translateY(-7%); } }
-@keyframes pet-sway { 0%, 100% { transform: scale(var(--ps, 1)) rotate(-1.6deg); } 50% { transform: scale(var(--ps, 1)) rotate(1.6deg); } }
-@keyframes pet-droop { 0%, 100% { transform: scale(var(--ps, 1)) scaleY(.97); } 50% { transform: scale(var(--ps, 1)) scaleY(.94) translateY(1%); } }
-.pet-cloud { position: absolute; top: 10%; right: 14%; font-size: 30px; animation: pet-drip 2s ease-in-out infinite; }
+.pet-party { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); z-index: 6; background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 999px; font-weight: 700; white-space: nowrap; animation: banner-pop .5s ease-out; box-shadow: 0 8px 24px rgba(23, 32, 29, .3); }
+
+/* 놀이터: 펫이 좌우로 걸어 다녀요 */
+.pet-stage { --st: min(86vw, 340px, 36dvh); position: relative; width: min(100%, 420px); height: var(--st); border-radius: 32px; background: linear-gradient(#cfeaf7 0%, #e9f6fb 58%, #fdeed0 58%); overflow: hidden; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+.pet-stage.night { background: linear-gradient(#27345f 0%, #3b4a82 58%, #5a5a6e 58%); }
+.pet-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .45), transparent 70%); }
+.pet-moon { position: absolute; top: 10px; left: 14px; font-size: 28px; }
+.pet-actor { position: absolute; bottom: 12%; transform: translateX(-50%); transition-property: left; transition-timing-function: linear; display: flex; flex-direction: column; align-items: center; }
+.pet-body { position: relative; transform-origin: 50% 100%; height: calc(var(--st) * .34 * var(--ps, 1)); }
+.pet-body.stage-baby { height: calc(var(--st) * .36 * var(--ps, 1)); }
+.pet-body.stage-kid { height: calc(var(--st) * .44 * var(--ps, 1)); }
+.pet-body.stage-adult { height: calc(var(--st) * .54 * var(--ps, 1)); }
+.pet-pic { height: 100%; width: auto; display: block; transform: scaleX(var(--dir, 1)); filter: drop-shadow(0 6px 6px rgba(90, 60, 30, .2)); user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.pet-body.mood-sad .pet-pic { filter: saturate(.5) brightness(.96) drop-shadow(0 6px 6px rgba(60, 60, 90, .2)); }
+.pet-shadow { position: absolute; bottom: -3%; width: 70%; height: 10px; border-radius: 50%; background: rgba(60, 40, 20, .18); filter: blur(2px); }
+.pet-cloud { position: absolute; top: 12%; right: 14%; font-size: 28px; animation: pet-drip 2s ease-in-out infinite; }
 @keyframes pet-drip { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(8px); opacity: .55; } }
-.pet-heart { position: absolute; bottom: 38%; font-size: 26px; animation: pet-up 1.2s ease-out forwards; pointer-events: none; }
-@keyframes pet-up { from { transform: translateY(0) scale(.6); opacity: 1; } to { transform: translateY(-110px) scale(1.2); opacity: 0; } }
-.pet-bubble { position: relative; padding: 10px 18px; border-radius: 18px; background: #fff; border: 1px solid var(--line); font-weight: 700; text-align: center; max-width: 100%; }
+.pet-fx { position: absolute; bottom: 100%; left: 50%; margin-left: -12px; font-size: 26px; pointer-events: none; animation: pet-up 1.5s ease-out forwards; }
+@keyframes pet-up { from { transform: translate(var(--dx, 0), 0) scale(.6); opacity: 1; } to { transform: translate(var(--dx, 0), -90px) scale(1.25); opacity: 0; } }
+
+.pet-body.a-idle { animation: pet-breathe 3s ease-in-out infinite; }
+.pet-body.a-walk { animation: pet-walk .46s ease-in-out infinite; }
+.pet-body.a-flee { animation: pet-walk .2s ease-in-out infinite; }
+.pet-body.a-eat { animation: pet-munch .34s ease-in-out infinite; }
+.pet-body.a-refuse { animation: pet-no .36s ease-in-out 5; }
+.pet-body.a-shake { animation: pet-shake .14s linear 12; }
+.pet-body.a-tickle { animation: pet-shake .1s linear 14; }
+.pet-body.a-play { animation: pet-bounce .5s ease-in-out infinite; }
+.pet-body.a-jump { animation: pet-jump .55s ease-out 3; }
+.pet-body.a-hide { animation: pet-hide 2.6s ease-in-out 1; }
+.pet-body.a-wash { animation: pet-wiggle .26s ease-in-out infinite; }
+.pet-body.a-hug { animation: pet-hug .8s ease-in-out infinite; }
+.pet-body.a-dance { animation: pet-dance .55s ease-in-out infinite; }
+.pet-body.a-sleep { animation: pet-sleep 2.6s ease-in-out infinite; }
+.pet-body.a-dizzy { animation: pet-dizzy 1.6s ease-in-out 1; }
+@keyframes pet-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.035) scaleX(.99); } }
+@keyframes pet-walk { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-9%) rotate(3deg); } }
+@keyframes pet-munch { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(3%) scaleY(.93) scaleX(1.04); } }
+@keyframes pet-no { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-7%) rotate(-5deg); } 75% { transform: translateX(7%) rotate(5deg); } }
+@keyframes pet-shake { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+@keyframes pet-bounce { 0%, 100% { transform: translateY(0) scaleY(.95); } 50% { transform: translateY(-18%) scaleY(1.05); } }
+@keyframes pet-jump { 0% { transform: translateY(0) scale(1.05, .92); } 45% { transform: translateY(-26%) scale(.96, 1.06); } 100% { transform: translateY(0) scale(1.05, .92); } }
+@keyframes pet-hide { 0% { transform: scale(1); opacity: 1; } 20% { transform: scale(.05); opacity: 0; } 70% { transform: scale(.05); opacity: 0; } 85% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pet-wiggle { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(6deg) translateY(-3%); } }
+@keyframes pet-hug { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+@keyframes pet-dance { 0%, 100% { transform: rotate(-11deg) translateY(0); } 25% { transform: rotate(0) translateY(-12%); } 50% { transform: rotate(11deg) translateY(0); } 75% { transform: rotate(0) translateY(-12%); } }
+@keyframes pet-sleep { 0%, 100% { transform: rotate(-9deg) scaleY(.93) translateY(3%); } 50% { transform: rotate(-9deg) scaleY(.96) translateY(1%); } }
+@keyframes pet-dizzy { 0% { transform: rotate(0); } 40% { transform: rotate(360deg); } 60% { transform: rotate(-14deg); } 80% { transform: rotate(14deg); } 100% { transform: rotate(0); } }
+
+.pet-bubble { position: relative; padding: 10px 18px; border-radius: 18px; background: #fff; border: 1px solid var(--line); font-weight: 700; text-align: center; max-width: 100%; min-height: 44px; display: grid; place-items: center; }
 .pet-bubble.mood-sad { background: #eef1f8; color: #40557f; }
 .pet-bubble.mood-happy { background: #fff5d6; color: #7a5a0c; }
-.pet-xp { width: min(90%, 340px); display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.pet-grow { width: min(92%, 380px); display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; }
 .pet-xp-bar { width: 100%; height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .pet-xp-bar i { display: block; height: 100%; background: linear-gradient(90deg, #f4c542, #e0a526); border-radius: 99px; transition: width .6s; }
-.pet-care { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; width: 100%; max-width: 520px; }
-.care { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14.5px; line-height: 1.25; }
-.care .care-emoji { font-size: 28px; line-height: 1.1; height: 32px; display: grid; place-items: center; }
-.care small { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: center; min-height: 28px; }
+.pet-meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: min(100%, 420px); }
+.pet-meter { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; font-weight: 700; color: var(--ink-2, var(--ink)); }
+.pet-meter i { display: block; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.pet-meter b { display: block; height: 100%; border-radius: 99px; transition: width .5s; }
+.pet-meter.belly b { background: #f08a4b; }
+.pet-meter.energy b { background: #4aa8d8; }
+.pet-meter.clean b { background: #5cc49a; }
+.pet-care { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 520px; }
+.care { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 4px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 13.5px; line-height: 1.25; }
+.care .care-emoji { font-size: 26px; line-height: 1.1; height: 30px; display: grid; place-items: center; }
+.care small { font-size: 11px; font-weight: 600; color: var(--ink-3); min-height: 14px; }
 .care.ready { border-color: #e0a526; background: #fff8e6; }
-.care.ready:active { transform: scale(.94); }
-.care.done { background: var(--ink); color: #fff; border-color: var(--ink); }
-.care.done small { color: rgba(255, 255, 255, .75); }
-.care.locked { opacity: .6; background: var(--bg); }
+.care.game { border-color: #7aa6e8; background: #eef4ff; }
+.care:active { transform: scale(.94); }
+.care:disabled { opacity: .45; }
+.pet-rewards { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; width: 100%; max-width: 520px; }
+.rw { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 6px; border-radius: 16px; border: 1px dashed var(--line); background: var(--bg); font-size: 13px; text-align: center; }
+.rw span { font-size: 20px; }
+.rw small { font-size: 11px; color: var(--ink-3); font-weight: 600; }
+.rw.ready { border: 2px solid #e0a526; background: #fff3cc; animation: pet-jump 1.4s ease-in-out infinite; }
+.rw.done { opacity: .6; }
 .pet-foot { text-align: center; }
 .pet-adopt { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 .pet-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 420px; }
@@ -875,8 +917,37 @@ button.mcard.has-scene { position: relative; overflow: hidden; background: linea
 .pet-name { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 420px; }
 .pet-name label { display: flex; flex-direction: column; gap: 4px; }
 .pet-sheet { width: min(560px, 92%); max-height: 94%; overflow-y: auto; align-items: center; position: relative; padding: 24px 20px; }
-.pet-sheet .pet-stage { max-height: 34vh; width: min(52vh, 320px); height: min(52vh, 320px); }
-.pet-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; z-index: 4; }
+.pet-sheet .pet-stage { --st: min(46vh, 320px); }
+.pet-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; z-index: 7; }
 .dt-pet { display: flex; align-items: center; gap: 12px; }
 .dt-pet .dt-pet-img { height: 72px; width: auto; animation: none; transform: none; }
-@media (prefers-reduced-motion: reduce) { .pet-img, .pet-cloud, .pet-party { animation: none !important; } }
+
+/* 간식 얻기 게임 */
+.pet-games { position: absolute; inset: -6px; z-index: 8; background: var(--bg); border-radius: 24px; padding: 14px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: 0 0 0 100vmax rgba(23, 32, 29, .35); }
+.pg-top { display: flex; align-items: center; justify-content: space-between; font-size: 18px; }
+.pg-x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); }
+.pg-menu { display: grid; gap: 10px; }
+.pg-menu button { display: grid; grid-template-columns: 48px 1fr; align-items: center; text-align: left; gap: 0 10px; padding: 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); font-weight: 800; font-size: 17px; }
+.pg-menu button span { grid-row: span 2; font-size: 34px; text-align: center; }
+.pg-menu small { font-weight: 600; color: var(--ink-3); font-size: 13px; }
+.pg-quiz { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+.pg-q { font-size: 22px; font-weight: 800; text-align: center; white-space: pre-line; line-height: 1.5; padding: 14px 6px; }
+.pg-choices { display: grid; gap: 10px; }
+.pg-choices button { padding: 16px; border-radius: 18px; border: 2px solid var(--line); background: var(--surface); font-size: 20px; font-weight: 800; }
+.pg-choices .right { border-color: #2e9d62; background: #e3f6ea; }
+.pg-choices .wrong { border-color: #d6453d; background: #fde7e5; }
+.pg-choices .dim { opacity: .45; }
+.pg-fb { min-height: 24px; text-align: center; font-weight: 800; font-size: 18px; }
+.pg-result { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 0; text-align: center; font-weight: 700; font-size: 18px; }
+.pg-big { font-size: 44px; letter-spacing: 2px; }
+.pg-row { display: flex; gap: 10px; }
+.pg-hud { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 17px; }
+.pg-field { position: relative; height: min(52dvh, 420px); border-radius: 20px; background: linear-gradient(#d9f0fb, #fdeed0); overflow: hidden; touch-action: manipulation; }
+.pg-drop { position: absolute; top: -48px; font-size: 40px; line-height: 1; padding: 6px; background: none; border: 0; animation-name: pg-fall; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes pg-fall { to { transform: translateY(calc(min(52dvh, 420px) + 60px)); } }
+.pg-memory { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.pg-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 380px; }
+.pg-cards .card { aspect-ratio: 1; border-radius: 16px; border: 2px solid var(--line); background: #eef4ff; font-size: 34px; display: grid; place-items: center; }
+.pg-cards .card.up { background: #fff; border-color: #7aa6e8; }
+.pg-cards .card.ok { background: #e3f6ea; border-color: #2e9d62; }
+@media (prefers-reduced-motion: reduce) { .pet-body, .pet-cloud, .pet-party, .pet-fx, .rw.ready { animation: none !important; } .pet-actor { transition: none !important; } }

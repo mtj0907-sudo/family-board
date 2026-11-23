@@ -1,4 +1,3 @@
-import { Lock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFamily } from '../FamilyContext';
 import { useBag } from '../hooks/useBag';
@@ -6,25 +5,52 @@ import { useDocData } from '../hooks/useFirestore';
 import { useNotify } from '../hooks/useNotify';
 import { useNow } from '../hooks/useNow';
 import { bagProgress } from '../lib/bag';
-import { adoptPet, carePet, lovePet, path } from '../lib/db';
-import { CARE, PET_SPECIES, careCount, careOptions, loveLeft, moodOf, petArt, petMessage, speciesOf, stageLabel, stageProgress, type PetDoc, type PetSpecies } from '../lib/pet';
+import { adoptPet, claimReward, earnSnacks, path, petDo } from '../lib/db';
+import {
+  ACTIONS,
+  DAY_GROWTH,
+  PET_SPECIES,
+  careCount,
+  dayNumber,
+  growScale,
+  growthOf,
+  moodOf,
+  petArt,
+  petMessage,
+  react,
+  reactTap,
+  rewardOptions,
+  speciesOf,
+  stageLabel,
+  stageProgress,
+  statsNow,
+  todayGrowth,
+  type ActionKey,
+  type Anim,
+  type PetDoc,
+  type PetSpecies,
+  type RewardKey,
+  type Stat,
+  type StatKey,
+} from '../lib/pet';
 import { routineProgress } from '../lib/routine';
 import { dateKey } from '../lib/time';
 import type { RoutineDoc } from '../lib/types';
 import type { Member } from '../lib/types';
+import { PetGames } from './PetGames';
 
 const BASE = import.meta.env.BASE_URL;
 
-/** 펫 그림 한 장. 기분에 따라 움직임이 달라져요. */
-export function PetImage({ pet, className = '' }: { pet: Pick<PetDoc, 'species' | 'xp' | 'days' | 'lastCareDate' | 'adoptedAt'>; className?: string }) {
+/** 펫 그림 한 장 (자세히 보기 같은 작은 곳에서 써요). 기분에 따라 움직임이 달라져요. */
+export function PetImage({ pet, className = '' }: { pet: Pick<PetDoc, 'species' | 'days' | 'lastCareDate' | 'adoptedAt'>; className?: string }) {
   const today = dateKey(Date.now());
-  const stage = stageProgress(pet.xp).stage;
-  const art = petArt(pet.species, stage);
-  const mood = stage === 'egg' ? 'ok' : moodOf(pet, today);
+  const prog = stageProgress(growthOf(pet));
+  const art = petArt(pet.species, prog.stage);
+  const mood = prog.stage === 'egg' ? 'ok' : moodOf(pet, today);
   return (
     <img
-      className={`pet-img stage-${stage} mood-${mood} ${className}`}
-      style={{ ['--ps' as string]: art.scale }}
+      className={`pet-img stage-${prog.stage} mood-${mood} ${className}`}
+      style={{ ['--ps' as string]: art.scale * growScale(prog.ratio) }}
       src={`${BASE}${art.src}`}
       alt=""
       draggable={false}
@@ -73,9 +99,86 @@ function Adopt({ kid }: { kid: Member }) {
   );
 }
 
+const KST_HOUR = (t: number) => new Date(t + 9 * 3600000).getUTCHours();
+
+/**
+ * 돌아다니는 펫. 그림 한 장을 걷게 하고(통통 튀며 좌우로), 상황마다 몸짓을 바꿔요.
+ * 밥 먹기, 거절하기, 도망가기, 숨기, 춤추기, 자기, 어지러워하기 같은 동작이 있어요.
+ */
+function useActor(canWalk: boolean, calm: boolean) {
+  const [x, setX] = useState(50);
+  const [dir, setDir] = useState(1);
+  const [anim, setAnim] = useState<Anim>('idle');
+  const [dur, setDur] = useState(0);
+  const xr = useRef(50);
+  const busy = useRef(false);
+  const timers = useRef<number[]>([]);
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  };
+  const moveTo = (to: number, ms: number) => {
+    setDir(to >= xr.current ? 1 : -1);
+    setDur(ms);
+    setX(to);
+    xr.current = to;
+  };
+  useEffect(
+    () => () => {
+      timers.current.forEach((t) => window.clearTimeout(t));
+    },
+    [],
+  );
+  useEffect(() => {
+    if (!canWalk) return;
+    let stop = false;
+    const loop = () => {
+      if (stop) return;
+      if (!busy.current) {
+        const to = 18 + Math.random() * 64;
+        const ms = Math.abs(to - xr.current) * (calm ? 110 : 62);
+        moveTo(to, ms);
+        setAnim('walk');
+        later(() => {
+          if (!busy.current) setAnim('idle');
+        }, ms);
+      }
+      later(loop, (calm ? 5000 : 2400) + Math.random() * 3200);
+    };
+    later(loop, 1200);
+    return () => {
+      stop = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canWalk, calm]);
+
+  const play = (a: Anim, ms: number) => {
+    busy.current = true;
+    setAnim(a);
+    if (a === 'flee') {
+      const away = xr.current < 50 ? -30 : 130;
+      moveTo(away, 800);
+      later(() => moveTo(50, 1100), Math.max(1500, ms - 1200));
+    } else if (a === 'eat' || a === 'wash' || a === 'sleep' || a === 'hug') {
+      moveTo(50, 500);
+    }
+    later(() => {
+      busy.current = false;
+      setAnim('idle');
+    }, ms);
+  };
+  return { x, dir, anim, dur, play };
+}
+
+interface Fx {
+  id: number;
+  e: string;
+  dx: number;
+}
+
 /**
  * 한 아이의 펫 화면. 아이가 직접 골라 키우고, 부모는 자세히 보기에서 구경만 해요.
- * 밥·놀이·씻기는 언제나, 간식은 할 일을 반쯤, 선물은 가방(또는 할 일)을 다 하면 열려요.
+ * 돌보기 횟수에는 제한이 없어요. 대신 너무 많이 주면 펫이 배불러하고 도망가요.
+ * 간식은 퀴즈·미니게임과 진짜 할 일(보상 상자)로 얻어요.
  */
 export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: boolean }) {
   const { code, settings, me } = useFamily();
@@ -86,8 +189,11 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
   const routine = useDocData<RoutineDoc>(path(code, 'routines', today)) ?? undefined;
   const bag = useBag(now);
   const isMe = actAsKid || me.id === kid.id;
+  const night = KST_HOUR(now) >= 21 || KST_HOUR(now) < 6;
 
-  const stage = pet ? stageProgress(pet.xp).stage : 'egg';
+  const growth = pet ? growthOf(pet) : 0;
+  const prog = stageProgress(growth);
+  const stage = prog.stage;
   const prevStage = useRef(stage);
   const [party, setParty] = useState('');
   useEffect(() => {
@@ -104,78 +210,183 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
     }
   }, [stage, pet]);
 
-  const [hearts, setHearts] = useState<number[]>([]);
+  const mood = pet && stage !== 'egg' ? moodOf(pet, today) : 'ok';
+  const actor = useActor(stage !== 'egg' && !night, mood === 'sad');
+  const [say, setSay] = useState('');
+  const [fx, setFx] = useState<Fx[]>([]);
+  const [games, setGames] = useState(false);
+  const [claiming, setClaiming] = useState<string[]>([]);
+  const pushed = useRef<Record<string, number>>({});
+  const taps = useRef({ n: 0, t: 0 });
+  const sayTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(sayTimer.current), []);
+
   if (pet === undefined) return <div className="sub">불러오는 중…</div>;
   if (pet === null) return isMe ? <Adopt kid={kid} /> : <div className="sub">{kid.name}은(는) 아직 펫이 없어요</div>;
 
-  const prog = stageProgress(pet.xp);
-  const mood = prog.stage === 'egg' ? 'ok' : moodOf(pet, today);
-  const doneToday = careCount(pet.days?.[today]);
+  const t = Date.now();
+  const stats = statsNow(pet, t);
+  const day = pet.days?.[today];
+  const doneToday = careCount(day);
+  const snacks = pet.snacks ?? 0;
   const isSchool = bag.schoolKids.includes(kid.id);
   const bagDone = isSchool && bagProgress(bag.items, bag.bag?.done?.[kid.id]).complete;
   const ratio = routineProgress(settings.routineItems, routine?.done?.[kid.id]).ratio;
-  const options = careOptions(pet, today, { routineRatio: ratio, bagComplete: bagDone, isSchoolKid: isSchool });
-  const left = loveLeft(pet.days?.[today]);
+  const rewards = rewardOptions(day, { routineRatio: ratio, bagComplete: bagDone, isSchoolKid: isSchool });
+  const art = petArt(pet.species, stage);
+  const size = art.scale * growScale(prog.ratio);
+  const sleeping = (night && actor.anim === 'idle') || actor.anim === 'sleep';
+  const shownAnim: Anim = sleeping ? 'sleep' : actor.anim;
+  const idleText = petMessage(mood, stage, doneToday, stats, night);
 
-  function care(key: (typeof options)[number]['key']) {
-    if (!isMe) return;
-    void carePet(code, kid.id, today, key);
-    if (careCount(pet?.days?.[today]) === 0) notify('message', kid.name, `${pet?.name}를 돌봐 줬어요`);
+  function show(text: string, emojis: string[], ms: number) {
+    setSay(text);
+    window.clearTimeout(sayTimer.current);
+    sayTimer.current = window.setTimeout(() => setSay(''), Math.max(2600, ms + 800));
+    const base = Date.now();
+    setFx((f) => [...f, ...emojis.map((e, i) => ({ id: base + i + Math.random(), e, dx: (i - (emojis.length - 1) / 2) * 24 }))]);
+    window.setTimeout(() => setFx((f) => f.filter((x) => x.id < base || x.id > base + 10)), 1600);
   }
-  function pat() {
-    if (!isMe) return;
-    setHearts((h) => [...h, Date.now()]);
-    window.setTimeout(() => setHearts((h) => h.slice(1)), 1200);
-    if (left > 0) void lovePet(code, kid.id, today);
+
+  function act(key: ActionKey) {
+    if (!isMe || stage === 'egg') return;
+    if (key === 'snack' && snacks <= 0) {
+      show('간식이 없어요! 퀴즈나 게임으로 얻어 올까요?', ['🍪'], 1800);
+      return;
+    }
+    const p = pushed.current[key] ?? 0;
+    const r = react(key, stats, p, Math.random());
+    pushed.current[key] = r.ok ? 0 : p + 1;
+    actor.play(r.anim, r.ms);
+    show(r.say, r.fx, r.ms);
+    if (!r.ok) return;
+    const set: Partial<Record<StatKey, Stat>> = {};
+    for (const k of ['belly', 'energy', 'clean'] as const) if (r.set[k] !== undefined) set[k] = { v: r.set[k]!, at: t };
+    void petDo(code, kid.id, today, set, r.xp, r.snack);
+    if (doneToday === 0) notify('message', kid.name, `${pet?.name}를 돌봐 줬어요`);
   }
+  function poke() {
+    if (!isMe) return;
+    const n = Date.now();
+    taps.current = { n: n - taps.current.t < 1600 ? taps.current.n + 1 : 1, t: n };
+    if (stage === 'egg') {
+      actor.play('shake', 700);
+      show('알이 달그락 움직여요', ['✨'], 700);
+      return;
+    }
+    const r = reactTap(taps.current.n, Math.random());
+    actor.play(r.anim, 1400);
+    show(r.say, r.fx, 1400);
+  }
+  function claim(key: RewardKey, n: number) {
+    if (!isMe || claiming.includes(key)) return;
+    setClaiming((c) => [...c, key]);
+    void claimReward(code, kid.id, today, key, n);
+    show(`간식 ${n}개를 받았어요! 🍪`, ['🍪', '🎁'], 1800);
+  }
+
+  const bar = (label: string, v: number, cls: string) => (
+    <div className={`pet-meter ${cls}`} title={`${label} ${v}`}>
+      <span>{label}</span>
+      <i>
+        <b style={{ width: `${v}%` }} />
+      </i>
+    </div>
+  );
 
   return (
     <div className="pet-panel">
       {party && <div className="pet-party" role="status">{party}</div>}
       <div className="pet-head">
         <b>{pet.name}</b>
-        <span className="sub">{stageLabel(pet.species, prog.stage)}</span>
+        <span className="sub">
+          {stageLabel(pet.species, stage)} · {dayNumber(pet.adoptedAt, today)}일째
+        </span>
       </div>
 
-      <button className="pet-stage" onClick={pat} aria-label={`${pet.name} 쓰다듬기`} disabled={!isMe}>
-        {mood === 'sad' && <span className="pet-cloud" aria-hidden>💧</span>}
-        <PetImage pet={pet} />
-        {hearts.map((k, i) => (
-          <span key={k} className="pet-heart" style={{ left: `${38 + ((i * 17) % 30)}%` }} aria-hidden>
-            ❤️
-          </span>
-        ))}
-      </button>
+      <div className={`pet-stage ${night ? 'night' : ''}`} onClick={poke} role="button" aria-label={`${pet.name}를 톡톡`} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && poke()}>
+        {night && <span className="pet-moon" aria-hidden>🌙</span>}
+        {mood === 'sad' && stage !== 'egg' && <span className="pet-cloud" aria-hidden>💧</span>}
+        <div className="pet-ground" aria-hidden />
+        <div className="pet-actor" style={{ left: `${actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size }}>
+          <div className="pet-shadow" />
+          <div className={`pet-body a-${shownAnim} stage-${stage} mood-${mood}`} style={{ ['--dir' as string]: actor.dir }}>
+            <img className="pet-pic" src={`${BASE}${art.src}`} alt="" draggable={false} />
+          </div>
+          {fx.map((f) => (
+            <span key={f.id} className="pet-fx" style={{ ['--dx' as string]: `${f.dx}px` }} aria-hidden>
+              {f.e}
+            </span>
+          ))}
+        </div>
+      </div>
 
-      <div className={`pet-bubble mood-${mood}`}>{petMessage(mood, prog.stage, doneToday)}</div>
+      <div className={`pet-bubble mood-${mood}`} aria-live="polite">
+        {say || idleText}
+      </div>
 
-      <div className="pet-xp" aria-label="성장">
-        <div className="pet-xp-bar">
+      <div className="pet-grow">
+        <div className="pet-xp-bar" aria-label="성장">
           <i style={{ width: `${Math.round(prog.ratio * 100)}%` }} />
         </div>
-        <span className="sub">{prog.toNext === null ? '다 자랐어요! 계속 사랑해 주세요' : `다음 단계까지 ${prog.toNext}`}</span>
+        <span className="sub">
+          {prog.toNext === null ? '다 자랐어요! 계속 사랑해 주세요' : `다음 단계까지 ${prog.toNext}`} · 오늘 자란 만큼 {todayGrowth(day)}/{DAY_GROWTH}
+        </span>
       </div>
 
-      <div className="pet-care">
-        {options.map((o) => (
-          <button
-            key={o.key}
-            className={`care ${o.state}`}
-            disabled={!isMe || o.state !== 'ready'}
-            onClick={() => care(o.key)}
-            aria-label={`${o.label}${o.state === 'done' ? ' (오늘 했어요)' : o.note ? ` (${o.note})` : ''}`}
-          >
-            <span className="care-emoji" aria-hidden>
-              {o.state === 'locked' ? <Lock size={22} strokeWidth={1.75} /> : o.emoji}
-            </span>
-            <span>{o.label}</span>
-            <small>{o.state === 'done' ? '했어요' : o.state === 'locked' ? o.note : `+${CARE[o.key].xp}`}</small>
-          </button>
-        ))}
-      </div>
-      <div className="sub pet-foot">
-        {isMe ? (left > 0 ? `펫을 눌러서 쓰다듬어 보세요 (${left}번 더)` : '오늘은 충분히 쓰다듬었어요') : `${kid.name}의 펫을 구경하는 중이에요`}
-      </div>
+      {stage !== 'egg' && (
+        <div className="pet-meters">
+          {bar('배부름', stats.belly, 'belly')}
+          {bar('기운', stats.energy, 'energy')}
+          {bar('깨끗함', stats.clean, 'clean')}
+        </div>
+      )}
+
+      {isMe && (
+        <>
+          <div className="pet-care">
+            {ACTIONS.map((a) => (
+              <button key={a.key} className="care ready" disabled={stage === 'egg'} onClick={() => act(a.key)}>
+                <span className="care-emoji" aria-hidden>
+                  {a.emoji}
+                </span>
+                <span>{a.label}</span>
+                {a.key === 'snack' && <small>🍪 {snacks}개</small>}
+              </button>
+            ))}
+            <button className="care game" onClick={() => setGames(true)}>
+              <span className="care-emoji" aria-hidden>
+                🎮
+              </span>
+              <span>게임하기</span>
+              <small>간식 얻기</small>
+            </button>
+          </div>
+
+          <div className="pet-rewards">
+            {rewards.map((r) => (
+              <button key={r.key} className={`rw ${r.state}`} disabled={r.state !== 'ready' || claiming.includes(r.key)} onClick={() => claim(r.key, r.snacks)}>
+                <span aria-hidden>{r.state === 'done' ? '✅' : r.state === 'ready' ? '🎁' : '🔒'}</span>
+                <b>{r.label}</b>
+                <small>{r.state === 'done' ? '받았어요' : r.state === 'ready' ? `간식 ${r.snacks}개 받기` : r.note}</small>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {!isMe && <div className="sub pet-foot">{kid.name}의 펫을 구경하는 중이에요</div>}
+      {stage === 'egg' && isMe && <div className="sub pet-foot">알을 톡톡 눌러 보세요. 오늘 하루 돌봐 주면 깨어나요</div>}
+
+      {games && (
+        <PetGames
+          level={isSchool ? 'school' : 'kinder'}
+          onEarn={(n) => {
+            void earnSnacks(code, kid.id, n);
+            show(`간식 ${n}개를 얻었어요! 🍪`, ['🍪'], 1800);
+          }}
+          onClose={() => setGames(false)}
+        />
+      )}
     </div>
   );
 }
