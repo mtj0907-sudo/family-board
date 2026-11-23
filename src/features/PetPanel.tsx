@@ -38,7 +38,14 @@ import { routineProgress } from '../lib/routine';
 import { dateKey } from '../lib/time';
 import type { RoutineDoc } from '../lib/types';
 import type { Member } from '../lib/types';
+import { lazy, Suspense } from 'react';
+import type { Pet3DHandle } from '../pet3d/Pet3D';
+import { canUse3D } from '../pet3d/support';
 import { PetGames } from './PetGames';
+
+const WEBGL = canUse3D();
+/** 3D 부분은 무거워서 펫 화면을 열 때 불러와요 */
+const Pet3D = lazy(() => import('../pet3d/Pet3D').then((m) => ({ default: m.Pet3D })));
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -218,6 +225,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
   const [games, setGames] = useState(false);
   const [box, setBox] = useState(false);
   const [claiming, setClaiming] = useState<string[]>([]);
+  const pet3d = useRef<Pet3DHandle>(null);
   const pushed = useRef<Record<string, number>>({});
   const taps = useRef({ n: 0, t: 0 });
   const sayTimer = useRef(0);
@@ -259,6 +267,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
     const p = pushed.current[key] ?? 0;
     const r = react(key, stats, p, Math.random());
     pushed.current[key] = r.ok ? 0 : p + 1;
+    if (WEBGL && (key === 'feed' || key === 'snack')) pet3d.current?.serve(key === 'snack' ? 'cookie' : 'rice', r.anim === 'eat' ? 'eat' : r.anim === 'flee' ? 'flee' : 'refuse');
     actor.play(r.anim, r.ms);
     show(r.say, r.fx, r.ms);
     if (!r.ok) return;
@@ -355,16 +364,38 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
           </div>
         )}
 
-        <div className="pet-field" onClick={poke} role="button" aria-label={`${pet.name}를 톡톡`} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && poke()}>
+        <div className="pet-field" onClick={WEBGL ? undefined : poke} role="button" aria-label={`${pet.name}를 톡톡`} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && poke()}>
           {mood === 'sad' && stage !== 'egg' && <span className="pet-cloud" aria-hidden>💧</span>}
-          <div className="pet-actor" style={{ left: `${actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size }}>
+          {WEBGL && (
+            <Suspense fallback={null}>
+            <Pet3D
+              ref={pet3d}
+              species={pet.species}
+              stage={stage}
+              grow={prog.ratio}
+              mood={mood}
+              belly={stats.belly / 100}
+              energy={stats.energy / 100}
+              x={actor.x}
+              dir={actor.dir}
+              dur={actor.dur}
+              anim={shownAnim}
+              onPoke={poke}
+            />
+            </Suspense>
+          )}
+          <div className={WEBGL ? 'pet-actor over' : 'pet-actor'} style={{ left: `${WEBGL ? 50 + 0.85 * (actor.x - 50) : actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size, ...(WEBGL ? { bottom: `${{ egg: 54, baby: 52, kid: 58, adult: 63 }[stage]}%` } : {}) }}>
             <div className={`pet-think ${say ? 'talk' : ''}`} aria-live="polite" title={idleText}>
               {say ? <span>{say}</span> : <b>{need}</b>}
             </div>
-            <div className="pet-shadow" />
-            <div className={`pet-body a-${shownAnim} stage-${stage} mood-${mood}`} style={{ ['--dir' as string]: actor.dir }}>
-              <img className="pet-pic" src={`${BASE}${art.src}`} alt="" draggable={false} />
-            </div>
+            {!WEBGL && (
+              <>
+                <div className="pet-shadow" />
+                <div className={`pet-body a-${shownAnim} stage-${stage} mood-${mood}`} style={{ ['--dir' as string]: actor.dir }}>
+                  <img className="pet-pic" src={`${BASE}${art.src}`} alt="" draggable={false} />
+                </div>
+              </>
+            )}
             {fx.map((f) => (
               <span key={f.id} className="pet-fx" style={{ ['--dx' as string]: `${f.dx}px` }} aria-hidden>
                 {f.e}
