@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import type { Look } from '../lib/characters';
+import { useState, type ReactNode } from 'react';
+import { SCENE_KEYS, type Look } from '../lib/characters';
 
 /**
  * 상태마다 달라지는 작은 장면 그림 (어른용). 우리 앱을 위해 새로 그린 그림이에요.
@@ -353,8 +353,26 @@ function scene(key: string, o: { look: Look; accent: string }): ReactNode {
   }
 }
 
-/** 어른 상태 그림. 그림이 없는 상태(직접 만든 장소 등)는 인사하는 인물만 나와요. */
+/** 3D 지점토 그림이 있는 상태들 (public/scenes/<상태>-<short|long>.webp) */
+const CLAY = new Set<string>(SCENE_KEYS as readonly string[]);
+
+/**
+ * 어른 상태 그림. 3D 지점토 느낌의 그림이 있으면 그것을, 없으면(직접 만든 장소 등) 그려 둔 간단한 그림을 보여줘요.
+ * 그림이 안 불러와지면(인터넷 문제 등) 간단한 그림으로 바뀝니다.
+ */
 export function StatusScene({ statusKey, look, accent, className }: { statusKey: string; look: Look; accent: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (CLAY.has(statusKey) && !failed) {
+    return (
+      <img
+        className={className ?? 'status-scene clay'}
+        src={`${import.meta.env.BASE_URL}scenes/${statusKey}-${look}.webp`}
+        alt=""
+        draggable={false}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
   return (
     <svg className={className ?? 'status-scene'} viewBox="0 0 320 250" role="img" aria-hidden preserveAspectRatio="xMidYMid meet">
       <Tile />
