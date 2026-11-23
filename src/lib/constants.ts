@@ -23,7 +23,7 @@ export const STATUS_CATALOG: StatusDef[] = [
   { key: 'home', emoji: '🏠', label: '집에 있어요', eta: false, audience: 'both', group: '장소' },
   { key: 'sleep', emoji: '😴', label: '자는 중', eta: false, audience: 'both', group: '쉬기' },
   // 어른
-  { key: 'work', emoji: '💼', label: '회사에서 일하는 중', eta: false, audience: 'parent', group: '장소' },
+  { key: 'work', emoji: '💼', label: '일하는 중', eta: false, audience: 'parent', group: '장소' },
   { key: 'going_home', emoji: '🚗', label: '집에 가는 중', eta: true, audience: 'parent', group: '이동' },
   { key: 'pickup', emoji: '🧒', label: '데리러 가는 중', eta: true, audience: 'parent', group: '이동' },
   { key: 'shopping', emoji: '🛒', label: '장 보는 중', eta: true, audience: 'parent', group: '이동' },

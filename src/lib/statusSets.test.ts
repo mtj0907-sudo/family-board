@@ -16,11 +16,11 @@ describe('사람마다 다른 상태 목록', () => {
     expect(labels(l)).toContain('학원 가는 중');
     expect(labels(l)).not.toContain('장 보는 중');
     expect(labels(l)).not.toContain('데리러 가는 중');
-    expect(labels(l)).not.toContain('회사에서 일하는 중');
+    expect(labels(l)).not.toContain('일하는 중');
   });
   it('어른 기본 목록에는 집안일이 들어 있고 아이 전용 항목은 없다', () => {
     const l = statusesFor(parent, {});
-    expect(labels(l)).toEqual(expect.arrayContaining(['청소 중', '정리하는 중', '요리하는 중', '빨래 중', '회사에서 일하는 중', '장 보는 중']));
+    expect(labels(l)).toEqual(expect.arrayContaining(['청소 중', '정리하는 중', '요리하는 중', '빨래 중', '일하는 중', '장 보는 중']));
     expect(labels(l)).not.toContain('학교에 있어요');
     expect(labels(l)).not.toContain('놀이터에서 놀아요');
   });

@@ -70,7 +70,7 @@ describe('whenHome (엄마 언제 와요?)', () => {
 
   it('회사에 있고 근무 시간이 있으면 끝나는 시각과 집 도착 예상 (엄마 30분)', () => {
     const a = whenHome({ name: '엄마', now, st: st('work'), workCode: 'M12', workTimes: { M12: '12:00~21:00' }, commuteMin: 30 });
-    expect(a.headline).toBe('엄마는 회사에서 일하는 중');
+    expect(a.headline).toBe('엄마는 일하는 중');
     expect(a.details).toEqual(['오늘 근무는 오후 9:00에 끝나요', '집에는 약 오후 9:30쯤 도착해요']);
     expect(a.canAsk).toBe(true);
   });
