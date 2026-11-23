@@ -134,7 +134,7 @@ function useActor(canWalk: boolean, calm: boolean) {
     const loop = () => {
       if (stop) return;
       if (!busy.current) {
-        const to = 18 + Math.random() * 64;
+        const to = 26 + Math.random() * 48;
         const ms = Math.abs(to - xr.current) * (calm ? 110 : 62);
         moveTo(to, ms);
         setAnim('walk');
@@ -215,6 +215,7 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
   const [say, setSay] = useState('');
   const [fx, setFx] = useState<Fx[]>([]);
   const [games, setGames] = useState(false);
+  const [box, setBox] = useState(false);
   const [claiming, setClaiming] = useState<string[]>([]);
   const pushed = useRef<Record<string, number>>({});
   const taps = useRef({ n: 0, t: 0 });
@@ -285,97 +286,140 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
     show(`간식 ${n}개를 받았어요! 🍪`, ['🍪', '🎁'], 1800);
   }
 
-  const bar = (label: string, v: number, cls: string) => (
-    <div className={`pet-meter ${cls}`} title={`${label} ${v}`}>
-      <span>{label}</span>
-      <i>
-        <b style={{ width: `${v}%` }} />
-      </i>
+  const ring = (emoji: string, v: number, cls: string, label: string) => (
+    <div className={`pet-ring ${cls} ${v < 25 ? 'low' : ''}`} style={{ ['--v' as string]: v }} title={`${label} ${v}`} aria-label={`${label} ${v}`}>
+      <span aria-hidden>{emoji}</span>
     </div>
   );
+  const ready = rewards.filter((r) => r.state === 'ready' && !claiming.includes(r.key)).length;
+  const need = stage === 'egg' ? '🥚' : night ? '💤' : stats.belly < 20 ? '🍚' : stats.clean < 25 ? '🫧' : stats.energy < 20 ? '💤' : mood === 'sad' ? '💧' : mood === 'happy' ? '💗' : '🎵';
+  const main: { key: ActionKey; label: string }[] = [
+    { key: 'feed', label: '밥' },
+    { key: 'snack', label: '간식' },
+    { key: 'wash', label: '목욕' },
+    { key: 'play', label: '놀이' },
+    { key: 'sleep', label: '잠' },
+  ];
+  const emojiOf = (k: ActionKey) => ACTIONS.find((x) => x.key === k)!.emoji;
 
   return (
     <div className="pet-panel">
       {party && <div className="pet-party" role="status">{party}</div>}
-      <div className="pet-head">
-        <b>{pet.name}</b>
-        <span className="sub">
-          {stageLabel(pet.species, stage)} · {dayNumber(pet.adoptedAt, today)}일째
-        </span>
-      </div>
-
-      <div className={`pet-stage ${night ? 'night' : ''}`} onClick={poke} role="button" aria-label={`${pet.name}를 톡톡`} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && poke()}>
-        {night && <span className="pet-moon" aria-hidden>🌙</span>}
-        {mood === 'sad' && stage !== 'egg' && <span className="pet-cloud" aria-hidden>💧</span>}
-        <div className="pet-ground" aria-hidden />
-        <div className="pet-actor" style={{ left: `${actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size }}>
-          <div className="pet-shadow" />
-          <div className={`pet-body a-${shownAnim} stage-${stage} mood-${mood}`} style={{ ['--dir' as string]: actor.dir }}>
-            <img className="pet-pic" src={`${BASE}${art.src}`} alt="" draggable={false} />
+      <div className={`pet-room ${night ? 'night' : ''}`}>
+        <div className="room-wall" aria-hidden>
+          <div className="room-window">
+            <i /><i /><i /><i />
+            {night && <span className="room-moon">🌙</span>}
           </div>
-          {fx.map((f) => (
-            <span key={f.id} className="pet-fx" style={{ ['--dx' as string]: `${f.dx}px` }} aria-hidden>
-              {f.e}
-            </span>
-          ))}
+          <span className="room-plant">🪴</span>
         </div>
-      </div>
+        <div className="room-floor" aria-hidden />
+        <div className="room-rug" aria-hidden />
 
-      <div className={`pet-bubble mood-${mood}`} aria-live="polite">
-        {say || idleText}
-      </div>
-
-      <div className="pet-grow">
-        <div className="pet-xp-bar" aria-label="성장">
-          <i style={{ width: `${Math.round(prog.ratio * 100)}%` }} />
-        </div>
-        <span className="sub">
-          {prog.toNext === null ? '다 자랐어요! 계속 사랑해 주세요' : `다음 단계까지 ${prog.toNext}`} · 오늘 자란 만큼 {todayGrowth(day)}/{DAY_GROWTH}
-        </span>
-      </div>
-
-      {stage !== 'egg' && (
-        <div className="pet-meters">
-          {bar('배부름', stats.belly, 'belly')}
-          {bar('기운', stats.energy, 'energy')}
-          {bar('깨끗함', stats.clean, 'clean')}
-        </div>
-      )}
-
-      {isMe && (
-        <>
-          <div className="pet-care">
-            {ACTIONS.map((a) => (
-              <button key={a.key} className="care ready" disabled={stage === 'egg'} onClick={() => act(a.key)}>
-                <span className="care-emoji" aria-hidden>
-                  {a.emoji}
-                </span>
-                <span>{a.label}</span>
-                {a.key === 'snack' && <small>🍪 {snacks}개</small>}
-              </button>
-            ))}
-            <button className="care game" onClick={() => setGames(true)}>
-              <span className="care-emoji" aria-hidden>
-                🎮
+        <div className="pet-hud">
+          <div className="hud-lv">
+            <b>{stage === 'egg' ? '🥚' : speciesOf(pet.species)?.emoji}</b>
+            <div>
+              <span className="hud-name">
+                {pet.name} <small>{dayNumber(pet.adoptedAt, today)}일째</small>
               </span>
-              <span>게임하기</span>
-              <small>간식 얻기</small>
+              <div className="hud-bar" title={stageLabel(pet.species, stage)}>
+                <i style={{ width: `${Math.round(prog.ratio * 100)}%` }} />
+              </div>
+            </div>
+          </div>
+          <div className="hud-snack" title="간식">
+            <span aria-hidden>🍪</span>
+            <b>{snacks}</b>
+          </div>
+        </div>
+        <div className="hud-sub">{stageLabel(pet.species, stage)} · 오늘 자란 만큼 {todayGrowth(day)}/{DAY_GROWTH}</div>
+
+        <div className="pet-rings">
+          {stage !== 'egg' && (
+            <>
+              {ring('🍚', stats.belly, 'belly', '배부름')}
+              {ring('⚡', stats.energy, 'energy', '기운')}
+              {ring('🫧', stats.clean, 'clean', '깨끗함')}
+            </>
+          )}
+        </div>
+        {isMe && (
+          <div className="pet-side">
+            <button className="rbtn small" onClick={() => setGames(true)} aria-label="게임하기">
+              <span>🎮</span>
+              <em>게임</em>
+            </button>
+            <button className={`rbtn small ${ready > 0 ? 'alert' : ''}`} onClick={() => setBox((v) => !v)} aria-label="보상 상자">
+              <span>🎁</span>
+              <em>보상</em>
+              {ready > 0 && <u>{ready}</u>}
             </button>
           </div>
+        )}
 
-          <div className="pet-rewards">
-            {rewards.map((r) => (
-              <button key={r.key} className={`rw ${r.state}`} disabled={r.state !== 'ready' || claiming.includes(r.key)} onClick={() => claim(r.key, r.snacks)}>
-                <span aria-hidden>{r.state === 'done' ? '✅' : r.state === 'ready' ? '🎁' : '🔒'}</span>
-                <b>{r.label}</b>
-                <small>{r.state === 'done' ? '받았어요' : r.state === 'ready' ? `간식 ${r.snacks}개 받기` : r.note}</small>
+        <div className="pet-field" onClick={poke} role="button" aria-label={`${pet.name}를 톡톡`} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && poke()}>
+          {mood === 'sad' && stage !== 'egg' && <span className="pet-cloud" aria-hidden>💧</span>}
+          <div className="pet-actor" style={{ left: `${actor.x}%`, transitionDuration: `${actor.dur}ms`, ['--ps' as string]: size }}>
+            <div className={`pet-think ${say ? 'talk' : ''}`} aria-live="polite" title={idleText}>
+              {say ? <span>{say}</span> : <b>{need}</b>}
+            </div>
+            <div className="pet-shadow" />
+            <div className={`pet-body a-${shownAnim} stage-${stage} mood-${mood}`} style={{ ['--dir' as string]: actor.dir }}>
+              <img className="pet-pic" src={`${BASE}${art.src}`} alt="" draggable={false} />
+            </div>
+            {fx.map((f) => (
+              <span key={f.id} className="pet-fx" style={{ ['--dx' as string]: `${f.dx}px` }} aria-hidden>
+                {f.e}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {isMe && stage !== 'egg' && (
+          <div className="pet-toys">
+            <button className="rbtn mini" onClick={() => act('hug')} aria-label="안아주기">
+              <span>{emojiOf('hug')}</span>
+            </button>
+            <button className="rbtn mini" onClick={() => act('dance')} aria-label="춤추기">
+              <span>{emojiOf('dance')}</span>
+            </button>
+          </div>
+        )}
+        {isMe && (
+          <div className="pet-dock">
+            {main.map((m) => (
+              <button key={m.key} className="rbtn" disabled={stage === 'egg'} onClick={() => act(m.key)} aria-label={ACTIONS.find((x) => x.key === m.key)!.label}>
+                <span>{emojiOf(m.key)}</span>
+                <em>{m.key === 'snack' ? `${m.label} ${snacks}` : m.label}</em>
               </button>
             ))}
           </div>
-        </>
-      )}
-      {!isMe && <div className="sub pet-foot">{kid.name}의 펫을 구경하는 중이에요</div>}
-      {stage === 'egg' && isMe && <div className="sub pet-foot">알을 톡톡 눌러 보세요. 오늘 하루 돌봐 주면 깨어나요</div>}
+        )}
+        {!isMe && <div className="pet-viewing">{kid.name}의 펫을 구경하는 중이에요</div>}
+        {stage === 'egg' && isMe && <div className="pet-viewing">알을 톡톡 눌러 보세요. 오늘 하루 돌봐 주면 깨어나요</div>}
+
+        {box && isMe && (
+          <div className="pet-box" role="dialog" aria-label="보상 상자">
+            <div className="pet-box-top">
+              <b>🎁 오늘의 보상 상자</b>
+              <button className="pg-x" onClick={() => setBox(false)} aria-label="닫기">
+                ✕
+              </button>
+            </div>
+            <div className="sub">진짜 할 일을 하면 간식을 받아요</div>
+            <div className="pet-rewards">
+              {rewards.map((r) => (
+                <button key={r.key} className={`rw ${r.state}`} disabled={r.state !== 'ready' || claiming.includes(r.key)} onClick={() => claim(r.key, r.snacks)}>
+                  <span aria-hidden>{r.state === 'done' ? '✅' : r.state === 'ready' ? '🎁' : '🔒'}</span>
+                  <b>{r.label}</b>
+                  <small>{r.state === 'done' ? '받았어요' : r.state === 'ready' ? `간식 ${r.snacks}개 받기` : r.note}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {games && (
         <PetGames
