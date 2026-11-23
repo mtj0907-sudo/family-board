@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { StatusScene } from '../components/StatusScene';
 import { lookOf } from '../lib/characters';
+import { presenceOf } from '../lib/presence';
 import { Clock, type ClockMark } from '../components/Clock';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
@@ -384,7 +385,13 @@ export function BoardTile({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
-    <article className={onTalk ? 'btile talkable' : 'btile'} onClick={onTalk}>
+    <article className={`btile${onTalk ? ' talkable' : ''}${m.role === 'parent' && st ? ' has-scene' : ''}`} onClick={onTalk}>
+      {m.role === 'parent' && st && (
+        <div className={`btile-bg pres-${presenceOf(st)}`} aria-hidden>
+          <StatusScene statusKey={st.key} look={lookOf(m)} accent={toneOf(m.id).fg} />
+          <div className="btile-fade" />
+        </div>
+      )}
       <header className="btile-head">
         <Avatar member={m} size={kid ? 68 : 56} />
         <div className="btile-who">
@@ -469,12 +476,6 @@ export function BoardTile({
             <EventRow key={ev.id} ev={ev} forMember={m} />
           ))}
           {events.length > 1 && <div className="sub">외 {events.length - 1}건</div>}
-        </div>
-      )}
-
-      {m.role === 'parent' && st && (
-        <div className="btile-scene">
-          <StatusScene statusKey={st.key} look={lookOf(m)} accent={toneOf(m.id).fg} />
         </div>
       )}
 
