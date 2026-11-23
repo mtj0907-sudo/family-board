@@ -790,7 +790,17 @@ button.mcard:active { transform: scale(.985); background: #fafbfa; }
 
 /* ───────── 상태 그림 (어른) ───────── */
 .status-scene { display: block; }
-.btile > .btile-scene { flex: 1 1 0; min-height: 0; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-.btile-scene .status-scene { height: 100%; width: auto; max-width: 100%; }
 .dt-scene { display: flex; justify-content: center; background: var(--bg); border-radius: 20px; padding: 6px 0 2px; }
 .dt-scene .status-scene { height: 150px; width: auto; }
+
+/* 엄마·아빠 카드: 장면 그림이 카드를 꽉 채우고, 글씨가 있는 위쪽은 하얗게 흐려져서 읽기 좋게 */
+.btile.has-scene { position: relative; }
+.btile.has-scene > *:not(.btile-bg) { position: relative; z-index: 1; }
+.btile-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: inherit; background: linear-gradient(180deg, #fff 0%, var(--scene-tint, #eef1ef) 100%); }
+.btile-bg.pres-home { --scene-tint: #dcf0e4; }
+.btile-bg.pres-away { --scene-tint: #f8e9c0; }
+.btile-bg.pres-sleep { --scene-tint: #dfe6f4; }
+.btile-bg.pres-none { --scene-tint: #eef1ef; }
+.btile-bg .status-scene { position: absolute; right: -10%; bottom: -8%; height: 88%; width: auto; }
+.btile-fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(255, 255, 255, .82) 30%, rgba(255, 255, 255, 0) 64%), linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 60%); }
+.btile.has-scene .talkhint { background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
