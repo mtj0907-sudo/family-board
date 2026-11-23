@@ -792,6 +792,7 @@ button.mcard:active { transform: scale(.985); background: #fafbfa; }
 .status-scene { display: block; }
 .dt-scene { display: flex; justify-content: center; background: var(--bg); border-radius: 20px; padding: 6px 0 2px; }
 .dt-scene .status-scene { height: 150px; width: auto; }
+.dt-scene .status-scene.clay { height: 190px; }
 
 /* 엄마·아빠 카드: 장면 그림이 카드를 꽉 채우고, 글씨가 있는 위쪽은 하얗게 흐려져서 읽기 좋게 */
 .btile.has-scene { position: relative; }
@@ -802,5 +803,7 @@ button.mcard:active { transform: scale(.985); background: #fafbfa; }
 .btile-bg.pres-sleep { --scene-tint: #dfe6f4; }
 .btile-bg.pres-none { --scene-tint: #eef1ef; }
 .btile-bg .status-scene { position: absolute; right: -10%; bottom: -8%; height: 88%; width: auto; }
-.btile-fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(255, 255, 255, .82) 30%, rgba(255, 255, 255, 0) 64%), linear-gradient(90deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 60%); }
+.btile-bg .status-scene.clay { left: 50%; transform: translateX(-50%); right: auto; bottom: -6%; height: 80%; width: auto; max-width: none; filter: drop-shadow(0 8px 12px rgba(70, 50, 30, .14)); }
+img.status-scene { display: block; user-select: none; -webkit-user-drag: none; }
+.btile-fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .94) 0%, rgba(255, 255, 255, .8) 22%, rgba(255, 255, 255, 0) 46%); }
 .btile.has-scene .talkhint { background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
