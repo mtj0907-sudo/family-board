@@ -998,3 +998,19 @@ button.mcard.has-scene { position: relative; overflow: hidden; background: linea
 .pet-dev { margin-top: 12px; padding: 12px; border-radius: 16px; background: #fff8e1; border: 1px dashed #d9a400; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
 .pet-dev > div { display: flex; flex-wrap: wrap; gap: 6px; }
 .pet-dev button { padding: 8px 12px; border-radius: 10px; border: 1px solid #d9a400; background: #fff; font-weight: 700; font-size: 13px; }
+.pg-time { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.pg-time i { display: block; height: 100%; background: #4aa8d8; transition: width 1s linear; }
+.pg-time i.low { background: #e5483f; }
+.pg-chess { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.pg-chess .pg-q { font-size: 17px; padding: 4px; }
+.pg-board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; max-width: 360px; aspect-ratio: 1; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 3px #7a5230; }
+.pg-board .cell { border: 0; padding: 0; display: grid; place-items: center; font-size: 26px; line-height: 1; position: relative; }
+.pg-board .cell.lt { background: #f0d9b5; }
+.pg-board .cell.dk { background: #b58863; }
+.pg-board .cell.reach::after { content: ''; position: absolute; width: 36%; height: 36%; border-radius: 50%; background: rgba(46, 157, 98, .55); }
+.pg-board .cell.right { outline: 3px solid #2e9d62; outline-offset: -3px; }
+.pg-board .cell.wrong { outline: 3px solid #d6453d; outline-offset: -3px; }
+.pg-board .cell b { position: relative; z-index: 1; font-weight: 400; }
+.pg-board .mine { color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 3px #000; font-size: 28px; }
+.pg-board .foe { color: #1d1d1d; }
+.pg-board .ally { color: #fff; text-shadow: 0 0 2px #000; }
