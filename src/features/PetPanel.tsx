@@ -471,6 +471,9 @@ export function PetPanel({ kid, actAsKid = false }: { kid: Member; actAsKid?: bo
       {games && (
         <PetGames
           level={isSchool ? 'school' : 'kinder'}
+          species={pet.species}
+          petName={pet.name}
+          snacks={snacks}
           onEarn={(n) => {
             void earnSnacks(code, kid.id, n);
             show(`간식 ${n}개를 얻었어요! 🍪`, ['🍪'], 1800);
