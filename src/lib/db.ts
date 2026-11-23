@@ -154,5 +154,7 @@ export const earnSnacks = (code: string, kidId: string, n: number) =>
 export const claimReward = (code: string, kidId: string, date: string, key: RewardKey, snacks: number) =>
   setDoc(doc(need(), path(code, 'pets', kidId)), { snacks: increment(snacks), days: { [date]: { claimed: { [key]: true } } } }, { merge: true });
 
+export const deletePet = (code: string, kidId: string) => deleteDoc(doc(need(), path(code, 'pets', kidId)));
+
 export const renamePet = (code: string, kidId: string, name: string) =>
   setDoc(doc(need(), path(code, 'pets', kidId)), { name }, { merge: true });

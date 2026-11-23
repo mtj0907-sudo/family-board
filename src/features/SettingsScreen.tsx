@@ -9,7 +9,7 @@ import { PushSettings } from './PushSettings';
 import { QrCode } from '../components/QrCode';
 import { useFamily } from '../FamilyContext';
 import { useDocData } from '../hooks/useFirestore';
-import { deleteBoardPhoto, path, saveBoardPhoto, saveSettings } from '../lib/db';
+import { deleteBoardPhoto, deletePet, path, saveBoardPhoto, saveSettings } from '../lib/db';
 import { buildJoinLink } from '../lib/family';
 import { hashPin, isValidPin } from '../lib/pin';
 import type { CustomStatus, FamilySettings, Member, RoutineItem } from '../lib/types';
@@ -19,6 +19,10 @@ import { loadPhoto, renderFit } from '../lib/photo';
 import { TIMED_CODES } from '../lib/work';
 import { PLACE_CHOICES } from '../lib/specialDay';
 import { ShortcutHelper } from './ShortcutHelper';
+import { PetSheet } from './PetSheet';
+import type { Member as PetMember } from '../lib/types';
+
+const DEMO_PET: PetMember = { id: 'demo-pet', name: '체험', emoji: '🐾', role: 'child' };
 
 export function SettingsScreen() {
   return (
@@ -31,6 +35,7 @@ export function SettingsScreen() {
 function SettingsBody() {
   const { code, settings, leave } = useFamily();
   const [members, setMembers] = useState<Member[]>(settings.members);
+  const [petDemo, setPetDemo] = useState(false);
   const [items, setItems] = useState<RoutineItem[]>(settings.routineItems);
   const [owner, setOwner] = useState(settings.workOwnerId ?? '');
   const [times, setTimes] = useState<Record<string, string>>(settings.workTimes ?? {});
@@ -485,6 +490,25 @@ function SettingsBody() {
         저장하기
       </button>
       {msg && <div className="toast">{msg}</div>}
+
+      <div className="card">
+        <h2>펫 체험해 보기</h2>
+        <p className="sub">승우·아림이 펫과 따로 있는 체험용 펫이에요. 마음껏 해 보고, 지우면 처음부터 다시 할 수 있어요.</p>
+        <div className="row">
+          <button className="btn primary" onClick={() => setPetDemo(true)}>
+            체험 펫 열기
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              if (window.confirm('체험 펫을 지우고 처음부터 할까요? (아이들 펫은 그대로예요)')) void deletePet(code, DEMO_PET.id);
+            }}
+          >
+            체험 펫 지우기
+          </button>
+        </div>
+      </div>
+      {petDemo && <PetSheet kid={DEMO_PET} onClose={() => setPetDemo(false)} />}
 
       <div className="card">
         <h2>가족 링크</h2>
