@@ -1,5 +1,7 @@
 import { Check, MapPinned, Pencil } from 'lucide-react';
-import { Avatar } from '../components/Avatar';
+import { Avatar, toneOf } from '../components/Avatar';
+import { StatusScene } from '../components/StatusScene';
+import { lookOf } from '../lib/characters';
 import { Portal } from '../components/Portal';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
@@ -74,6 +76,12 @@ export function MemberDetail({
             )}
           </div>
         </div>
+
+        {m.role === 'parent' && st && (
+          <div className="dt-scene">
+            <StatusScene statusKey={st.key} look={lookOf(m)} accent={toneOf(m.id).fg} />
+          </div>
+        )}
 
         {eta && <EtaTrack member={m} eta={eta} now={now} />}
 

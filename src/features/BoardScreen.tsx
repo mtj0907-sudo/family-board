@@ -1,6 +1,8 @@
 import { Backpack, Check, CloudSun, ListChecks, PartyPopper, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Avatar } from '../components/Avatar';
+import { Avatar, toneOf } from '../components/Avatar';
+import { StatusScene } from '../components/StatusScene';
+import { lookOf } from '../lib/characters';
 import { Clock, type ClockMark } from '../components/Clock';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
@@ -467,6 +469,12 @@ export function BoardTile({
             <EventRow key={ev.id} ev={ev} forMember={m} />
           ))}
           {events.length > 1 && <div className="sub">외 {events.length - 1}건</div>}
+        </div>
+      )}
+
+      {m.role === 'parent' && st && (
+        <div className="btile-scene">
+          <StatusScene statusKey={st.key} look={lookOf(m)} accent={toneOf(m.id).fg} />
         </div>
       )}
 
