@@ -1,4 +1,4 @@
-import { Backpack, Check, CloudSun, ListChecks, PartyPopper, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
+import { Backpack, Check, CloudSun, ListChecks, PartyPopper, PawPrint, Maximize2, MessageCircleHeart, MonitorPlay, Pencil, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { StatusScene } from '../components/StatusScene';
@@ -39,6 +39,7 @@ import type { Member, MessageDoc, RoutineDoc, StatusDoc, WithId } from '../lib/t
 import { estimateEta } from '../lib/whenHome';
 import { bagProgress } from '../lib/bag';
 import { MemberSheet, TalkSheet, YoutubeSheet, type SheetTab } from './BoardSheets';
+import { PetSheet } from './PetSheet';
 
 /**
  * 보드는 높이 820px 기준으로 디자인하고, 눈에 보이는 화면 크기에 맞춰 통째로 확대/축소합니다.
@@ -87,6 +88,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
   const photo = useDocData<{ data: string }>(path(code, 'media', 'board'));
   const [sheet, setSheet] = useState<{ member: Member; tab: SheetTab } | null>(null);
   const [ytOpen, setYtOpen] = useState(false);
+  const [petFor, setPetFor] = useState<Member | null>(null);
   const bag = useBag(now);
   const [hiddenIds, setHiddenIds] = useState(loadHidden);
   const hiddenSet = new Set(hiddenIds);
@@ -295,6 +297,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
                 ? {
                     onToggle: (key, value) => void setRoutineDone(code, today, m.id, key, value),
                     onTodo: () => setSheet({ member: m, tab: 'todo' }),
+                    onPet: () => setPetFor(m),
                   }
                 : undefined
             }
@@ -321,6 +324,7 @@ export function BoardScreen({ onExit }: { onExit: () => void }) {
       )}
       {toast && <div className="board-toast">{toast}</div>}
       {sheet && <MemberSheet member={sheet.member} initial={sheet.tab} now={now} onClose={() => setSheet(null)} onFlash={flash} />}
+      {petFor && <PetSheet kid={petFor} onClose={() => setPetFor(null)} />}
       {ytOpen && (
         <YoutubeSheet pending={pendingYoutube} members={members} answeredBy={members.find((m) => m.role === 'parent')?.id ?? ''} onClose={() => setYtOpen(false)} onFlash={flash} />
       )}
@@ -376,6 +380,7 @@ export function BoardTile({
   kid?: {
     onToggle: (itemKey: string, value: boolean) => void;
     onTodo: () => void;
+    onPet: () => void;
   };
 }) {
   const { settings } = useFamily();
@@ -443,6 +448,12 @@ export function BoardTile({
             <button className={bagStat.complete ? 'bagchip on' : 'bagchip'} onClick={bagStat.onOpen} aria-label="가방 챙기기">
               {bagStat.complete ? <Check size={18} strokeWidth={2.25} aria-hidden /> : <Backpack size={18} strokeWidth={1.75} aria-hidden />}
               {bagStat.skip ? '쉬는 날' : `${bagStat.done}/${bagStat.total}`}
+            </button>
+          )}
+          {kid && (
+            <button className="bagchip" onClick={kid.onPet} aria-label="펫 키우기">
+              <PawPrint size={18} strokeWidth={1.75} aria-hidden />
+              펫
             </button>
           )}
           {kid && (

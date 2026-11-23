@@ -1,5 +1,9 @@
 import { Check, MapPinned, Pencil } from 'lucide-react';
 import { Avatar, toneOf } from '../components/Avatar';
+import { PetImage } from './PetPanel';
+import { careCount, moodOf, stageLabel, stageProgress, type PetDoc } from '../lib/pet';
+import { useDocData } from '../hooks/useFirestore';
+import { dateKey } from '../lib/time';
 import { StatusScene } from '../components/StatusScene';
 import { hasClayScene, sceneLookOf } from '../lib/characters';
 import { Portal } from '../components/Portal';
@@ -48,6 +52,7 @@ export function MemberDetail({
 }) {
   const { code, settings, isParent, members } = useFamily();
   const msgs = useColData<MessageDoc>(path(code, 'messages'), { orderField: 'at', limitN: 40 });
+  const pet = useDocData<PetDoc>(m.role === 'child' ? path(code, 'pets', m.id) : null);
   const def = st ? statusInfo(st) : undefined;
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
   const done = routine?.done?.[m.id];
@@ -106,6 +111,25 @@ export function MemberDetail({
               <div className={bag.complete ? 'dt-bag ok' : 'dt-bag'}>
                 {bag.skip ? '내일은 학교 안 가요' : bag.complete ? '가방을 다 챙겼어요' : `가방 챙기기 ${bag.done}/${bag.total}`}
               </div>
+            )}
+          </div>
+        )}
+
+        {m.role === 'child' && (
+          <div className="dt-sec">
+            <div className="dt-title">펫</div>
+            {pet ? (
+              <div className="dt-pet">
+                <PetImage pet={pet} className="dt-pet-img" />
+                <div>
+                  <b>{pet.name}</b> <span className="sub">{stageLabel(pet.species, stageProgress(pet.xp).stage)}</span>
+                  <div className="sub">
+                    기분 {stageProgress(pet.xp).stage === 'egg' ? '알 속에서 자는 중' : { happy: '좋음 😊', ok: '보통 🙂', sad: '시무룩 🥺' }[moodOf(pet, dateKey(now))]} · 오늘 돌봄 {careCount(pet.days?.[dateKey(now)])}번
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="sub">아직 펫을 고르지 않았어요</div>
             )}
           </div>
         )}

@@ -1,4 +1,4 @@
-import { ChevronLeft, Ellipsis, House, ListChecks, MapPin, MessageCircle, Monitor, type LucideIcon } from 'lucide-react';
+import { ChevronLeft, Ellipsis, House, ListChecks, MapPin, MessageCircle, Monitor, PawPrint, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from './components/Avatar';
 import { useFamily } from './FamilyContext';
@@ -9,19 +9,21 @@ import { TodayScreen } from './features/TodayScreen';
 import { StatusScreen } from './features/StatusScreen';
 import { MessageScreen } from './features/MessageScreen';
 import { RoutineScreen } from './features/RoutineScreen';
+import { PetScreen } from './features/PetPanel';
 import { ComingSoon, HelpScreen, MoreScreen, type SubPage } from './features/MoreScreen';
 import { SettingsScreen } from './features/SettingsScreen';
 import { ScheduleScreen } from './features/ScheduleScreen';
 import { CalendarScreen } from './features/CalendarScreen';
 import { WorkScreen } from './features/WorkScreen';
 
-export type Tab = 'today' | 'status' | 'message' | 'routine' | 'more';
+export type Tab = 'today' | 'status' | 'message' | 'routine' | 'pet' | 'more';
 
 const TABS: { key: Tab; Icon: LucideIcon; label: string }[] = [
   { key: 'today', Icon: House, label: '오늘' },
   { key: 'status', Icon: MapPin, label: '상태' },
   { key: 'message', Icon: MessageCircle, label: '한마디' },
   { key: 'routine', Icon: ListChecks, label: '루틴' },
+  { key: 'pet', Icon: PawPrint, label: '펫' },
   { key: 'more', Icon: Ellipsis, label: '더보기' },
 ];
 
@@ -35,7 +37,7 @@ const SUB_TITLES: Record<SubPage, string> = {
 };
 
 export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onBoard?: () => void }) {
-  const { me } = useFamily();
+  const { me, isParent } = useFamily();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sub, setSub] = useState<SubPage | null>(null);
   const messageDot = useMessageDot(tab === 'message');
@@ -68,6 +70,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
   else if (tab === 'status') body = <StatusScreen key={statusFor ?? 'me'} initialTarget={statusFor} />;
   else if (tab === 'message') body = <MessageScreen />;
   else if (tab === 'routine') body = <RoutineScreen />;
+  else if (tab === 'pet') body = <PetScreen />;
   else body = <MoreScreen onOpen={(p) => (p === 'board' && onBoard ? onBoard() : setSub(p))} />;
 
   const title = TABS.find((t) => t.key === tab)!.label;
@@ -105,7 +108,7 @@ export function Shell({ initialTab = 'today', onBoard }: { initialTab?: Tab; onB
       </header>
       <main>{body}</main>
       <nav className="tabbar" aria-label="메뉴">
-        {TABS.map(({ key, Icon, label }) => (
+        {TABS.filter((t) => t.key !== 'pet' || !isParent).map(({ key, Icon, label }) => (
           <button key={key} className={tab === key ? 'tab on' : 'tab'} onClick={() => go(key)} aria-current={tab === key ? 'page' : undefined}>
             <Icon size={24} strokeWidth={tab === key ? 2 : 1.75} aria-hidden />
             <span>{label}</span>
