@@ -14,24 +14,24 @@ describe('펫 퀴즈', () => {
     it(`${level}: 다섯 문제, 보기 셋, 정답이 보기 안에 있다`, () => {
       for (let seed = 1; seed <= 60; seed++) {
         const qs = makeQuiz(level, seeded(seed));
-        expect(qs).toHaveLength(5);
+        expect(qs).toHaveLength(level === 'school' ? 6 : 5);
         for (const q of qs) {
           expect(q.choices.length).toBeGreaterThanOrEqual(2);
           expect(new Set(q.choices).size).toBe(q.choices.length);
           expect(q.answer).toBeGreaterThanOrEqual(0);
           expect(q.answer).toBeLessThan(q.choices.length);
         }
-        expect(new Set(qs.map((q) => q.q)).size).toBe(5);
+        expect(new Set(qs.map((q) => q.q)).size).toBe(qs.length);
       }
     });
   }
   it('덧셈·곱셈 문제의 정답이 맞다', () => {
     for (let seed = 1; seed <= 80; seed++) {
       for (const q of makeQuiz('school', seeded(seed))) {
-        const m = q.q.match(/^(\d+) ([+×−]) (\d+) = \?$/);
+        const m = q.q.match(/^(\d+) ([+×−÷]) (\d+) = \?$/);
         if (!m) continue;
         const [a, b] = [Number(m[1]), Number(m[3])];
-        const v = m[2] === '+' ? a + b : m[2] === '×' ? a * b : a - b;
+        const v = m[2] === '+' ? a + b : m[2] === '×' ? a * b : m[2] === '÷' ? a / b : a - b;
         expect(q.choices[q.answer]).toBe(String(v));
       }
     }
@@ -43,6 +43,9 @@ describe('펫 퀴즈', () => {
     expect(quizSnacks(5, 5)).toBe(5);
     expect(memorySnacks(6)).toBe(3);
     expect(memorySnacks(12)).toBe(2);
+    expect(memorySnacks(12, 6)).toBe(3);
+    expect(memorySnacks(19, 6)).toBe(1);
+    expect(catchSnacks(10, 5)).toBe(2);
     expect(memorySnacks(30)).toBe(1);
     expect(catchSnacks(3)).toBe(0);
     expect(catchSnacks(9)).toBe(2);
