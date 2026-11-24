@@ -5,7 +5,7 @@ import { careCount, growthOf, moodOf, stageLabel, stageProgress, type PetDoc } f
 import { useDocData } from '../hooks/useFirestore';
 import { dateKey } from '../lib/time';
 import { StatusScene } from '../components/StatusScene';
-import { hasClayScene, sceneLookOf } from '../lib/characters';
+import { hasClayScene, sceneKeyOf, sceneLookOf } from '../lib/characters';
 import { Portal } from '../components/Portal';
 import { EtaTrack } from '../components/EtaTrack';
 import { EventRow } from '../components/EventRow';
@@ -82,9 +82,9 @@ export function MemberDetail({
           </div>
         </div>
 
-        {st && (m.role === 'parent' || hasClayScene(st.key, sceneLookOf(m))) && (
+        {st && (m.role === 'parent' || hasClayScene(sceneKeyOf(st), sceneLookOf(m))) && (
           <div className="dt-scene">
-            <StatusScene statusKey={st.key} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
+            <StatusScene statusKey={sceneKeyOf(st)} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
           </div>
         )}
 

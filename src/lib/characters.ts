@@ -24,7 +24,7 @@ export function lookOf(m: Pick<Member, 'name' | 'role' | 'look'>): Look {
 export const SCENE_KEYS = ['home', 'work', 'going_home', 'pickup', 'shopping', 'errand', 'hospital', 'cleaning', 'organizing', 'laundry', 'cooking', 'caring', 'resting', 'exercise', 'sleep'] as const;
 
 /** 아이 상태 그림이 있는 상태들 */
-export const KID_SCENE_KEYS = ['home', 'sleep', 'school', 'kid_going_home', 'academy', 'at_academy', 'playground', 'friend', 'study', 'gaming', 'eating', 'washing', 'tv', 'reading'] as const;
+export const KID_SCENE_KEYS = ['home', 'sleep', 'school', 'kid_going_home', 'academy', 'at_academy', 'playground', 'friend', 'study', 'gaming', 'eating', 'washing', 'tv', 'reading', 'grandparents'] as const;
 
 /** 이 상태와 모습에 3D 그림 파일이 있는지 */
 export function hasClayScene(statusKey: string, look: SceneLook): boolean {
@@ -35,3 +35,12 @@ export function hasClayScene(statusKey: string, look: SceneLook): boolean {
 
 /** 그림 파일 이름에 쓰는 상태 이름 (at_academy는 academy 그림) */
 export const sceneFile = (statusKey: string, look: SceneLook) => `${statusKey === 'at_academy' ? 'academy' : statusKey}-${look}`;
+
+/**
+ * 상태에 맞는 그림 이름. 직접 만든 장소 중 "할머니·할아버지·외가·친가"가 들어간 이름은
+ * 조부모님 댁 그림을 써요. 나머지는 상태 이름 그대로예요.
+ */
+export function sceneKeyOf(st: { key: string; label?: string }): string {
+  if (st.label && /할머니|할아버지|외할|친할|외갓집|친가|외가|조부모/.test(st.label)) return 'grandparents';
+  return st.key;
+}

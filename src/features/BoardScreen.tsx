@@ -2,7 +2,7 @@ import { Backpack, Check, CloudSun, ListChecks, PartyPopper, PawPrint, Maximize2
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, toneOf } from '../components/Avatar';
 import { StatusScene } from '../components/StatusScene';
-import { hasClayScene, sceneLookOf } from '../lib/characters';
+import { hasClayScene, sceneKeyOf, sceneLookOf } from '../lib/characters';
 import { presenceOf } from '../lib/presence';
 import { Clock, type ClockMark } from '../components/Clock';
 import { EtaTrack } from '../components/EtaTrack';
@@ -390,10 +390,10 @@ export function BoardTile({
   const eta = estimateEta(st, settings.commuteMinutes?.[m.id]);
 
   return (
-    <article className={`btile${onTalk ? ' talkable' : ''}${m.role === 'parent' && st ? ' has-scene' : ''}${m.role === 'child' && st && hasClayScene(st.key, sceneLookOf(m)) ? ' has-kidscene' : ''}`} onClick={onTalk}>
+    <article className={`btile${onTalk ? ' talkable' : ''}${m.role === 'parent' && st ? ' has-scene' : ''}${m.role === 'child' && st && hasClayScene(sceneKeyOf(st), sceneLookOf(m)) ? ' has-kidscene' : ''}`} onClick={onTalk}>
       {m.role === 'parent' && st && (
         <div className={`btile-bg pres-${presenceOf(st)}`} aria-hidden>
-          <StatusScene statusKey={st.key} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
+          <StatusScene statusKey={sceneKeyOf(st)} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
           <div className="btile-fade" />
         </div>
       )}
@@ -490,9 +490,9 @@ export function BoardTile({
         </div>
       )}
 
-      {m.role === 'child' && st && hasClayScene(st.key, sceneLookOf(m)) && (
+      {m.role === 'child' && st && hasClayScene(sceneKeyOf(st), sceneLookOf(m)) && (
         <div className="btile-kidscene" aria-hidden>
-          <StatusScene statusKey={st.key} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
+          <StatusScene statusKey={sceneKeyOf(st)} look={sceneLookOf(m)} accent={toneOf(m.id).fg} />
         </div>
       )}
 

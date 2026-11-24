@@ -46,6 +46,19 @@ describe('그림이 있는 상태', () => {
   });
   it('그림 파일 이름', () => {
     expect(sceneFile('going_home', 'long')).toBe('going_home-long');
-    expect(KID_SCENE_KEYS.length).toBe(14);
+    expect(KID_SCENE_KEYS.length).toBe(15);
+  });
+});
+
+import { sceneKeyOf } from './characters';
+describe('sceneKeyOf', () => {
+  it('할머니·할아버지가 들어간 장소는 조부모님 댁 그림', () => {
+    expect(sceneKeyOf({ key: 'custom_1', label: '할머니 할아버지 집' })).toBe('grandparents');
+    expect(sceneKeyOf({ key: 'custom_2', label: '외갓집' })).toBe('grandparents');
+  });
+  it('그 밖의 상태는 그대로', () => {
+    expect(sceneKeyOf({ key: 'home', label: '집' })).toBe('home');
+    expect(sceneKeyOf({ key: 'custom_3', label: '친구네' })).toBe('custom_3');
+    expect(sceneKeyOf({ key: 'school' })).toBe('school');
   });
 });
