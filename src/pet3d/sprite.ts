@@ -6,38 +6,41 @@ import type { Anim, PetMood } from '../lib/pet';
  * 머리는 끄덕이고 턱은 벌어지고, 다리는 번갈아 들리고, 배는 볼록해지고, 꼬리는 흔들려요.
  */
 
-/** 그림마다 입(턱) 위치: [가로 0~1, 세로 0~1(아래가 0)] */
-const MOUTH: Record<string, [number, number]> = {
-  'bear-baby': [0.55, 0.52],
-  'cat-baby': [0.52, 0.54],
-  'cat-kid': [0.37, 0.56],
-  'cat-adult': [0.7, 0.68],
-  'chick-baby': [0.55, 0.54],
-  'chick-kid': [0.52, 0.63],
-  'chick-adult': [0.67, 0.76],
-  'dog-baby': [0.58, 0.49],
-  'dog-kid': [0.38, 0.57],
-  'dog-adult': [0.5, 0.69],
-  'hamster-baby': [0.53, 0.58],
-  'hamster-kid': [0.56, 0.69],
-  'hamster-adult': [0.52, 0.66],
-  'rabbit-baby': [0.53, 0.54],
-  'rabbit-kid': [0.44, 0.69],
-  'rabbit-adult': [0.57, 0.69],
-};
-/** 머리가 시작되는 높이 (이 위쪽이 머리로 움직여요) */
-const NECK: Record<string, number> = { baby: 0.38, kid: 0.47, adult: 0.6, egg: 0.5 };
+export type PoseName = 'walkA' | 'walkB' | 'eat' | 'chew' | 'sleep' | 'jump' | 'roll' | 'sit';
+export const POSE_NAMES: PoseName[] = ['walkA', 'walkB', 'eat', 'chew', 'sleep', 'jump', 'roll', 'sit'];
 
-export interface Sprite {
+/** 한 자세 그림 */
+export interface Pose {
   mesh: THREE.Mesh;
   mat: THREE.ShaderMaterial;
-  /** 가로 세로 크기(세계 단위) */
   w: number;
   h: number;
-  mouth: [number, number];
+}
+/** 한 마리의 모든 자세 (걷기·먹기·자기·점프·뒹굴기·앉기) */
+export interface Sprite {
+  group: THREE.Group;
+  poses: Partial<Record<PoseName, Pose>>;
+  /** 앉은 자세의 크기(기준) */
+  w: number;
+  h: number;
+  /** 지금 보이는 자세 */
+  current: PoseName;
   isEgg: boolean;
   dispose: () => void;
 }
+
+/** 자세마다 입 위치(그림 안 비율) — 오른쪽을 보는 그림이에요 */
+const MOUTH_AT: Record<PoseName, [number, number]> = {
+  sit: [0.78, 0.6],
+  eat: [0.84, 0.3],
+  chew: [0.78, 0.58],
+  walkA: [0.85, 0.62],
+  walkB: [0.85, 0.62],
+  jump: [0.85, 0.6],
+  roll: [0.5, 0.5],
+  sleep: [0.8, 0.35],
+};
+export const mouthOf = (s: Sprite): [number, number] => MOUTH_AT[s.current];
 
 const VERT = /* glsl */ `
 uniform vec2 uSize;
@@ -97,70 +100,102 @@ void main() {
 }`;
 
 const loader = new THREE.TextureLoader();
-
-export function loadSprite(url: string, key: string, stage: string, height: number, scale: number): Promise<Sprite> {
-  return new Promise((resolve, reject) => {
+const loadTex = (url: string) =>
+  new Promise<THREE.Texture>((res, rej) =>
     loader.load(
       url,
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = 4;
-        tex.generateMipmaps = true;
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
-        const img = tex.image as { width: number; height: number };
-        const h = height * scale;
-        const w = (img.width / img.height) * h;
-        const geo = new THREE.PlaneGeometry(1, 1, 26, 30);
-        geo.translate(0, 0.5, 0);
-        geo.scale(w, h, 1);
-        const mouth = MOUTH[key] ?? [0.5, 0.6];
-        const mat = new THREE.ShaderMaterial({
-          uniforms: {
-            uTex: { value: tex },
-            uSize: { value: new THREE.Vector2(w, h) },
-            uTime: { value: 0 },
-            uNeck: { value: NECK[stage] ?? 0.5 },
-            uNod: { value: 0 },
-            uHeadX: { value: 0 },
-            uStep: { value: 0 },
-            uPhase: { value: 0 },
-            uTail: { value: 0 },
-            uBulge: { value: 0 },
-            uJaw: { value: 0 },
-            uBreath: { value: 0 },
-            uSway: { value: 0 },
-            uPuff: { value: 0 },
-            uEar: { value: 0 },
-            uSquishTop: { value: 0 },
-            uMouth: { value: new THREE.Vector2(mouth[0], mouth[1]) },
-            uTint: { value: 0 },
-          },
-          vertexShader: VERT,
-          fragmentShader: FRAG,
-          transparent: true,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.frustumCulled = false;
-        resolve({
-          mesh,
-          mat,
-          w,
-          h,
-          mouth: [mouth[0], mouth[1]],
-          isEgg: stage === 'egg',
-          dispose: () => {
-            tex.dispose();
-            geo.dispose();
-            mat.dispose();
-          },
-        });
+      (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 4;
+        t.minFilter = THREE.LinearMipmapLinearFilter;
+        res(t);
       },
       undefined,
-      reject,
-    );
+      rej,
+    ),
+  );
+
+function makePose(tex: THREE.Texture, h: number, w: number): Pose {
+  const geo = new THREE.PlaneGeometry(1, 1, 22, 26);
+  geo.translate(0, 0.5, 0);
+  geo.scale(w, h, 1);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTex: { value: tex },
+      uSize: { value: new THREE.Vector2(w, h) },
+      uTime: { value: 0 },
+      uNeck: { value: 0.55 },
+      uNod: { value: 0 },
+      uHeadX: { value: 0 },
+      uStep: { value: 0 },
+      uPhase: { value: 0 },
+      uTail: { value: 0 },
+      uBulge: { value: 0 },
+      uJaw: { value: 0 },
+      uBreath: { value: 0 },
+      uSway: { value: 0 },
+      uPuff: { value: 0 },
+      uEar: { value: 0 },
+      uSquishTop: { value: 0 },
+      uMouth: { value: new THREE.Vector2(0.8, 0.6) },
+      uTint: { value: 0 },
+    },
+    vertexShader: VERT,
+    fragmentShader: FRAG,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
   });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.frustumCulled = false;
+  mesh.visible = false;
+  return { mesh, mat, w, h };
+}
+
+/** 한 마리의 자세 그림들을 모두 불러와요. 앉은 자세 높이를 height로 맞춰요. */
+export async function loadSprite(base: string, species: string, stage: string, height: number, scale: number): Promise<Sprite> {
+  const group = new THREE.Group();
+  const poses: Partial<Record<PoseName, Pose>> = {};
+  const texs: THREE.Texture[] = [];
+  if (stage === 'egg') {
+    const tex = await loadTex(`${base}pets/egg.webp`);
+    texs.push(tex);
+    const img = tex.image as { width: number; height: number };
+    const h = height * scale;
+    const p = makePose(tex, h, (img.width / img.height) * h);
+    p.mesh.visible = true;
+    group.add(p.mesh);
+    poses.sit = p;
+    return { group, poses, w: p.w, h: p.h, current: 'sit', isEgg: true, dispose: () => texs.forEach((t) => t.dispose()) };
+  }
+  const loaded = await Promise.all(POSE_NAMES.map((n) => loadTex(`${base}pets/${species}-${stage}-${n}.webp`)));
+  loaded.forEach((t) => texs.push(t));
+  const px = (t: THREE.Texture) => t.image as { width: number; height: number };
+  const sitH = px(loaded[POSE_NAMES.indexOf('sit')]).height;
+  const k = (height * scale) / sitH;
+  POSE_NAMES.forEach((n, i) => {
+    const im = px(loaded[i]);
+    const p = makePose(loaded[i], im.height * k, im.width * k);
+    group.add(p.mesh);
+    poses[n] = p;
+  });
+  const sit = poses.sit!;
+  sit.mesh.visible = true;
+  return {
+    group,
+    poses,
+    w: sit.w,
+    h: sit.h,
+    current: 'sit',
+    isEgg: false,
+    dispose: () => {
+      texs.forEach((t) => t.dispose());
+      Object.values(poses).forEach((p) => {
+        p!.mesh.geometry.dispose();
+        p!.mat.dispose();
+      });
+    },
+  };
 }
 
 export interface PoseIn {
@@ -184,14 +219,47 @@ const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const ease = (u: number) => u * u * (3 - 2 * u);
 const arc = (u: number) => 4 * u * (1 - u);
 
-/** 한 프레임의 몸짓: 그림 전체의 움직임과 부위별 구부림 값을 정해요 */
+/** 이 동작에 쓸 자세 그림 고르기 (걷기는 두 장을 번갈아, 먹을 때는 먹기·씹기를 번갈아) */
+export function chooseSprite(anim: Anim, o: { time: number; t: number; chew: number; wide: number; sleepy: boolean }): PoseName {
+  switch (anim) {
+    case 'walk':
+      return Math.floor(o.time * 5) % 2 ? 'walkB' : 'walkA';
+    case 'flee':
+      return Math.floor(o.time * 10) % 2 ? 'walkB' : 'walkA';
+    case 'dance':
+      return Math.floor(o.time * 4) % 2 ? 'walkB' : 'walkA';
+    case 'eat':
+      if (o.chew > 0) return Math.floor(o.time * 4.5) % 2 ? 'chew' : 'eat';
+      return o.wide > 0.3 ? 'eat' : 'sit';
+    case 'sleep':
+      return 'sleep';
+    case 'jump':
+      return 'jump';
+    case 'play':
+      return o.t < 1.6 ? 'roll' : 'jump';
+    case 'tickle':
+      return 'roll';
+    case 'hug':
+    case 'refuse':
+    case 'shake':
+    case 'wash':
+    case 'hide':
+    case 'dizzy':
+    default:
+      return o.sleepy && anim === 'idle' ? 'sleep' : 'sit';
+  }
+}
+
+/** 한 프레임의 몸짓: 고른 자세 그림을 움직이고 구부려요 */
 export function poseSprite(s: Sprite, anim: Anim, o: PoseIn) {
-  const u = s.mat.uniforms;
+  const name = s.isEgg ? 'sit' : chooseSprite(anim, { time: o.time, t: o.t, chew: o.chew, wide: o.wide, sleepy: false });
+  s.current = name;
+  for (const [k, p] of Object.entries(s.poses)) p!.mesh.visible = k === name;
+  const cur = s.poses[name]!;
+  const u = cur.mat.uniforms;
   const { time, t, dir } = o;
   const sad = o.mood === 'sad';
   const happy = o.mood === 'happy';
-  const lazy = 1 - o.energy * 0.45;
-  const m = s.mesh;
   const flip = dir >= 0 ? 1 : -1;
   const bulge = clamp((o.belly - 0.45) / 0.55);
 
@@ -200,184 +268,126 @@ export function poseSprite(s: Sprite, anim: Anim, o: PoseIn) {
   let yaw = 0;
   let sx = 1;
   let sy = 1;
-  let ox = 0;
   let nod = 0;
-  let headX = 0;
-  let step = 0;
-  let phase = time * 10;
-  let jaw = 0;
   let sway = 0;
-  let tail = sin(time * (happy ? 12 : sad ? 2 : 5)) * (happy ? 0.03 : sad ? 0.004 : 0.015);
-  let puff = o.belly > 0.88 ? 1 : 0;
-  let ear = 0;
   let aroundCenter = false;
-  let lie = 0;
   const breath = sin(time * (anim === 'sleep' ? 1.7 : 2.6)) * (anim === 'sleep' ? 0.03 : 0.016);
-
-  // 평소: 가만히 숨 쉬며 두리번
-  nod = sin(time * 0.9) * 0.025 + (sad ? 0.12 : 0) + (1 - o.energy) * 0.05;
-  headX = sin(time * 0.6) * 0.012;
-  sway = sin(time * 0.8) * 0.006;
-  yaw = sin(time * 0.5) * 0.18;
+  let tail = sin(time * (happy ? 12 : sad ? 2 : 5)) * (happy ? 0.02 : sad ? 0.003 : 0.01);
 
   switch (anim) {
+    case 'idle':
+      nod = sin(time * 0.9) * 0.02 + (sad ? 0.08 : 0);
+      sway = sin(time * 0.8) * 0.006;
+      yaw = sin(time * 0.5) * 0.12;
+      if (sad) sy *= 0.985;
+      break;
     case 'walk':
     case 'flee': {
       const fast = anim === 'flee';
-      const w = fast ? 20 : 10 * lazy;
-      phase = time * w;
-      step = fast ? 1.5 : 1;
-      hop = Math.abs(sin(time * w * 0.5 * 2)) * (fast ? 0.1 : 0.05);
-      rotZ = sin(time * w) * (fast ? 0.07 : 0.045);
-      sway = (fast ? -0.06 : -0.02) * flip * -1;
-      yaw = 0.42 * flip;
-      nod = sin(time * w) * 0.04 + (fast ? -0.1 : 0);
-      sy = 1 + sin(time * w * 2) * 0.012;
-      tail = sin(time * w) * 0.025;
+      const w = fast ? 20 : 10;
+      hop = Math.abs(sin(time * w * 0.5 * 2)) * (fast ? 0.09 : 0.045);
+      rotZ = sin(time * w) * (fast ? 0.05 : 0.025);
+      yaw = 0.18 * flip * (fast ? 1.4 : 1);
+      tail = 0;
       break;
     }
     case 'eat': {
-      yaw = 0;
       const chewing = o.chew > 0;
-      nod = chewing ? -0.1 + sin(time * 16) * 0.055 : 0.1 * o.wide;
-      jaw = chewing ? (0.35 + 0.65 * (sin(time * 16) * 0.5 + 0.5)) : o.wide * 1.0;
-      headX = chewing ? sin(time * 8) * 0.008 : 0;
-      sy = chewing ? 1 - 0.02 * (sin(time * 16) * 0.5 + 0.5) : 1;
-      puff = Math.max(puff, chewing ? 0.6 + 0.4 * sin(time * 16) : 0);
+      hop = 0;
+      sy = chewing ? 1 - 0.015 * (sin(time * 16) * 0.5 + 0.5) : 1;
+      rotZ = chewing ? sin(time * 9) * 0.012 : 0;
       break;
     }
     case 'refuse': {
-      yaw = sin(t * 14) * 0.55 * clamp(1.8 - t);
-      nod = 0.08;
-      headX = sin(t * 14) * 0.03 * clamp(1.8 - t);
-      sway = 0.03 * -flip;
-      sy = 1.02;
-      puff = 1;
+      // 입을 꾹 다물고 도리도리
+      const k = clamp(1.8 - t);
+      yaw = sin(t * 14) * 0.7 * k;
+      rotZ = sin(t * 14) * 0.04 * k;
+      sx = 1 + 0.02;
       break;
     }
     case 'shake': {
       const k = clamp(1.6 - t);
-      rotZ = sin(t * 38) * 0.17 * k;
-      yaw = sin(t * 38 + 1) * 0.5 * k;
-      ear = sin(t * 40) * 0.02 * k;
+      rotZ = sin(t * 38) * 0.15 * k;
+      yaw = sin(t * 38 + 1) * 0.6 * k;
       break;
     }
     case 'tickle': {
-      rotZ = sin(t * 24) * 0.1;
-      hop = Math.abs(sin(t * 14)) * 0.07;
-      jaw = 0.6 + 0.35 * sin(t * 20);
-      nod = -0.1 + sin(t * 18) * 0.05;
-      sx = 1 + sin(t * 24) * 0.02;
+      rotZ = sin(t * 24) * 0.12;
+      hop = Math.abs(sin(t * 14)) * 0.05;
+      aroundCenter = true;
       break;
     }
     case 'play': {
-      // 뒹굴기: 몸 가운데를 축으로 데굴데굴, 마지막에 벌떡 일어서며 폴짝
-      const roll = clamp(t / 1.5);
-      const turns = ease(roll) * Math.PI * 4 * -flip;
-      rotZ = turns;
-      aroundCenter = true;
-      hop = Math.abs(sin(turns / 2)) * 0.05;
-      const after = clamp((t - 1.5) / 0.5);
-      if (t > 1.5) hop += arc(after) * 0.18;
-      jaw = roll < 1 ? 0.5 + 0.4 * sin(t * 12) : 0.2;
-      if (roll >= 1) sy = 1 + (after < 0.2 ? -0.08 : 0.05 * arc(after));
+      // 뒹굴기: 발라당 누워 좌우로 데굴데굴, 그다음 폴짝
+      if (t < 1.6) {
+        aroundCenter = true;
+        rotZ = sin(t * 7) * 0.5;
+        hop = Math.abs(sin(t * 7)) * 0.04;
+      } else {
+        const k = clamp((t - 1.6) / 0.7);
+        hop = arc(k) * 0.3;
+      }
       break;
     }
     case 'jump': {
       const k = (t % 0.7) / 0.7;
       hop = arc(k) * 0.4;
-      sy = 1 + (k < 0.15 || k > 0.85 ? -0.12 : 0.08);
-      sx = 1 + (k < 0.15 || k > 0.85 ? 0.08 : -0.04);
-      step = arc(k) * 1.2;
-      phase = time * 14;
-      jaw = 0.4 * arc(k);
-      ear = -arc(k) * 0.03;
+      sy = 1 + (k < 0.15 || k > 0.85 ? -0.1 : 0.06);
       break;
     }
     case 'hide': {
-      // 숨바꼭질: 몸을 낮추고 웅크렸다가 짜잔 하고 튀어올라요
       const crouch = t < 1.4 ? ease(clamp(t / 0.35)) : 1 - ease(clamp((t - 1.4) / 0.15));
-      sy = 1 - crouch * 0.42;
-      sx = 1 + crouch * 0.12;
-      nod = crouch * 0.2;
+      sy = 1 - crouch * 0.4;
+      sx = 1 + crouch * 0.1;
       const pop = clamp((t - 1.5) / 0.6);
       if (t > 1.5) hop = arc(pop) * 0.45;
       break;
     }
     case 'wash': {
-      rotZ = sin(t * 14) * 0.1;
-      yaw = sin(t * 11) * 0.4;
+      rotZ = sin(t * 14) * 0.08;
+      yaw = sin(t * 11) * 0.5;
       hop = Math.abs(sin(t * 7)) * 0.03;
-      jaw = 0.25 + 0.2 * sin(t * 6);
-      nod = sin(t * 14) * 0.08;
-      step = 0.5;
-      phase = time * 14;
       break;
     }
     case 'hug': {
       const k = ease(clamp(t / 0.4));
-      sx = 1 + 0.07 * k + sin(time * 6) * 0.012;
-      sy = 1 - 0.05 * k;
-      nod = 0.18 * k;
-      yaw = sin(time * 3) * 0.3;
+      sx = 1 + 0.06 * k + sin(time * 6) * 0.012;
+      sy = 1 - 0.04 * k;
+      rotZ = sin(time * 3) * 0.04;
       break;
     }
     case 'dance': {
-      rotZ = sin(time * 8) * 0.14;
-      hop = Math.abs(sin(time * 8)) * 0.12;
-      yaw = sin(time * 4) * 0.6;
-      nod = sin(time * 16) * 0.09;
-      step = 1;
-      phase = time * 8;
-      jaw = 0.45 + 0.3 * sin(time * 8);
-      tail = sin(time * 16) * 0.035;
-      ear = sin(time * 16) * 0.02;
+      rotZ = sin(time * 8) * 0.1;
+      hop = Math.abs(sin(time * 8)) * 0.1;
+      yaw = sin(time * 4) * 0.4;
       break;
     }
     case 'sleep': {
-      // 옆으로 누워서 쿨쿨 (숨쉴 때마다 몸이 오르내려요)
-      const down = ease(clamp(t / 0.9));
-      lie = down;
-      aroundCenter = true;
-      rotZ = -Math.PI * 0.46 * down * flip;
-      nod = 0;
-      sway = 0;
-      yaw = 0;
-      sy = 1 + sin(time * 1.7) * 0.02;
+      sy = 1 + sin(time * 1.7) * 0.025;
       break;
     }
     case 'dizzy': {
       yaw = t * 9;
-      rotZ = sin(t * 7) * 0.08;
-      nod = sin(t * 8) * 0.12;
-      jaw = 0.3;
+      rotZ = sin(t * 7) * 0.06;
       break;
     }
     default:
       break;
   }
-  if (sad && anim === 'idle') sy *= 0.985;
 
   u.uTime.value = time;
   u.uNod.value = nod;
-  u.uHeadX.value = headX;
-  u.uStep.value = step;
-  u.uPhase.value = phase;
-  u.uTail.value = tail;
   u.uBulge.value = bulge;
-  u.uJaw.value = jaw;
   u.uBreath.value = breath;
   u.uSway.value = sway;
-  u.uPuff.value = puff;
-  u.uEar.value = ear;
-  u.uTint.value = sad ? 0.35 : 0;
+  u.uTail.value = tail;
+  u.uPuff.value = o.belly > 0.88 ? 1 : 0;
+  u.uTint.value = sad ? 0.3 : 0;
 
-  // 알은 머리가 없으니 통통 흔들리기만
   if (s.isEgg) {
     u.uNod.value = 0;
-    u.uJaw.value = 0;
-    u.uHeadX.value = 0;
-    u.uStep.value = 0;
+    u.uBulge.value = 0;
     const wob = anim === 'idle' || anim === 'walk' ? 0.03 : 0.14;
     const f = anim === 'idle' || anim === 'walk' ? 1.6 : 9;
     rotZ = sin(time * f) * wob;
@@ -385,14 +395,13 @@ export function poseSprite(s: Sprite, anim: Anim, o: PoseIn) {
     yaw = 0;
   }
 
-  // 몸 전체 위치·기울기. aroundCenter면 몸 가운데를 축으로 돌려요.
+  const m = cur.mesh;
   m.scale.set(flip * sx, sy, 1);
   m.rotation.set(0, yaw, rotZ);
   if (aroundCenter) {
-    const c = (s.h * sy) / 2;
-    m.position.y = hop + c * (1 - Math.cos(rotZ)) - lie * (s.h / 2 - s.w / 2) * 0.9;
-    m.position.x = ox + c * Math.sin(rotZ);
+    const c = (cur.h * sy) / 2;
+    m.position.set(c * Math.sin(rotZ), hop + c * (1 - Math.cos(rotZ)), 0);
   } else {
-    m.position.set(ox, hop, 0);
+    m.position.set(0, hop, 0);
   }
 }
