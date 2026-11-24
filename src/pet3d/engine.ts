@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import type { Anim, PetMood, PetSpecies, PetStage } from '../lib/pet';
-import { petArt } from '../lib/pet';
-import { loadSprite, poseSprite, type Sprite } from './sprite';
+import { loadSprite, mouthOf, poseSprite, type Sprite } from './sprite';
 
 export type FoodKind = 'cookie' | 'rice';
 export type ServeMode = 'eat' | 'refuse' | 'flee';
@@ -176,20 +175,19 @@ export class PetEngine {
     const key = `${species}-${stage}`;
     if (key === this.key) return;
     this.key = key;
-    const art = petArt(species, stage);
     const height = { egg: 1.3, baby: 1.45, kid: 1.7, adult: 1.95 }[stage];
     const id = ++this.loadId;
-    loadSprite(`${baseUrl}${art.src}`, key, stage, height, art.scale).then((sp) => {
+    loadSprite(baseUrl, species, stage, height, 1).then((sp) => {
       if (this.disposed || id !== this.loadId) {
         sp.dispose();
         return;
       }
       if (this.sprite) {
-        this.face.remove(this.sprite.mesh);
+        this.face.remove(this.sprite.group);
         this.sprite.dispose();
       }
       this.sprite = sp;
-      this.face.add(sp.mesh);
+      this.face.add(sp.group);
     });
   }
 
@@ -274,9 +272,11 @@ export class PetEngine {
     let away = 0;
     const f = this.food;
     if (f) {
-      const mouth = new THREE.Vector3((sp.mouth[0] - 0.5) * sp.w, sp.mouth[1] * sp.h, 0.05);
-      sp.mesh.updateMatrix();
-      mouth.applyMatrix4(sp.mesh.matrix);
+      const cur = sp.poses[sp.current]!;
+      const [mx, my] = mouthOf(sp);
+      const mouth = new THREE.Vector3((mx - 0.5) * cur.w, my * cur.h, 0.05);
+      cur.mesh.updateMatrix();
+      mouth.applyMatrix4(cur.mesh.matrix);
       mouth.x += this.actor.position.x;
       if (sp.isEgg) mouth.set(this.actor.position.x, 0.6, 0.1);
       if (f.phase === 'fly') {
@@ -346,7 +346,7 @@ export class PetEngine {
     this.face.scale.setScalar(k);
 
     /* 그림자 */
-    const lift = Math.max(0, sp.mesh.position.y);
+    const lift = Math.max(0, sp.poses[sp.current]!.mesh.position.y);
     this.shadow.scale.setScalar(sp.w * k * 0.95 * (1 - Math.min(0.4, lift * 0.4)));
     (this.shadow.material as THREE.MeshBasicMaterial).opacity = 0.9 - Math.min(0.5, lift);
 

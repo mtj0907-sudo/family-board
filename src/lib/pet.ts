@@ -303,3 +303,10 @@ export function petMessage(mood: PetMood, stage: PetStage, doneToday: number, st
   if (mood === 'happy') return doneToday >= 6 ? '오늘 최고예요! 사랑해요' : '기분이 좋아요! 고마워요';
   return doneToday === 0 ? '오늘도 같이 놀아요!' : '조금 더 놀고 싶어요';
 }
+
+/** 자세별 그림 파일 (걷기 두 장, 먹기·씹기·자기·점프·뒹굴기·앉기) */
+export function petPoseFiles(): string[] {
+  const out: string[] = [];
+  for (const sp of PET_SPECIES) for (const st of ['baby', 'kid', 'adult'] as const) for (const po of ['walkA', 'walkB', 'eat', 'chew', 'sleep', 'jump', 'roll', 'sit']) out.push(`pets/${sp.key}-${st}-${po}.webp`);
+  return out;
+}
